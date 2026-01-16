@@ -4,10 +4,19 @@ import os
 from datetime import datetime
 import json
 from functools import wraps
+import razorpay
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'  # Change this to a secure secret key
-import os
+app.secret_key = 'your-secret-key-here'
+
+# Razorpay Configuration
+RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID')
+RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET')
+razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(os.getcwd(), "instance", "database.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -55,6 +64,7 @@ def sign_in():
             if customer and customer.check_password(password):
                 session['user_id'] = customer.id
                 session['user_name'] = customer.full_name
+                session['user_email'] = customer.email
                 session['user_role'] = 'customer'
                 flash('Login successful!', 'success')
                 return redirect(url_for('customer_dashboard'))
@@ -174,6 +184,7 @@ def customer_signup():
 
         session['user_id'] = new_customer.id
         session['user_name'] = new_customer.full_name
+        session['user_email'] = new_customer.email
         session['user_role'] = 'customer'
         flash('Signup successful!', 'success')
         return redirect(url_for('customer_dashboard'))
@@ -201,7 +212,7 @@ def create_order():
             payment_type=data['paymentType'],
             order_type=data['deliveryType'],
             total=data['total'],
-            status='Pending'
+            status='Pending' if data['paymentType'] != 'online' else 'Payment Pending'
         )
         order.set_items(data['items'])
         db.session.add(order)
@@ -222,6 +233,78 @@ def cancel_order(order_id):
         db.session.commit()
         return jsonify({'success': True})
     return jsonify({'error': 'Cannot cancel'}), 400
+
+@app.route('/api/payment/create', methods=['POST'])
+@customer_required
+def create_payment():
+    try:
+        data = request.json
+        order_id = data.get('order_id')
+        order = Order.query.get(order_id)
+        
+        if not order:
+            return jsonify({'error': 'Order not found'}), 404
+            
+        # Amount in paise (multiply by 100)
+        amount = int(order.total * 100)
+        
+        razorpay_order = razorpay_client.order.create({
+            'amount': amount,
+            'currency': 'INR',
+            'payment_capture': '1'
+        })
+        
+        order.razorpay_order_id = razorpay_order['id']
+        db.session.commit()
+        
+        return jsonify({
+            'razorpay_order_id': razorpay_order['id'],
+            'razorpay_key_id': RAZORPAY_KEY_ID,
+            'amount': amount,
+            'customer_name': order.customer_name,
+            'customer_email': session.get('user_email', ''),
+            'customer_phone': order.customer_phone
+        })
+    except Exception as e:
+        print(f"Error creating Razorpay order: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/payment/verify', methods=['POST'])
+@customer_required
+def verify_payment():
+    try:
+        data = request.json
+        order_id = data.get('order_id')
+        razorpay_order_id = data.get('razorpay_order_id')
+        razorpay_payment_id = data.get('razorpay_payment_id')
+        razorpay_signature = data.get('razorpay_signature')
+        
+        # Verify signature
+        params_dict = {
+            'razorpay_order_id': razorpay_order_id,
+            'razorpay_payment_id': razorpay_payment_id,
+            'razorpay_signature': razorpay_signature
+        }
+        
+        try:
+            razorpay_client.utility.verify_payment_signature(params_dict)
+            
+            order = Order.query.filter_by(id=order_id, razorpay_order_id=razorpay_order_id).first()
+            if order:
+                order.razorpay_payment_id = razorpay_payment_id
+                order.razorpay_signature = razorpay_signature
+                order.status = 'Pending' # Now that payment is done, it's pending for vendor action
+                db.session.commit()
+                return jsonify({'success': True})
+            else:
+                return jsonify({'error': 'Order not found'}), 404
+        except Exception as sig_error:
+            print(f"Signature verification failed: {sig_error}")
+            return jsonify({'success': False, 'error': 'Invalid signature'}), 400
+            
+    except Exception as e:
+        print(f"Error verifying payment: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/orders/<int:order_id>', methods=['DELETE'])
 @customer_required

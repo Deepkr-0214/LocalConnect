@@ -69,6 +69,12 @@ class Order(db.Model):
     customer_suggestion = db.Column(db.Text)
     rejection_reason = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Razorpay Details
+    razorpay_order_id = db.Column(db.String(100))
+    razorpay_payment_id = db.Column(db.String(100))
+    razorpay_signature = db.Column(db.String(255))
+    
     review_rating = db.Column(db.Integer)
     review_comment = db.Column(db.Text)
     review_date = db.Column(db.DateTime)
