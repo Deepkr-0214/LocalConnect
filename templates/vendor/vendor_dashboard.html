@@ -61,40 +61,25 @@ function updateOrderStatus(orderId, status) {
     const statusBadge = document.getElementById(`status-${orderId}`);
     const actionsDiv = document.getElementById(`actions-${orderId}`);
     
-    if (statusBadge && actionsDiv) {
-        // Update UI immediately for smooth experience
-        statusBadge.textContent = status;
-        statusBadge.className = `status-badge-compact status-${status.toLowerCase()}`;
-        
-        // Hide buttons immediately
-        actionsDiv.style.opacity = '0';
-        setTimeout(() => {
-            actionsDiv.innerHTML = '';
-            actionsDiv.style.opacity = '1';
-        }, 200);
-        
-        // Add smooth transition effect to badge
-        statusBadge.style.transform = 'scale(1.1)';
-        setTimeout(() => {
-            statusBadge.style.transform = 'scale(1)';
-        }, 200);
-        
-        // Update pending orders count
-        updatePendingCount();
-    }
-    
-    // Send AJAX request in background (optional - for real backend)
-    fetch('/update_order/' + orderId, {
+    fetch(`/vendor/orders/${orderId}/status`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-            status: status
-        })
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ status: status })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (statusBadge && actionsDiv) {
+                statusBadge.textContent = status;
+                statusBadge.className = `status-badge-compact status-${status.toLowerCase()}`;
+                actionsDiv.innerHTML = '';
+            }
+            updatePendingCount();
+        }
     })
     .catch(error => {
-        console.log('Backend not available - demo mode');
+        console.error('Error:', error);
+        alert('Failed to update order status');
     });
 }
 

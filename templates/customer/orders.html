@@ -166,7 +166,7 @@
                             <i class="fa-solid fa-truck"></i> Track Order
                         </button>
                     `}
-                    ${order.status === 'preparing' ? `
+                    ${order.status === 'Pending' || order.status === 'preparing' ? `
                         <button class="action-btn" onclick="cancelOrder(${order.id})" style="background:#e74c3c;color:white;flex:1;">
                             <i class="fa-solid fa-times-circle"></i> Cancel
                         </button>

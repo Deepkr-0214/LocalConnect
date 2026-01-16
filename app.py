@@ -183,30 +183,35 @@ def customer_signup():
 @app.route('/api/orders', methods=['POST'])
 @customer_required
 def create_order():
-    data = request.json
-    customer = Customer.query.get(session['user_id'])
-    vendor = Vendor.query.get(data['vendor_id'])
-    
-    if not vendor:
-        return jsonify({'error': 'Vendor not found'}), 404
-    
-    order = Order(
-        customer_id=session['user_id'],
-        vendor_id=vendor.id,
-        vendor_name=vendor.business_name,
-        customer_name=customer.full_name,
-        customer_phone=customer.phone,
-        delivery_type=data['deliveryType'],
-        payment_type=data['paymentType'],
-        order_type=data['deliveryType'],
-        total=data['total'],
-        total_price=data['total'],
-        status='Pending'
-    )
-    order.set_items(data['items'])
-    db.session.add(order)
-    db.session.commit()
-    return jsonify({'success': True, 'order_id': order.id})
+    try:
+        data = request.json
+        customer = Customer.query.get(session['user_id'])
+        vendor = Vendor.query.get(data['vendor_id'])
+        
+        if not vendor:
+            return jsonify({'error': 'Vendor not found'}), 404
+        
+        order = Order(
+            customer_id=session['user_id'],
+            vendor_id=vendor.id,
+            vendor_name=vendor.business_name,
+            customer_name=customer.full_name,
+            customer_phone=customer.phone,
+            delivery_type=data['deliveryType'],
+            payment_type=data['paymentType'],
+            order_type=data['deliveryType'],
+            total=data['total'],
+            status='Pending'
+        )
+        order.set_items(data['items'])
+        db.session.add(order)
+        db.session.commit()
+        print(f"Order created: ID={order.id}, Customer={customer.full_name}, Vendor={vendor.business_name}")
+        return jsonify({'success': True, 'order_id': order.id})
+    except Exception as e:
+        print(f"Error creating order: {e}")
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/orders/<int:order_id>/cancel', methods=['POST'])
 @customer_required
