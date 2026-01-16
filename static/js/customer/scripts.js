@@ -24,7 +24,7 @@ class FoodRestaurantPage {
             rating: 4.5,
             reviews: Math.floor(Math.random() * 1000) + 100,
             distance: (Math.random() * 3 + 0.5).toFixed(1) + ' km',
-            image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=300&h=200&fit=crop',
+            image: v.shop_image || '🏪',
             cuisine: v.category,
             priceRange: '₹100-300',
             deliveryTime: '15-25 min',
@@ -69,9 +69,21 @@ class FoodRestaurantPage {
         card.className = 'vendor-card';
         card.onclick = () => this.viewVendorDetails(vendor.id);
 
+        const isEmoji = /\p{Emoji}/u.test(vendor.image) && vendor.image.length < 10;
+        const isBase64 = vendor.image && vendor.image.startsWith('data:image');
+        
+        let imageHtml;
+        if (isEmoji) {
+            imageHtml = `<div style="font-size:80px;display:flex;align-items:center;justify-content:center;height:100%;">${vendor.image}</div>`;
+        } else if (isBase64) {
+            imageHtml = `<img src="${vendor.image}" alt="${vendor.name}">`;
+        } else {
+            imageHtml = `<div style="font-size:80px;display:flex;align-items:center;justify-content:center;height:100%;">🏪</div>`;
+        }
+
         card.innerHTML = `
             <div class="vendor-image">
-                <img src="${vendor.image}" alt="${vendor.name}" onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">
+                ${imageHtml}
                 <div class="status-badge ${vendor.isOpen ? 'open' : 'closed'}">
                     ${vendor.isOpen ? 'Open' : 'Closed'}
                 </div>

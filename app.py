@@ -95,6 +95,7 @@ def food_restaurants():
         'name': v.business_name,
         'category': v.business_category,
         'is_open': v.is_open if hasattr(v, 'is_open') else True,
+        'shop_image': v.shop_image if hasattr(v, 'shop_image') else '🏪',
         'address': v.business_address,
         'phone': v.phone
     } for v in vendors]
