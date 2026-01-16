@@ -579,6 +579,22 @@ def vendor_settings():
         vendor.business_category = request.form.get('business_category', vendor.business_category)
         vendor.phone = request.form.get('phone', vendor.phone)
         vendor.business_address = request.form.get('address', vendor.business_address)
+        vendor.about = request.form.get('about', vendor.about)
+        vendor.category_type = request.form.get('category_type')
+        vendor.veg_nonveg = request.form.get('veg_nonveg')
+        opening_time = request.form.get('opening_time')
+        opening_period = request.form.get('opening_period')
+        closing_time = request.form.get('closing_time')
+        closing_period = request.form.get('closing_period')
+        vendor.opening_time = f"{opening_time} {opening_period}" if opening_time and opening_period else None
+        vendor.closing_time = f"{closing_time} {closing_period}" if closing_time and closing_period else None
+        vendor.indoor_seating = request.form.get('indoor_seating') == '1'
+        vendor.outdoor_seating = request.form.get('outdoor_seating') == '1'
+        vendor.home_delivery = request.form.get('home_delivery') == '1'
+        vendor.takeaway = request.form.get('takeaway') == '1'
+        vendor.free_wifi = request.form.get('free_wifi') == '1'
+        vendor.ac = request.form.get('ac') == '1'
+        vendor.cooler = request.form.get('cooler') == '1'
         db.session.commit()
         
         # Update session

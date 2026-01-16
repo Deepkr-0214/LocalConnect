@@ -192,12 +192,12 @@
 .brand-badge { 
     background: #e8f5e9; 
     color: var(--primary-green); 
-    padding: 5px 15px; 
+    padding: 8px 16px; 
     border-radius: 50px; 
-    font-size: 0.8rem; 
+    font-size: 0.85rem; 
     font-weight: 700; 
-    margin-bottom: 15px; 
-    display: inline-block; 
+    display: inline-block;
+    margin-right: 10px;
 }
 
 .amenities-grid { 

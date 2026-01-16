@@ -97,21 +97,107 @@
             <section id="about-section" class="tab-content">
                 <div class="about-container">
                     <div class="about-main-card">
-                        <div class="brand-badge">Since 1998</div>
-                        <h3>Our Flavorful Journey</h3>
-                        <p>Serving Delhi's most authentic street flavors for over two decades. We use 100% RO-purified water and hand-picked spices to ensure every bite is safe and delicious.</p>
-                        
-                        <div class="amenities-grid">
-                            <div class="amenity-item"><i class="fa-solid fa-leaf"></i> <span>Pure Veg</span></div>
-                            <div class="amenity-item"><i class="fa-solid fa-wind"></i> <span>Outdoor Seating</span></div>
-                            <div class="amenity-item"><i class="fa-solid fa-truck-ramp-box"></i> <span>Home Delivery</span></div>
-                            <div class="amenity-item"><i class="fa-solid fa-wifi"></i> <span>Free Wi-Fi</span></div>
+                        <!-- Badges Section -->
+                        <div style="display:flex;gap:12px;margin-bottom:25px;flex-wrap:wrap;">
+                            {% if vendor.category_type %}
+                            <span class="info-badge" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;padding:10px 20px;border-radius:25px;font-weight:600;font-size:0.9rem;box-shadow:0 4px 15px rgba(102,126,234,0.3);">
+                                <i class="fa-solid fa-utensils" style="margin-right:8px;"></i>{{ vendor.category_type }}
+                            </span>
+                            {% endif %}
+                            {% if vendor.veg_nonveg %}
+                            <span class="info-badge" style="background:linear-gradient(135deg, #11998e 0%, #38ef7d 100%);color:white;padding:10px 20px;border-radius:25px;font-weight:600;font-size:0.9rem;box-shadow:0 4px 15px rgba(17,153,142,0.3);">
+                                <i class="fa-solid fa-leaf" style="margin-right:8px;"></i>{{ vendor.veg_nonveg }}
+                            </span>
+                            {% endif %}
                         </div>
+                        
+                        <!-- About Section -->
+                        <div style="margin-bottom:35px;">
+                            <h3 style="margin-bottom:15px;color:#2c3e50;font-size:1.8rem;font-weight:700;display:flex;align-items:center;gap:10px;">
+                                <i class="fa-solid fa-circle-info" style="color:#3498db;font-size:1.5rem;"></i>
+                                About {{ vendor.business_name }}
+                            </h3>
+                            <p style="line-height:1.9;color:#555;font-size:1.05rem;background:#f8f9fa;padding:20px;border-radius:12px;border-left:4px solid #3498db;">{{ vendor.about if vendor.about else 'No information available.' }}</p>
+                        </div>
+                        
+                        <!-- Amenities Section -->
+                        {% if vendor.indoor_seating or vendor.outdoor_seating or vendor.home_delivery or vendor.takeaway or vendor.free_wifi or vendor.ac or vendor.cooler %}
+                        <div style="margin-bottom:35px;">
+                            <h4 style="margin:0 0 20px 0;color:#2c3e50;font-size:1.4rem;font-weight:700;display:flex;align-items:center;gap:10px;">
+                                <i class="fa-solid fa-star" style="color:#f39c12;font-size:1.2rem;"></i>
+                                Amenities & Features
+                            </h4>
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;">
+                                {% if vendor.indoor_seating %}
+                                <div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;padding:15px 20px;border-radius:12px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 15px rgba(102,126,234,0.2);transition:transform 0.3s;">
+                                    <i class="fa-solid fa-couch" style="font-size:1.5rem;"></i>
+                                    <span style="font-weight:600;">Indoor Seating</span>
+                                </div>
+                                {% endif %}
+                                {% if vendor.outdoor_seating %}
+                                <div style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%);color:white;padding:15px 20px;border-radius:12px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 15px rgba(240,147,251,0.2);transition:transform 0.3s;">
+                                    <i class="fa-solid fa-wind" style="font-size:1.5rem;"></i>
+                                    <span style="font-weight:600;">Outdoor Seating</span>
+                                </div>
+                                {% endif %}
+                                {% if vendor.home_delivery %}
+                                <div style="background:linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);color:white;padding:15px 20px;border-radius:12px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 15px rgba(79,172,254,0.2);transition:transform 0.3s;">
+                                    <i class="fa-solid fa-truck-ramp-box" style="font-size:1.5rem;"></i>
+                                    <span style="font-weight:600;">Home Delivery</span>
+                                </div>
+                                {% endif %}
+                                {% if vendor.takeaway %}
+                                <div style="background:linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);color:white;padding:15px 20px;border-radius:12px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 15px rgba(67,233,123,0.2);transition:transform 0.3s;">
+                                    <i class="fa-solid fa-bag-shopping" style="font-size:1.5rem;"></i>
+                                    <span style="font-weight:600;">Takeaway</span>
+                                </div>
+                                {% endif %}
+                                {% if vendor.free_wifi %}
+                                <div style="background:linear-gradient(135deg, #fa709a 0%, #fee140 100%);color:white;padding:15px 20px;border-radius:12px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 15px rgba(250,112,154,0.2);transition:transform 0.3s;">
+                                    <i class="fa-solid fa-wifi" style="font-size:1.5rem;"></i>
+                                    <span style="font-weight:600;">Free Wi-Fi</span>
+                                </div>
+                                {% endif %}
+                                {% if vendor.ac %}
+                                <div style="background:linear-gradient(135deg, #30cfd0 0%, #330867 100%);color:white;padding:15px 20px;border-radius:12px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 15px rgba(48,207,208,0.2);transition:transform 0.3s;">
+                                    <i class="fa-solid fa-snowflake" style="font-size:1.5rem;"></i>
+                                    <span style="font-weight:600;">AC</span>
+                                </div>
+                                {% endif %}
+                                {% if vendor.cooler %}
+                                <div style="background:linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);color:#2c3e50;padding:15px 20px;border-radius:12px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 15px rgba(168,237,234,0.2);transition:transform 0.3s;">
+                                    <i class="fa-solid fa-fan" style="font-size:1.5rem;"></i>
+                                    <span style="font-weight:600;">Cooler</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
 
-                        <div class="contact-strip">
-                            <div class="contact-info"><h4>Timings</h4><p>10:30 AM - 11:00 PM</p></div>
-                            <div class="contact-info"><h4>Contact</h4><p>+91 98765 43210</p></div>
-                            <div class="contact-info"><h4>Address</h4><p>Sector 15, Near Central Mall</p></div>
+                        <!-- Contact Information -->
+                        <div>
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;">
+                                {% if vendor.opening_time and vendor.closing_time %}
+                                <div style="background:linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);padding:20px;border-radius:12px;box-shadow:0 4px 15px rgba(252,182,159,0.2);">
+                                    <h5 style="margin:0 0 10px 0;color:#d35400;font-size:1rem;display:flex;align-items:center;gap:8px;">
+                                        <i class="fa-solid fa-clock"></i> Timings
+                                    </h5>
+                                    <p style="margin:0;color:#2c3e50;font-weight:600;font-size:1.1rem;">{{ vendor.opening_time }} - {{ vendor.closing_time }}</p>
+                                </div>
+                                {% endif %}
+                                <div style="background:linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);padding:20px;border-radius:12px;box-shadow:0 4px 15px rgba(161,196,253,0.2);">
+                                    <h5 style="margin:0 0 10px 0;color:#2980b9;font-size:1rem;display:flex;align-items:center;gap:8px;">
+                                        <i class="fa-solid fa-phone"></i> Contact
+                                    </h5>
+                                    <p style="margin:0;color:#2c3e50;font-weight:600;font-size:1.1rem;">{{ vendor.phone }}</p>
+                                </div>
+                                <div style="background:linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);padding:20px;border-radius:12px;box-shadow:0 4px 15px rgba(253,203,110,0.2);">
+                                    <h5 style="margin:0 0 10px 0;color:#d63031;font-size:1rem;display:flex;align-items:center;gap:8px;">
+                                        <i class="fa-solid fa-location-dot"></i> Address
+                                    </h5>
+                                    <p style="margin:0;color:#2c3e50;font-weight:600;font-size:1.05rem;">{{ vendor.business_address }}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
