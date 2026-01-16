@@ -616,6 +616,8 @@ def vendor_settings():
         vendor.free_wifi = request.form.get('free_wifi') == '1'
         vendor.ac = request.form.get('ac') == '1'
         vendor.cooler = request.form.get('cooler') == '1'
+        vendor.parking = request.form.get('parking')
+        vendor.other_amenities = request.form.get('other_amenities')
         db.session.commit()
         
         # Update session

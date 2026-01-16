@@ -149,6 +149,18 @@
                             <span>Cooler</span>
                         </label>
                     </div>
+                    <div style="margin-top:15px;">
+                        <label style="display:block;margin-bottom:8px;">Parking</label>
+                        <select name="parking" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;">
+                            <option value="">Select Parking Option</option>
+                            <option value="Available" {{ 'selected' if vendor_profile and vendor_profile.parking == 'Available' else '' }}>Parking Available</option>
+                            <option value="Not Available" {{ 'selected' if vendor_profile and vendor_profile.parking == 'Not Available' else '' }}>Parking Not Available</option>
+                        </select>
+                    </div>
+                    <div style="margin-top:15px;">
+                        <label style="display:block;margin-bottom:8px;">Other Amenities</label>
+                        <textarea name="other_amenities" placeholder="Add other amenities (comma separated)" rows="2" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;">{{ vendor_profile.other_amenities if vendor_profile and vendor_profile.other_amenities else '' }}</textarea>
+                    </div>
                 </div>
                 
                 <div class="form-actions">

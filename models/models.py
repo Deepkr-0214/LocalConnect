@@ -43,6 +43,8 @@ class Vendor(db.Model):
     free_wifi = db.Column(db.Boolean, default=False)
     ac = db.Column(db.Boolean, default=False)
     cooler = db.Column(db.Boolean, default=False)
+    parking = db.Column(db.String(20))
+    other_amenities = db.Column(db.Text)
     opening_time = db.Column(db.String(10))
     closing_time = db.Column(db.String(10))
     menu_items = db.relationship('MenuItem', backref='vendor', lazy=True)
