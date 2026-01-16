@@ -32,7 +32,11 @@
             <div class="order-body">
                 <div class="customer-main-info">
                     <span class="cust-details"><strong>{{ order.customer_name }}</strong> | {{ order.customer_phone }}</span>
-                    <p class="items-summary">{{ order.items }}</p>
+                    <p class="items-summary">
+                        {% for item in order.get_items() %}
+                            {{ item.name }} x{{ item.qty }}{% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    </p>
                     <p class="total-row">Total: <strong>₹{{ order.total }}</strong></p>
                 </div>
 
