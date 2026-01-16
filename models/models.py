@@ -15,6 +15,8 @@ class Customer(db.Model):
     city = db.Column(db.String(100))
     state = db.Column(db.String(100))
     pincode = db.Column(db.String(10))
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
     orders = db.relationship('Order', backref='customer', lazy=True)
 
     def set_password(self, password):
@@ -47,6 +49,8 @@ class Vendor(db.Model):
     other_amenities = db.Column(db.Text)
     opening_time = db.Column(db.String(10))
     closing_time = db.Column(db.String(10))
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
     menu_items = db.relationship('MenuItem', backref='vendor', lazy=True)
     orders = db.relationship('Order', backref='vendor', lazy=True)
 

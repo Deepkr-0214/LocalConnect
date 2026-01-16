@@ -16,20 +16,111 @@ class FoodRestaurantPage {
             'Restaurant': 'restaurant',
             'Dhaba': 'restaurant'
         };
-        
-        return vendorsFromServer.map(v => ({
+
+        // Initialize vendors with "Getting location..." message
+        const vendors = vendorsFromServer.map(v => ({
             id: v.id,
             name: v.name,
             category: categoryMap[v.category] || 'shop',
             rating: 4.5,
             reviews: Math.floor(Math.random() * 1000) + 100,
-            distance: (Math.random() * 3 + 0.5).toFixed(1) + ' km',
+            distance: 'Getting location...',
             image: v.shop_image || '🏪',
             cuisine: v.category,
             priceRange: `₹${v.min_price}-${v.max_price}`,
             deliveryTime: '15-25 min',
-            isOpen: v.is_open
+            isOpen: v.is_open,
+            latitude: v.latitude,
+            longitude: v.longitude
         }));
+
+        // Function to calculate and display distances
+        const calculateDistances = (userLat, userLon) => {
+            console.log('User location:', userLat, userLon);
+            vendors.forEach(vendor => {
+                console.log(`Vendor ${vendor.name}:`, vendor.latitude, vendor.longitude);
+                if (vendor.latitude && vendor.longitude) {
+                    const distance = this.calculateDistance(
+                        userLat, userLon,
+                        vendor.latitude, vendor.longitude
+                    );
+                    vendor.distance = distance.toFixed(1) + ' km';
+                    console.log(`Distance to ${vendor.name}: ${vendor.distance}`);
+                } else {
+                    vendor.distance = 'N/A';
+                    console.log(`${vendor.name} has no coordinates`);
+                }
+            });
+
+            // Sort by distance (closest first)
+            vendors.sort((a, b) => {
+                const distA = parseFloat(a.distance) || 999;
+                const distB = parseFloat(b.distance) || 999;
+                return distA - distB;
+            });
+
+            this.vendors = vendors;
+            this.filteredVendors = [...this.vendors];
+            this.renderVendors();
+        };
+
+        // Check if we have stored customer coordinates
+        if (customerStoredLat && customerStoredLon) {
+            console.log('Using stored customer location');
+            calculateDistances(customerStoredLat, customerStoredLon);
+        }
+        
+        // Always try to get live browser location for real-time distance
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    console.log('Using live browser location');
+                    const userLat = position.coords.latitude;
+                    const userLon = position.coords.longitude;
+                    calculateDistances(userLat, userLon);
+                },
+                (error) => {
+                    console.warn('Geolocation error:', error);
+                    if (!customerStoredLat && !customerStoredLon) {
+                        vendors.forEach(vendor => {
+                            vendor.distance = 'Location disabled';
+                        });
+                        this.vendors = vendors;
+                        this.filteredVendors = [...this.vendors];
+                        this.renderVendors();
+                    }
+                }
+            );
+        } else if (!customerStoredLat && !customerStoredLon) {
+            vendors.forEach(vendor => {
+                vendor.distance = 'Location unavailable';
+            });
+            this.vendors = vendors;
+            this.filteredVendors = [...this.vendors];
+            this.renderVendors();
+        }
+
+        return vendors;
+    }
+
+    // Haversine formula to calculate distance between two coordinates
+    calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Radius of Earth in kilometers
+        const dLat = this.toRadians(lat2 - lat1);
+        const dLon = this.toRadians(lon2 - lon1);
+
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c;
+
+        return distance;
+    }
+
+    toRadians(degrees) {
+        return degrees * (Math.PI / 180);
     }
 
     init() {
@@ -47,20 +138,33 @@ class FoodRestaurantPage {
         if (shopsList) shopsList.innerHTML = '';
         if (restaurantsList) restaurantsList.innerHTML = '';
 
-        this.filteredVendors.forEach(vendor => {
-            const vendorCard = this.createVendorCard(vendor);
-            
-            switch(vendor.category) {
-                case 'street':
-                    if (streetList) streetList.appendChild(vendorCard);
-                    break;
-                case 'shop':
-                    if (shopsList) shopsList.appendChild(vendorCard);
-                    break;
-                case 'restaurant':
-                    if (restaurantsList) restaurantsList.appendChild(vendorCard);
-                    break;
-            }
+        // Separate vendors by category
+        const streetVendors = this.filteredVendors.filter(v => v.category === 'street');
+        const shopVendors = this.filteredVendors.filter(v => v.category === 'shop');
+        const restaurantVendors = this.filteredVendors.filter(v => v.category === 'restaurant');
+
+        // Sort each category by distance
+        const sortByDistance = (a, b) => {
+            const distA = parseFloat(a.distance) || 999;
+            const distB = parseFloat(b.distance) || 999;
+            return distA - distB;
+        };
+
+        streetVendors.sort(sortByDistance);
+        shopVendors.sort(sortByDistance);
+        restaurantVendors.sort(sortByDistance);
+
+        // Render sorted vendors
+        streetVendors.forEach(vendor => {
+            if (streetList) streetList.appendChild(this.createVendorCard(vendor));
+        });
+
+        shopVendors.forEach(vendor => {
+            if (shopsList) shopsList.appendChild(this.createVendorCard(vendor));
+        });
+
+        restaurantVendors.forEach(vendor => {
+            if (restaurantsList) restaurantsList.appendChild(this.createVendorCard(vendor));
         });
     }
 
@@ -71,7 +175,7 @@ class FoodRestaurantPage {
 
         const isEmoji = /\p{Emoji}/u.test(vendor.image) && vendor.image.length < 10;
         const isBase64 = vendor.image && vendor.image.startsWith('data:image');
-        
+
         let imageHtml;
         if (isEmoji) {
             imageHtml = `<div style="font-size:80px;display:flex;align-items:center;justify-content:center;height:100%;">${vendor.image}</div>`;
@@ -126,7 +230,7 @@ class FoodRestaurantPage {
                 btn.classList.add('active');
 
                 const target = btn.getAttribute('data-target');
-                
+
                 if (target === 'all') {
                     this.filteredVendors = [...this.vendors];
                     if (mainContainer) mainContainer.classList.remove('single-category');
@@ -155,7 +259,7 @@ class FoodRestaurantPage {
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
                 const term = e.target.value.toLowerCase();
-                this.filteredVendors = this.vendors.filter(vendor => 
+                this.filteredVendors = this.vendors.filter(vendor =>
                     vendor.name.toLowerCase().includes(term) ||
                     vendor.cuisine.toLowerCase().includes(term)
                 );

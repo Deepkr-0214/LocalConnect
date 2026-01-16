@@ -9,6 +9,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="/static/css/customer/base.css">
     <link rel="stylesheet" href="/static/css/customer/viewdet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 
@@ -71,17 +75,18 @@
                 <div class="title-row">
                     <h2>{{ vendor.business_name }}</h2>
                     <div class="badge-row">
-                        <span class="rating-box"><i class="fa-solid fa-star"></i> 4.5</span>
-                        <span class="reviews">(1,200 verified)</span>
-                        <span class="distance"><i class="fa-solid fa-location-dot"></i> 1.2 km away</span>
+                        <span class="rating-box"><i class="fa-solid fa-star"></i> <span id="vendor-rating">4.5</span></span>
+                        <span class="reviews">(<span id="review-count">0</span> verified)</span>
+                        <span class="distance"><i class="fa-solid fa-location-dot"></i> <span id="vendor-distance">Calculating...</span></span>
                         <span class="type-badge">{{ vendor.business_category }}</span>
                     </div>
                 </div>
                 <div class="info-row">
-                    <span class="status-green"><i class="fa-solid fa-circle-check"></i> Open Now</span>
-                    <span><i class="fa-solid fa-bag-shopping"></i> Takeaway</span>
-                    <span><i class="fa-solid fa-indian-rupee-sign"></i> 100—300</span>
-                    <span class="map-link"><i class="fa-solid fa-map-location-dot"></i> View on Map</span>
+                    <span class="{{ 'status-green' if vendor.is_open else 'status-red' }}"><i class="fa-solid fa-circle-{{ 'check' if vendor.is_open else 'xmark' }}"></i> {{ 'Open Now' if vendor.is_open else 'Closed' }}</span>
+                    {% if vendor.takeaway %}<span><i class="fa-solid fa-bag-shopping"></i> Takeaway</span>{% endif %}
+                    {% if vendor.home_delivery %}<span><i class="fa-solid fa-motorcycle"></i> Delivery</span>{% endif %}
+                    <span><i class="fa-solid fa-indian-rupee-sign"></i> <span id="price-range">Loading...</span></span>
+                    <span class="map-link" onclick="showMapModal()"><i class="fa-solid fa-map-location-dot"></i> View on Map</span>
                 </div>
             </div>
         </section>
@@ -104,20 +109,6 @@
             <section id="about-section" class="tab-content">
                 <div class="about-container">
                     <div class="about-main-card">
-<<<<<<< HEAD
-                        <div class="brand-badge">Since 1998</div>
-                        <h3>Our Flavorful Journey</h3>
-                        <p>Serving Delhi's most authentic street flavors for over two decades. We use 100% RO-purified
-                            water and hand-picked spices to ensure every bite is safe and delicious.</p>
-
-                        <div class="amenities-grid">
-                            <div class="amenity-item"><i class="fa-solid fa-leaf"></i> <span>Pure Veg</span></div>
-                            <div class="amenity-item"><i class="fa-solid fa-wind"></i> <span>Outdoor Seating</span>
-                            </div>
-                            <div class="amenity-item"><i class="fa-solid fa-truck-ramp-box"></i> <span>Home
-                                    Delivery</span></div>
-                            <div class="amenity-item"><i class="fa-solid fa-wifi"></i> <span>Free Wi-Fi</span></div>
-=======
                         <!-- Badges Section -->
                         <div style="display:flex;gap:12px;margin-bottom:25px;flex-wrap:wrap;">
                             {% if vendor.category_type %}
@@ -130,7 +121,6 @@
                                 <i class="fa-solid fa-leaf" style="margin-right:8px;"></i>{{ vendor.veg_nonveg }}
                             </span>
                             {% endif %}
->>>>>>> d06d1e7ad32b5bcd2f751bbc80992f8a7118bb1a
                         </div>
                         
                         <!-- About Section -->
@@ -210,20 +200,6 @@
                         </div>
                         {% endif %}
 
-<<<<<<< HEAD
-                        <div class="contact-strip">
-                            <div class="contact-info">
-                                <h4>Timings</h4>
-                                <p>10:30 AM - 11:00 PM</p>
-                            </div>
-                            <div class="contact-info">
-                                <h4>Contact</h4>
-                                <p>+91 98765 43210</p>
-                            </div>
-                            <div class="contact-info">
-                                <h4>Address</h4>
-                                <p>Sector 15, Near Central Mall</p>
-=======
                         <!-- Contact Information -->
                         <div>
                             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;">
@@ -247,7 +223,6 @@
                                     </h5>
                                     <p style="margin:0;color:#2c3e50;font-weight:600;font-size:1.05rem;">{{ vendor.business_address }}</p>
                                 </div>
->>>>>>> d06d1e7ad32b5bcd2f751bbc80992f8a7118bb1a
                             </div>
                         </div>
                     </div>
@@ -320,6 +295,19 @@
         </svg>
     </div>
 
+    <!-- Map Modal -->
+    <div id="map-modal" class="cart-modal">
+        <div class="cart-content" style="max-width:900px;">
+            <div class="cart-header">
+                <h2>Location & Directions</h2>
+                <button class="close-cart" onclick="closeMapModal()">&times;</button>
+            </div>
+            <div style="padding:20px;">
+                <div id="map" style="width:100%;height:500px;border-radius:12px;"></div>
+            </div>
+        </div>
+    </div>
+
     <script src="/static/js/customer/base.js"></script>
     <script>
         const userId = '{{ user_id if user_id else "" }}';
@@ -349,8 +337,194 @@
                     available: item.is_available,
                     image_file: item.image_file
                 }));
+                
+                // Calculate price range
+                if (menuItems.length > 0) {
+                    const prices = menuItems.map(i => i.price);
+                    const minPrice = Math.min(...prices);
+                    const maxPrice = Math.max(...prices);
+                    document.getElementById('price-range').textContent = `${minPrice}—${maxPrice}`;
+                } else {
+                    document.getElementById('price-range').textContent = 'N/A';
+                }
+                
                 renderMenuCards();
             });
+
+        // Calculate distance if vendor has coordinates
+        const vendorLat = {{ vendor.latitude if vendor.latitude else 'null' }};
+        const vendorLon = {{ vendor.longitude if vendor.longitude else 'null' }};
+        
+        if (vendorLat && vendorLon && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const distance = calculateDistance(
+                        position.coords.latitude,
+                        position.coords.longitude,
+                        vendorLat,
+                        vendorLon
+                    );
+                    document.getElementById('vendor-distance').textContent = distance.toFixed(1) + ' km away';
+                },
+                () => {
+                    document.getElementById('vendor-distance').textContent = 'Location unavailable';
+                }
+            );
+        } else {
+            document.getElementById('vendor-distance').textContent = 'N/A';
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function openGoogleMaps() {
+            const vendorLat = {{ vendor.latitude if vendor.latitude else 'null' }};
+            const vendorLon = {{ vendor.longitude if vendor.longitude else 'null' }};
+            
+            if (!vendorLat || !vendorLon) {
+                alert('Location not available for this vendor.');
+                return;
+            }
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLat = position.coords.latitude;
+                        const userLon = position.coords.longitude;
+                        const url = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLon}&destination=${vendorLat},${vendorLon}&travelmode=driving`;
+                        window.open(url, '_blank');
+                    },
+                    () => {
+                        const url = `https://www.google.com/maps/search/?api=1&query=${vendorLat},${vendorLon}`;
+                        window.open(url, '_blank');
+                    }
+                );
+            } else {
+                const url = `https://www.google.com/maps/search/?api=1&query=${vendorLat},${vendorLon}`;
+                window.open(url, '_blank');
+            }
+        }
+
+        let mapInstance = null;
+        let routingControl = null;
+
+        function showMapModal() {
+            const vendorLat = {{ vendor.latitude if vendor.latitude else 'null' }};
+            const vendorLon = {{ vendor.longitude if vendor.longitude else 'null' }};
+            
+            if (!vendorLat || !vendorLon) {
+                alert('Location not available for this vendor.');
+                return;
+            }
+            
+            document.getElementById('map-modal').classList.add('active');
+            
+            setTimeout(() => {
+                if (!mapInstance) {
+                    mapInstance = L.map('map').setView([vendorLat, vendorLon], 13);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(mapInstance);
+                }
+                
+                if (routingControl) {
+                    mapInstance.removeControl(routingControl);
+                }
+                
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const userLat = position.coords.latitude;
+                            const userLon = position.coords.longitude;
+                            
+                            routingControl = L.Routing.control({
+                                waypoints: [
+                                    L.latLng(userLat, userLon),
+                                    L.latLng(vendorLat, vendorLon)
+                                ],
+                                routeWhileDragging: false,
+                                show: false,
+                                addWaypoints: false,
+                                lineOptions: {
+                                    styles: [{ color: '#27ae60', weight: 5 }]
+                                },
+                                createMarker: function(i, wp) {
+                                    return L.marker(wp.latLng, {
+                                        icon: L.icon({
+                                            iconUrl: i === 0 ? 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png' : 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                                            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                                            iconSize: [25, 41],
+                                            iconAnchor: [12, 41],
+                                            popupAnchor: [1, -34],
+                                            shadowSize: [41, 41]
+                                        })
+                                    }).bindPopup(i === 0 ? '<b>Your Location</b>' : '<b>{{ vendor.business_name }}</b><br>{{ vendor.business_address }}');
+                                }
+                            }).addTo(mapInstance);
+                            
+                            routingControl.on('routesfound', function(e) {
+                                const route = e.routes[0];
+                                const distance = (route.summary.totalDistance / 1000).toFixed(1);
+                                const time = Math.round(route.summary.totalTime / 60);
+                                L.popup()
+                                    .setLatLng([vendorLat, vendorLon])
+                                    .setContent(`<b>{{ vendor.business_name }}</b><br>Distance: ${distance} km<br>Time: ${time} min`)
+                                    .openOn(mapInstance);
+                            });
+                        },
+                        () => {
+                            L.marker([vendorLat, vendorLon]).addTo(mapInstance)
+                                .bindPopup(`<b>{{ vendor.business_name }}</b><br>{{ vendor.business_address }}`).openPopup();
+                            mapInstance.setView([vendorLat, vendorLon], 15);
+                        }
+                    );
+                } else {
+                    L.marker([vendorLat, vendorLon]).addTo(mapInstance)
+                        .bindPopup(`<b>{{ vendor.business_name }}</b><br>{{ vendor.business_address }}`).openPopup();
+                    mapInstance.setView([vendorLat, vendorLon], 15);
+                }
+            }, 100);
+        }
+
+        function closeMapModal() {
+            document.getElementById('map-modal').classList.remove('active');
+        }
+
+        function openGoogleMaps() {
+            const vendorLat = {{ vendor.latitude if vendor.latitude else 'null' }};
+            const vendorLon = {{ vendor.longitude if vendor.longitude else 'null' }};
+            
+            if (!vendorLat || !vendorLon) {
+                alert('Location not available for this vendor.');
+                return;
+            }
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLat = position.coords.latitude;
+                        const userLon = position.coords.longitude;
+                        const mapUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLon}&destination=${vendorLat},${vendorLon}&travelmode=driving`;
+                        window.open(mapUrl, '_blank');
+                    },
+                    () => {
+                        const mapUrl = `https://www.google.com/maps/search/?api=1&query=${vendorLat},${vendorLon}`;
+                        window.open(mapUrl, '_blank');
+                    }
+                );
+            } else {
+                const mapUrl = `https://www.google.com/maps/search/?api=1&query=${vendorLat},${vendorLon}`;
+                window.open(mapUrl, '_blank');
+            }
+        }
 
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
@@ -370,18 +544,21 @@
         });
 
         function renderMenuCards() {
+            const isOpen = {{ 'true' if vendor.is_open else 'false' }};
             const menuGrid = document.getElementById('menu-grid');
             menuGrid.innerHTML = menuItems.map(item => {
                 const imageUrl = item.image_file && item.image_file !== 'default.jpg'
                     ? `/static/images/food/${item.image_file}`
                     : 'https://via.placeholder.com/400x300?text=No+Image';
                 return `
-                <div class="menu-card" style="background:white;border-radius:15px;padding:15px;border:1px solid #eee;display:flex;flex-direction:column;box-shadow:0 4px 15px rgba(0,0,0,0.04);${!item.available ? 'opacity:0.6;' : ''}">
+                <div class="menu-card" style="background:white;border-radius:15px;padding:15px;border:1px solid #eee;display:flex;flex-direction:column;box-shadow:0 4px 15px rgba(0,0,0,0.04);${!item.available || !isOpen ? 'opacity:0.6;' : ''}">
                     <img src="${imageUrl}" alt="${item.name}" class="item-img" style="width:100%;height:180px;object-fit:cover;border-radius:10px;margin-bottom:15px;" onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'">
                     <h4 style="margin:0 0 8px 0;">${item.name}</h4>
                     <p style="margin:0 0 10px 0;color:#7f8c8d;font-size:14px;">${item.sub_name || ''}</p>
                     <div class="action-row" style="display:flex;justify-content:space-between;align-items:center;margin-top:auto;">
-                        ${!item.available ?
+                        ${!isOpen ?
+                        '<span style="font-weight:700;color:#e74c3c;font-size:14px;">Shop Closed</span>' :
+                        !item.available ?
                         '<span style="font-weight:700;color:#e74c3c;font-size:14px;">Not Available</span>' :
                         item.qty > 0 ?
                             `<span style="font-weight:700;color:#27ae60;font-size:18px;">₹${item.price}</span><div style="display:flex;align-items:center;background:#27ae60;color:white;border-radius:8px;padding:4px 8px;gap:10px;"><button onclick="updateQty(${item.id}, -1)" style="background:none;border:none;color:white;cursor:pointer;font-size:16px;">-</button><span style="font-weight:700;">${item.qty}</span><button onclick="updateQty(${item.id}, 1)" style="background:none;border:none;color:white;cursor:pointer;font-size:16px;">+</button></div>` :
@@ -393,6 +570,11 @@
         }
 
         function addToCart(itemId) {
+            const isOpen = {{ 'true' if vendor.is_open else 'false' }};
+            if (!isOpen) {
+                alert('Sorry, this shop is currently closed. You cannot place orders at this time.');
+                return;
+            }
             const item = menuItems.find(i => i.id === itemId);
             if (!item.available) {
                 alert('Sorry, this item is currently not available.');
@@ -602,12 +784,25 @@
 
         document.addEventListener('click', (e) => {
             if (e.target.id === 'cart-modal') closeCart();
+            if (e.target.id === 'map-modal') closeMapModal();
         });
 
         // Load user reviews from database orders
         function loadUserReviews() {
             // Reviews will be loaded from database via orders page
         }
+
+        // Load user reviews from database orders
+        fetch(`/api/vendor/${vendorId}/reviews`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('vendor-rating').textContent = data.avg_rating || '4.5';
+                document.getElementById('review-count').textContent = data.review_count || '0';
+            })
+            .catch(() => {
+                document.getElementById('vendor-rating').textContent = '4.5';
+                document.getElementById('review-count').textContent = '0';
+            });
 
         loadUserReviews();
     </script>

@@ -100,6 +100,12 @@ def customer_dashboard():
 def food_restaurants():
     from sqlalchemy import func
     user_id = session.get('user_id')
+    
+    # Get customer coordinates if available
+    customer = Customer.query.get(user_id)
+    customer_lat = customer.latitude if customer and hasattr(customer, 'latitude') else None
+    customer_lon = customer.longitude if customer and hasattr(customer, 'longitude') else None
+    
     vendors = Vendor.query.all()
     vendors_data = []
     
@@ -122,10 +128,17 @@ def food_restaurants():
             'address': v.business_address,
             'phone': v.phone,
             'min_price': min_price,
-            'max_price': max_price
+            'max_price': max_price,
+            'latitude': v.latitude if hasattr(v, 'latitude') else None,
+            'longitude': v.longitude if hasattr(v, 'longitude') else None
         })
     
-    return render_template('customer/food&rest.html', user_name=session.get('user_name'), user_id=user_id, vendors=vendors_data)
+    return render_template('customer/food&rest.html', 
+                         user_name=session.get('user_name'), 
+                         user_id=user_id, 
+                         vendors=vendors_data,
+                         customer_lat=customer_lat,
+                         customer_lon=customer_lon)
 
 @app.route('/customer/orders')
 @customer_required
@@ -172,6 +185,19 @@ def get_vendor_menu(vendor_id):
         'is_available': item.is_available,
         'image_file': item.image_file
     } for item in items])
+
+@app.route('/api/vendor/<int:vendor_id>/reviews')
+def get_vendor_reviews(vendor_id):
+    from sqlalchemy import func
+    rating_data = db.session.query(
+        func.avg(Order.review_rating).label('avg_rating'),
+        func.count(Order.review_rating).label('review_count')
+    ).filter(Order.vendor_id==vendor_id, Order.review_rating!=None).first()
+    
+    return jsonify({
+        'avg_rating': round(rating_data.avg_rating, 1) if rating_data.avg_rating else 4.5,
+        'review_count': rating_data.review_count if rating_data.review_count else 0
+    })
 
 @app.route('/customer/signup', methods=['GET', 'POST'])
 def customer_signup():
@@ -351,10 +377,25 @@ def update_profile():
     data = request.json
     customer = Customer.query.get(session['user_id'])
     if customer:
-        customer.address = data.get('address')
-        customer.city = data.get('city')
-        customer.state = data.get('state')
-        customer.pincode = data.get('pincode')
+        address = data.get('address')
+        city = data.get('city')
+        state = data.get('state')
+        pincode = data.get('pincode')
+        
+        customer.address = address
+        customer.city = city
+        customer.state = state
+        customer.pincode = pincode
+        
+        # Geocode the full address to get coordinates
+        if address:
+            from utils.geocoding import geocode_address
+            full_address = f"{address}, {city}, {state}, {pincode}".strip(', ')
+            latitude, longitude = geocode_address(full_address)
+            if latitude and longitude:
+                customer.latitude = latitude
+                customer.longitude = longitude
+        
         db.session.commit()
         return jsonify({'success': True})
     return jsonify({'error': 'Customer not found'}), 404
@@ -537,30 +578,30 @@ def vendor_earnings():
     
     # Total earnings
     total_earnings = db.session.query(func.sum(Order.total)).filter(
-        Order.vendor_id==vendor_id, Order.status=='Completed'
+        Order.vendor_id==vendor_id, Order.status!='Rejected'
     ).scalar() or 0
     
     # Today's earnings
     today = date.today()
     today_earnings = db.session.query(func.sum(Order.total)).filter(
-        Order.vendor_id==vendor_id, func.date(Order.created_at)==today, Order.status=='Completed'
+        Order.vendor_id==vendor_id, func.date(Order.created_at)==today, Order.status!='Rejected'
     ).scalar() or 0
     
     # Week earnings
     week_start = today - timedelta(days=today.weekday())
     week_earnings = db.session.query(func.sum(Order.total)).filter(
-        Order.vendor_id==vendor_id, func.date(Order.created_at)>=week_start, Order.status=='Completed'
+        Order.vendor_id==vendor_id, func.date(Order.created_at)>=week_start, Order.status!='Rejected'
     ).scalar() or 0
     
     # Month earnings
     month_start = today.replace(day=1)
     month_earnings = db.session.query(func.sum(Order.total)).filter(
-        Order.vendor_id==vendor_id, func.date(Order.created_at)>=month_start, Order.status=='Completed'
+        Order.vendor_id==vendor_id, func.date(Order.created_at)>=month_start, Order.status!='Rejected'
     ).scalar() or 0
     
     # Stats
-    total_orders = Order.query.filter_by(vendor_id=vendor_id, status='Completed').count()
-    completed_orders = total_orders
+    total_orders = Order.query.filter_by(vendor_id=vendor_id).filter(Order.status!='Rejected').count()
+    completed_orders = Order.query.filter_by(vendor_id=vendor_id, status='Completed').count()
     all_orders = Order.query.filter_by(vendor_id=vendor_id).count()
     completion_rate = (completed_orders / all_orders * 100) if all_orders > 0 else 0
     avg_order_value = (total_earnings / total_orders) if total_orders > 0 else 0
@@ -573,12 +614,12 @@ def vendor_earnings():
         day = today - timedelta(days=i)
         chart_labels.append(day.strftime('%d %b'))
         day_earnings = db.session.query(func.sum(Order.total)).filter(
-            Order.vendor_id==vendor_id, func.date(Order.created_at)==day, Order.status=='Completed'
+            Order.vendor_id==vendor_id, func.date(Order.created_at)==day, Order.status!='Rejected'
         ).scalar() or 0
         chart_values.append(float(day_earnings))
     
     # Recent orders
-    earnings_history = Order.query.filter_by(vendor_id=vendor_id, status='Completed').order_by(Order.created_at.desc()).limit(10).all()
+    earnings_history = Order.query.filter_by(vendor_id=vendor_id).filter(Order.status!='Rejected').order_by(Order.created_at.desc()).limit(10).all()
     
     return render_template('vendor/earnings.html',
                          total_earnings=total_earnings,
@@ -658,6 +699,14 @@ def vendor_signup():
         new_vendor = Vendor(business_name=business_name, email=email, business_category=business_category,
                            business_address=business_address, phone=phone)
         new_vendor.set_password(password)
+        
+        # Geocode the business address to get coordinates
+        from utils.geocoding import geocode_address
+        latitude, longitude = geocode_address(business_address)
+        if latitude and longitude:
+            new_vendor.latitude = latitude
+            new_vendor.longitude = longitude
+        
         db.session.add(new_vendor)
         db.session.commit()
 
