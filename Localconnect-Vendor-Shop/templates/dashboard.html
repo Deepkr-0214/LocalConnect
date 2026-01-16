@@ -1,0 +1,451 @@
+{% extends "base.html" %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/menu.css') }}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/menu.js') }}"></script>
+<script>
+function toggleDashboardStatus(checkbox) {
+    const headerStatusText = document.getElementById('statusText');
+    const headerToggle = document.getElementById('header_shop_status');
+    const dashboardWrapper = document.querySelector('.dashboard-wrapper');
+    const isOpen = checkbox.checked;
+    
+    // Update header toggle and text if they exist
+    if (headerStatusText) headerStatusText.textContent = isOpen ? 'Open' : 'Closed';
+    if (headerToggle) headerToggle.checked = isOpen;
+    
+    // Update dashboard wrapper status
+    if (dashboardWrapper) {
+        dashboardWrapper.setAttribute('data-status', isOpen ? 'open' : 'closed');
+    }
+    
+    // Send AJAX request
+    fetch('/toggle_shop_status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ is_open: isOpen })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            // Revert if failed
+            checkbox.checked = !isOpen;
+            if (headerStatusText) headerStatusText.textContent = !isOpen ? 'Open' : 'Closed';
+            if (headerToggle) headerToggle.checked = !isOpen;
+            if (dashboardWrapper) {
+                dashboardWrapper.setAttribute('data-status', !isOpen ? 'open' : 'closed');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Revert if failed
+        checkbox.checked = !isOpen;
+        if (headerStatusText) headerStatusText.textContent = !isOpen ? 'Open' : 'Closed';
+        if (headerToggle) headerToggle.checked = !isOpen;
+        if (dashboardWrapper) {
+            dashboardWrapper.setAttribute('data-status', !isOpen ? 'open' : 'closed');
+        }
+    });
+}
+
+function updateOrderStatus(orderId, status) {
+    const statusBadge = document.getElementById(`status-${orderId}`);
+    const actionsDiv = document.getElementById(`actions-${orderId}`);
+    
+    if (statusBadge && actionsDiv) {
+        // Update UI immediately for smooth experience
+        statusBadge.textContent = status;
+        statusBadge.className = `status-badge-compact status-${status.toLowerCase()}`;
+        
+        // Hide buttons immediately
+        actionsDiv.style.opacity = '0';
+        setTimeout(() => {
+            actionsDiv.innerHTML = '';
+            actionsDiv.style.opacity = '1';
+        }, 200);
+        
+        // Add smooth transition effect to badge
+        statusBadge.style.transform = 'scale(1.1)';
+        setTimeout(() => {
+            statusBadge.style.transform = 'scale(1)';
+        }, 200);
+        
+        // Update pending orders count
+        updatePendingCount();
+    }
+    
+    // Send AJAX request in background (optional - for real backend)
+    fetch('/update_order/' + orderId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+            status: status
+        })
+    })
+    .catch(error => {
+        console.log('Backend not available - demo mode');
+    });
+}
+
+function updatePendingCount() {
+    // Update the pending orders count in the stats card
+    const pendingCards = document.querySelectorAll('.order-action-card').length;
+    const pendingCountElement = document.querySelector('.orange-bg').parentElement.querySelector('h3');
+    if (pendingCountElement) {
+        pendingCountElement.textContent = Math.max(0, pendingCards - 1);
+    }
+}
+
+function toggleItemAvailability(itemId, isAvailable) {
+    fetch('/toggle_item/' + itemId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ is_available: isAvailable })
+    })
+    .then(response => {
+        if (!response.ok) {
+            // Revert toggle if request failed
+            const checkbox = document.querySelector(`input[onchange="toggleItemAvailability(${itemId}, this.checked)"]`);
+            checkbox.checked = !isAvailable;
+            alert('Failed to update item availability');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Revert toggle if request failed
+        const checkbox = document.querySelector(`input[onchange="toggleItemAvailability(${itemId}, this.checked)"]`);
+        checkbox.checked = !isAvailable;
+        alert('Failed to update item availability');
+    });
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper" data-status="{{ 'open' if vendor_profile and vendor_profile.is_open else 'closed' }}">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon-box green-bg">
+                <i class="fa-solid fa-bell-concierge"></i>
+            </div>
+            <div class="stat-info">
+                <p>Today's Orders</p>
+                <h3>{{ todays_orders }}</h3>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon-box blue-bg">
+                <i class="fa-solid fa-wallet"></i>
+            </div>
+            <div class="stat-info">
+                <p>Today's Earnings</p>
+                <h3>₹{{ "%.0f"|format(todays_earnings) }}</h3>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon-box star-bg">
+                <i class="fa-solid fa-star"></i>
+            </div>
+            <div class="stat-info">
+                <p>Rating</p>
+                <h3>{{ avg_rating }} <span class="star-mini">★</span></h3>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon-box orange-bg">
+                <i class="fa-solid fa-clock"></i>
+            </div>
+            <div class="stat-info">
+                <p>Pending Orders</p>
+                <h3>{{ pending_orders }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h3>Recent Orders</h3>
+            <a href="/orders" class="view-link">View All <i class="fa-solid fa-chevron-right"></i></a>
+        </div>
+        <div class="orders-grid">
+            {% for order in orders %}
+            <div class="order-card compact" data-order-id="{{ order.id }}">
+                <div class="order-header">
+                    <div class="order-id">#{{ order.id }}</div>
+                    <div class="order-time">{{ order.created_at.strftime('%H:%M') if order.created_at else 'Now' }}</div>
+                </div>
+                
+                <div class="order-content">
+                    <div class="order-items-compact">{{ order.items_summary }}</div>
+                    <div class="order-meta">
+                        <span class="order-type-compact {{ 'delivery' if order.order_type == 'Delivery' else 'takeaway' }}">
+                            <i class="fa-solid {{ 'fa-motorcycle' if order.order_type == 'Delivery' else 'fa-bag-shopping' }}"></i>
+                            {{ order.order_type }}
+                        </span>
+                        <span class="order-amount">₹{{ order.total_price }}</span>
+                    </div>
+                </div>
+                
+                <div class="order-status-section">
+                    <div class="status-badge-compact status-{{ (order.status or 'pending').lower() }}" id="status-{{ order.id }}">
+                        {{ order.status or 'Pending' }}
+                    </div>
+                    
+                    <div class="order-actions-compact" id="actions-{{ order.id }}">
+                        {% if not order.status or order.status == 'Pending' %}
+                        <button class="btn-action accept" onclick="updateOrderStatus({{ order.id }}, 'Accepted')">
+                            Accept
+                        </button>
+                        <button class="btn-action reject" onclick="updateOrderStatus({{ order.id }}, 'Rejected')">
+                            Reject
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- Sample Orders for Demo -->
+            <div class="order-card compact" data-order-id="1001">
+                <div class="order-header">
+                    <div class="order-id">#1001</div>
+                    <div class="order-time">12:30</div>
+                </div>
+                
+                <div class="order-content">
+                    <div class="order-items-compact">2x Margherita Pizza, 1x Garlic Bread, 1x Coke</div>
+                    <div class="order-meta">
+                        <span class="order-type-compact delivery">
+                            <i class="fa-solid fa-motorcycle"></i>
+                            Delivery
+                        </span>
+                        <span class="order-amount">₹450</span>
+                    </div>
+                </div>
+                
+                <div class="order-status-section">
+                    <div class="status-badge-compact status-pending" id="status-1001">
+                        Pending
+                    </div>
+                    
+                    <div class="order-actions-compact" id="actions-1001">
+                        <button class="btn-action accept" onclick="updateOrderStatus(1001, 'Accepted')">
+                            Accept
+                        </button>
+                        <button class="btn-action reject" onclick="updateOrderStatus(1001, 'Rejected')">
+                            Reject
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="order-card compact" data-order-id="1002">
+                <div class="order-header">
+                    <div class="order-id">#1002</div>
+                    <div class="order-time">12:15</div>
+                </div>
+                
+                <div class="order-content">
+                    <div class="order-items-compact">1x Chicken Biryani, 1x Raita</div>
+                    <div class="order-meta">
+                        <span class="order-type-compact takeaway">
+                            <i class="fa-solid fa-bag-shopping"></i>
+                            Takeaway
+                        </span>
+                        <span class="order-amount">₹280</span>
+                    </div>
+                </div>
+                
+                <div class="order-status-section">
+                    <div class="status-badge-compact status-accepted" id="status-1002">
+                        Accepted
+                    </div>
+                    
+                    <div class="order-actions-compact" id="actions-1002">
+                        <!-- No buttons for accepted orders -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="order-card compact" data-order-id="1003">
+                <div class="order-header">
+                    <div class="order-id">#1003</div>
+                    <div class="order-time">11:45</div>
+                </div>
+                
+                <div class="order-content">
+                    <div class="order-items-compact">3x Masala Dosa, 2x Filter Coffee</div>
+                    <div class="order-meta">
+                        <span class="order-type-compact delivery">
+                            <i class="fa-solid fa-motorcycle"></i>
+                            Delivery
+                        </span>
+                        <span class="order-amount">₹320</span>
+                    </div>
+                </div>
+                
+                <div class="order-status-section">
+                    <div class="status-badge-compact status-rejected" id="status-1003">
+                        Rejected
+                    </div>
+                    
+                    <div class="order-actions-compact" id="actions-1003">
+                        <!-- No buttons for rejected orders -->
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h3>Menu Management</h3>
+            <a href="/menu" class="view-link">View All <i class="fa-solid fa-chevron-right"></i></a>
+        </div>
+        <div class="menu-preview-card">
+            <div class="dashboard-table-wrapper">
+                <table class="dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Price</th>
+                            <th>Available</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in menu_items %}
+                        <tr>
+                            <td>{{ item.name }}</td>
+                            <td>₹{{ item.price }}</td>
+                            <td>
+                                <label class="switch">
+                                    <input type="checkbox" {{ 'checked' if item.is_available else '' }} onchange="toggleItemAvailability({{ item.id }}, this.checked)">
+                                    <span class="slider round"></span>
+                                </label>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn-edit" onclick="openEditModal({{ item.id }})" title="Edit Item">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button class="btn-delete" onclick="deleteItem({{ item.id }})" title="Delete Item">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: #666; padding: 20px;">
+                                No menu items found. <a href="/menu" style="color: var(--primary-green);">Add items</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Item Modal -->
+<div id="itemModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Add New Menu Item</h3>
+            <span class="close" onclick="closeModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="itemForm" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="itemName">Item Name *</label>
+                    <input type="text" id="itemName" name="name" placeholder="e.g., Paneer Tikka" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="itemDescription">Description</label>
+                    <input type="text" id="itemDescription" name="sub_name" placeholder="e.g., Spicy grilled paneer with herbs">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemCategory">Category *</label>
+                        <select id="itemCategory" name="category" required>
+                            <option value="">Select Category</option>
+                            <option value="Veg">Vegetarian</option>
+                            <option value="Non-Veg">Non-Vegetarian</option>
+                            <option value="Beverages">Beverages</option>
+                            <option value="Desserts">Desserts</option>
+                            <option value="Snacks">Snacks</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemPrice">Price (₹) *</label>
+                        <input type="number" id="itemPrice" name="price" placeholder="180" min="1" step="0.01" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="itemImage">Item Photo</label>
+                    <div class="file-input-container">
+                        <input type="file" id="itemImage" name="image" accept="image/*" class="file-input">
+                        <div class="file-input-display">
+                            <i class="fa-solid fa-camera"></i>
+                            <span class="file-text">Choose photo from device</span>
+                        </div>
+                        <div id="imagePreview" class="image-preview"></div>
+                    </div>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-save" id="saveBtn">
+                        <i class="fa-solid fa-plus"></i> Add Item
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="modal">
+    <div class="modal-content delete-modal">
+        <div class="modal-header">
+            <h3>Delete Menu Item</h3>
+            <span class="close" onclick="closeDeleteModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="delete-icon">
+                <i class="fa-solid fa-trash-can"></i>
+            </div>
+            <p>Are you sure you want to delete this menu item?</p>
+            <p class="delete-warning">This action cannot be undone.</p>
+            
+            <div class="modal-buttons">
+                <button type="button" class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+                <button type="button" class="btn-delete-confirm" id="confirmDeleteBtn">
+                    <i class="fa-solid fa-trash"></i> Delete Item
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends "vendor/base.html" %}
+
+{% block page_title %}Earnings{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/vendor/earnings.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="earnings-container">
+    <!-- Simple Earnings Overview Cards -->
+    <div class="earnings-overview">
+        <div class="overview-card total-earnings">
+            <div class="card-icon">
+                <i class="fa-solid fa-wallet"></i>
+            </div>
+            <div class="card-content">
+                <h3>₹{{ "{:,.2f}".format(total_earnings) }}</h3>
+                <p>Total Earnings</p>
+                <div class="card-trend positive">
+                    <i class="fa-solid fa-arrow-up"></i>
+                    <span>{{ total_orders }} orders</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="overview-card monthly-earnings">
+            <div class="card-icon">
+                <i class="fa-solid fa-calendar-month"></i>
+            </div>
+            <div class="card-content">
+                <h3>₹{{ "{:,.2f}".format(month_earnings) }}</h3>
+                <p>This Month</p>
+                <div class="card-trend positive">
+                    <i class="fa-solid fa-arrow-up"></i>
+                    <span>+{{ "{:.1f}".format(month_growth) }}%</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="overview-card weekly-earnings">
+            <div class="card-icon">
+                <i class="fa-solid fa-calendar-week"></i>
+            </div>
+            <div class="card-content">
+                <h3>₹{{ "{:,.2f}".format(week_earnings) }}</h3>
+                <p>This Week</p>
+                <div class="card-trend positive">
+                    <i class="fa-solid fa-arrow-up"></i>
+                    <span>+{{ "{:.1f}".format(week_growth) }}%</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="overview-card daily-earnings">
+            <div class="card-icon">
+                <i class="fa-solid fa-calendar-day"></i>
+            </div>
+            <div class="card-content">
+                <h3>₹{{ "{:,.2f}".format(today_earnings) }}</h3>
+                <p>Today</p>
+                <div class="card-info">
+                    <span class="pending-orders">{{ pending_orders }} pending orders</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Stats Row -->
+    <div class="quick-stats">
+        <div class="stat-item">
+            <div class="stat-value">₹{{ "{:,.0f}".format(avg_order_value) }}</div>
+            <div class="stat-label">Avg Order Value</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ completed_orders }}</div>
+            <div class="stat-label">Completed Orders</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ "{:.1f}".format(completion_rate) }}%</div>
+            <div class="stat-label">Completion Rate</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ top_category }}</div>
+            <div class="stat-label">Top Category</div>
+        </div>
+    </div>
+    
+    <!-- Simple Chart -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <h3>Earnings Trend (Last 7 Days)</h3>
+        </div>
+        <div class="chart-container">
+            <canvas id="earningsChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Recent Orders Table -->
+    <div class="history-card">
+        <div class="history-header">
+            <h3>Recent Orders</h3>
+            <a href="/vendor/orders" class="view-all-link">
+                <i class="fa-solid fa-arrow-right"></i> View All Orders
+            </a>
+        </div>
+        
+        <div class="table-container">
+            <table class="earnings-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in earnings_history[:10] %}
+                    <tr>
+                        <td>#{{ order.id }}</td>
+                        <td>{{ order.customer_name }}</td>
+                        <td>{{ order.created_at.strftime('%d %b %Y') }}</td>
+                        <td>₹{{ order.total }}</td>
+                        <td>
+                            <span class="status-badge {{ order.status.lower() }}">{{ order.status }}</span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <i class="fa-solid fa-receipt"></i>
+                            <p>No orders found.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const chartData = {
+        labels: {{ chart_labels|tojson }},
+        values: {{ chart_values|tojson }}
+    };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const ctx = document.getElementById('earningsChart');
+    if (ctx && chartData.labels && chartData.values) {
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Earnings (₹)',
+                    data: chartData.values,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₹' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

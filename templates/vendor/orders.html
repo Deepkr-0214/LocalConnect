@@ -1,0 +1,130 @@
+{% extends "vendor/base.html" %}
+
+{% block page_title %}Orders{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/vendor/orders.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="orders-container">
+    <div class="status-tabs">
+        <button class="tab-btn active">All</button>
+        <button class="tab-btn">Pending</button>
+        <button class="tab-btn">Completed</button>
+        <button class="tab-btn">Rejected</button>
+    </div>
+
+    <div class="orders-list-section">
+        {% for order in orders %}
+        <div class="order-card" data-status="{{ order.status }}">
+            <div class="order-header-row">
+                <div class="header-left">
+                    <span class="order-number">Order #{{ order.id }}</span>
+                </div>
+                <div class="header-right">
+                    <span class="type-badge {{ order.delivery_type|lower }}">
+                        {{ order.delivery_type|upper }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="order-body">
+                <div class="customer-main-info">
+                    <span class="cust-details"><strong>{{ order.customer_name }}</strong> | {{ order.customer_phone }}</span>
+                    <p class="items-summary">{{ order.items }}</p>
+                    <p class="total-row">Total: <strong>₹{{ order.total }}</strong></p>
+                </div>
+
+                <div class="order-footer-actions">
+                    <div class="suggestion-text-wrapper">
+                        {% if order.customer_suggestion %}
+                            <span class="note-label">Customer Note:</span>
+                            <span class="note-content">{{ order.customer_suggestion }}</span>
+                        {% else %}
+                            <span class="note-content muted">No special instructions provided.</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="action-buttons-group">
+                        {% if order.status == 'Pending' %}
+                        <button class="btn-green-action" onclick="updateStatus({{ order.id }}, 'Completed')">Accept</button>
+                        <button class="btn-red-action" onclick="openRejectModal({{ order.id }})">Reject</button>
+                        {% else %}
+                        <span class="status-badge-static {{ order.status.lower() }}">
+                            {{ order.status }}
+                        </span>
+                        {% endif %}
+                        
+                        <a href="tel:{{ order.customer_phone }}" class="btn-blue-call">
+                            <i class="fa-solid fa-phone"></i> Call
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="order-card empty-state">
+            <i class="fa-solid fa-inbox"></i>
+            <p>No orders found at the moment.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="rejectModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Reject Order</h3>
+            <span class="close" onclick="closeRejectModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p>Please provide a reason for rejecting this order:</p>
+            <form id="rejectForm" onsubmit="submitReject(event)">
+                <input type="hidden" id="rejectOrderId">
+                <textarea id="rejectionReason" placeholder="Enter rejection reason..." required></textarea>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="closeRejectModal()">Cancel</button>
+                    <button type="submit" class="btn-reject-confirm">Reject Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/vendor/orders.js') }}"></script>
+<script>
+function updateStatus(orderId, status) {
+    fetch(`/vendor/orders/${orderId}/status`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({status: status})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) location.reload();
+    });
+}
+
+function submitReject(event) {
+    event.preventDefault();
+    const orderId = document.getElementById('rejectOrderId').value;
+    const reason = document.getElementById('rejectionReason').value;
+    
+    fetch(`/vendor/orders/${orderId}/status`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({status: 'Rejected', rejection_reason: reason})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            closeRejectModal();
+            location.reload();
+        }
+    });
+}
+</script>
+{% endblock %}

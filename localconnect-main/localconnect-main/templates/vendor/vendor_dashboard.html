@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Dashboard - LocalConnect</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f5f7f8; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 20px; }
+        h1 { margin-bottom: 30px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .stat-card h3 { color: #7f8c8d; font-size: 14px; margin-bottom: 10px; }
+        .stat-card .value { font-size: 32px; font-weight: 700; color: #2c3e50; }
+        .recent-orders { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .recent-orders h2 { margin-bottom: 20px; }
+        .order-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .order-item:last-child { border-bottom: none; }
+        .order-info strong { display: block; margin-bottom: 5px; }
+        .order-info span { color: #7f8c8d; font-size: 14px; }
+        .status-badge { padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+        .status-badge.pending { background: #fff3cd; color: #856404; }
+        .status-badge.accepted { background: #d4edda; color: #155724; }
+        .status-badge.rejected { background: #f8d7da; color: #721c24; }
+        .nav-links { display: flex; gap: 15px; margin-bottom: 30px; }
+        .nav-links a { padding: 10px 20px; background: #27ae60; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; }
+        .nav-links a:hover { background: #229954; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Vendor Dashboard</h1>
+        
+        <div class="nav-links">
+            <a href="/vendor/orders"><i class="fa-solid fa-list"></i> All Orders</a>
+            <a href="/vendor/menu"><i class="fa-solid fa-utensils"></i> Menu</a>
+            <a href="/logout"><i class="fa-solid fa-sign-out"></i> Logout</a>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>TOTAL ORDERS</h3>
+                <div class="value">{{ orders|length }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>PENDING ORDERS</h3>
+                <div class="value">{{ orders|selectattr('status', 'equalto', 'Pending')|list|length }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>ACCEPTED ORDERS</h3>
+                <div class="value">{{ orders|selectattr('status', 'equalto', 'Accepted')|list|length }}</div>
+            </div>
+        </div>
+
+        <div class="recent-orders">
+            <h2>Recent Orders</h2>
+            {% for order in orders[:10] %}
+            <div class="order-item">
+                <div class="order-info">
+                    <strong>Order #{{ order.id }} - {{ order.customer_name or 'Customer' }}</strong>
+                    <span>{{ order.items_summary or order.get_items()|map(attribute='name')|join(', ') }} | ₹{{ order.total }}</span>
+                </div>
+                <span class="status-badge {{ order.status.lower() }}">{{ order.status }}</span>
+            </div>
+            {% else %}
+            <p style="color: #7f8c8d; text-align: center; padding: 20px;">No orders yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

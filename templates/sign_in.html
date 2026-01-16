@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | LocalConnect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/sign_in.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <div class="bg-grid"></div>
+
+    <div class="signin-container">
+        <div class="signin-card">
+            <header class="card-header">
+                <h1>Welcome to <span class="brand-gradient">LocalConnect</span></h1>
+                <p class="subtitle">Please enter your details to sign in</p>
+            </header>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'success' if category == 'success' else 'error' }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form class="signin-form" method="POST" action="{{ url_for('sign_in') }}">
+                <div class="role-selection">
+                    <span class="role-label">* Role</span>
+                    <div class="radio-group">
+                        <label class="radio-container">
+                            <input type="radio" name="role" value="customer" checked>
+                            <span class="checkmark"></span>
+                            Customer
+                        </label>
+                        <label class="radio-container">
+                            <input type="radio" name="role" value="vendor">
+                            <span class="checkmark"></span>
+                            Vendor
+                        </label>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">* Username</label>
+                    <input type="text" name="username" id="usernameField" placeholder="Email or Phone Number" required>
+                </div>
+
+                <div class="input-group">
+                    <div class="label-with-icon">
+                        <label class="input-label">* Password</label>
+                        <i data-lucide="info" class="info-icon"></i>
+                    </div>
+                    <input type="password" name="password" placeholder="Password" id="passwordField" required>
+                </div>
+
+                <div class="form-options">
+                    <label class="show-password">
+                        <input type="checkbox" onclick="togglePassword()"> Show Password
+                    </label>
+                </div>
+
+                <div class="button-row">
+                    <button type="submit" class="btn-login">Login</button>
+                    <button type="button" class="btn-forgot">Forgot Password</button>
+                </div>
+            </form>
+
+            <footer class="card-footer">
+                <p>New to LocalConnect? <a href="/">Join us now</a></p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        function togglePassword() {
+            var x = document.getElementById("passwordField");
+            if (x.type === "password") { x.type = "text"; } 
+            else { x.type = "password"; }
+        }
+        
+        // Update placeholder based on role selection
+        document.querySelectorAll('input[name="role"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const usernameField = document.getElementById('usernameField');
+                if (this.value === 'vendor') {
+                    usernameField.placeholder = 'Gmail (Email)';
+                } else {
+                    usernameField.placeholder = 'Email or Phone Number';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

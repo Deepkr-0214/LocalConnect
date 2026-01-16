@@ -1,0 +1,66 @@
+{% extends "customer/customer_base.html" %}
+
+{% block title %}Customer Dashboard | LocalConnect{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="/static/css/customer/styles.css">
+{% endblock %}
+
+{% block content %}
+<main class="dashboard-content">
+    <div class="welcome-section">
+        <h1>Welcome to LocalConnect</h1>
+        <p>Discover local businesses and services in your area</p>
+    </div>
+
+    <div class="categories-grid">
+        <div class="category-card" onclick="window.location.href='/customer/food-restaurants'">
+            <div class="category-icon">
+                <i class="fas fa-utensils"></i>
+            </div>
+            <h3>Food & Restaurants</h3>
+            <p>Discover local eateries, street food, and restaurants</p>
+        </div>
+
+        <div class="category-card">
+            <div class="category-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <h3>Grocery & Essentials</h3>
+            <p>Fresh groceries and daily essentials delivered</p>
+        </div>
+
+        <div class="category-card">
+            <div class="category-icon">
+                <i class="fas fa-laptop"></i>
+            </div>
+            <h3>Electronics</h3>
+            <p>Latest gadgets and electronic accessories</p>
+        </div>
+
+        <div class="category-card">
+            <div class="category-icon">
+                <i class="fas fa-pills"></i>
+            </div>
+            <h3>Medical & Health</h3>
+            <p>Pharmacies, clinics, and health services</p>
+        </div>
+
+        <div class="category-card">
+            <div class="category-icon">
+                <i class="fas fa-tools"></i>
+            </div>
+            <h3>Services</h3>
+            <p>Home services, repairs, and maintenance</p>
+        </div>
+
+        <div class="category-card">
+            <div class="category-icon">
+                <i class="fas fa-tshirt"></i>
+            </div>
+            <h3>Fashion & Lifestyle</h3>
+            <p>Clothing, accessories, and lifestyle products</p>
+        </div>
+    </div>
+</main>
+{% endblock %}

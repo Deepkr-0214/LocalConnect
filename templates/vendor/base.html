@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Localconnect Vendor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/vendor/base.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>Localconnect</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li class="{{ 'active' if request.path == '/vendor/dashboard' }}">
+                        <a href="/vendor/dashboard"><i class="fa-solid fa-desktop"></i> Dashboard</a>
+                    </li>
+                    <li class="{{ 'active' if request.path == '/vendor/orders' }}">
+                        <a href="/vendor/orders"><i class="fa-regular fa-file-lines"></i> Orders</a>
+                    </li>
+                    <li class="{{ 'active' if request.path == '/vendor/menu' }}">
+                        <a href="/vendor/menu"><i class="fa-solid fa-utensils"></i> Menu Management</a>
+                    </li>
+                    <li class="{{ 'active' if request.path == '/vendor/earnings' }}">
+                        <a href="/vendor/earnings"><i class="fa-solid fa-indian-rupee-sign"></i> Earnings</a>
+                    </li>
+                    <li class="{{ 'active' if request.path == '/vendor/reviews' }}">
+                        <a href="/vendor/reviews"><i class="fa-regular fa-star"></i> Reviews</a>
+                    </li>
+                    <li class="{{ 'active' if request.path == '/vendor/settings' }}">
+                        <a href="/vendor/settings"><i class="fa-solid fa-gear"></i> Settings</a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="hamburger-menu" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="page-title-section">
+                        <h2 id="page-title">{% block page_title %}{% endblock %}</h2>
+                        <div class="status-indicator {{ 'open' if vendor_profile and vendor_profile.is_open else 'closed' }}">
+                            <span class="status-dot"></span>
+                            <span class="status-text">{{ 'Open' if vendor_profile and vendor_profile.is_open else 'Closed' }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <div class="header-actions">
+                        <div class="notification-wrapper">
+                            <button class="notification-btn" onclick="toggleDropdown('notif-content')" aria-label="Notifications">
+                                <i class="fa-regular fa-bell"></i>
+                                {% if unread_count > 0 %}
+                                    <span class="notification-badge">{{ unread_count }}</span>
+                                {% endif %}
+                            </button>
+                            <div id="notif-content" class="dropdown-content notification-dropdown">
+                                <div class="dropdown-header">
+                                    <span>Notifications</span>
+                                    <span class="notification-count">{{ unread_count or 0 }}</span>
+                                </div>
+                                <div class="notification-list">
+                                    <div class="notif-item">
+                                        <i class="fa-solid fa-shopping-cart"></i>
+                                        <div class="notif-content">
+                                            <span class="notif-title">New Order Received</span>
+                                            <span class="notif-time">2 minutes ago</span>
+                                        </div>
+                                    </div>
+                                    <div class="notif-item">
+                                        <i class="fa-solid fa-star"></i>
+                                        <div class="notif-content">
+                                            <span class="notif-title">Customer Review</span>
+                                            <span class="notif-time">1 hour ago</span>
+                                        </div>
+                                    </div>
+                                    <div class="notif-item">
+                                        <i class="fa-solid fa-check-circle"></i>
+                                        <div class="notif-content">
+                                            <span class="notif-title">Order Completed</span>
+                                            <span class="notif-time">3 hours ago</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="notification-footer">
+                                    <a href="/notifications">View All Notifications</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="shop-status-toggle">
+                            <div class="toggle-switch premium">
+                                <input type="checkbox" id="header_shop_status" {{ 'checked' if vendor_profile and vendor_profile.is_open else '' }} onchange="toggleShopStatus(this)">
+                                <label for="header_shop_status" class="switch-label" aria-label="Toggle shop status">
+                                    <span class="switch-slider"></span>
+                                    <span class="switch-text">{{ 'Open' if vendor_profile and vendor_profile.is_open else 'Closed' }}</span>
+                                </label>
+                            </div>
+                        </div>
+            
+                        <div class="profile-section dropdown">
+                            <div class="profile-pill" onclick="toggleDropdown('profile-content')" aria-label="Profile menu">
+                                <div class="profile-avatar" id="headerShopImage" onclick="event.stopPropagation(); showShopImageModal();" style="cursor: pointer;" title="Click to change profile image">
+                                    {% if vendor_profile and vendor_profile.shop_image %}
+                                        {{ vendor_profile.shop_image }}
+                                    {% else %}
+                                        <i class="fa-solid fa-store"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="profile-info">
+                                    <span class="profile-name">
+                                        {% if vendor_profile and vendor_profile.business_name %}
+                                            {{ vendor_profile.business_name[:15] }}{% if vendor_profile.business_name|length > 15 %}...{% endif %}
+                                        {% else %}
+                                            Localconnect
+                                        {% endif %}
+                                    </span>
+                                    <span class="profile-role">Vendor</span>
+                                </div>
+                                <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
+                            </div>
+                            <div id="profile-content" class="dropdown-content profile-menu">
+                                <div class="profile-header">
+                                    <div class="profile-avatar large" id="dropdownShopImage" onclick="showShopImageModal()" style="cursor: pointer;" title="Click to change image">
+                                        {% if vendor_profile and vendor_profile.shop_image %}
+                                            {{ vendor_profile.shop_image }}
+                                        {% else %}
+                                            <i class="fa-solid fa-store"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="profile-details">
+                                        <span class="profile-name">
+                                            {% if vendor_profile and vendor_profile.business_name %}
+                                                {{ vendor_profile.business_name }}
+                                            {% else %}
+                                                Localconnect Shop
+                                            {% endif %}
+                                        </span>
+                                        <span class="profile-email">{{ vendor_profile.email if vendor_profile else 'vendor@localconnect.com' }}</span>
+                                    </div>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <a href="/vendor/settings" class="dropdown-item">
+                                    <i class="fa-solid fa-gear"></i>
+                                    <span>Settings</span>
+                                </a>
+                                <a href="/logout" class="dropdown-item logout">
+                                    <i class="fa-solid fa-right-from-bracket"></i>
+                                    <span>Logout</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="content">
+                {% block content %}{% endblock %}
+            </section>
+        </main>
+    </div>
+
+    <script>
+        function toggleDropdown(id) {
+            // Close all other dropdowns first
+            document.querySelectorAll('.dropdown-content').forEach(content => {
+                if (content.id !== id) {
+                    content.classList.remove('show');
+                }
+            });
+            
+            // Toggle the clicked dropdown
+            const dropdown = document.getElementById(id);
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+                console.log('Dropdown toggled:', id, dropdown.classList.contains('show'));
+            } else {
+                console.log('Dropdown not found:', id);
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('active');
+        }
+        
+        function toggleShopStatus(checkbox) {
+            const headerStatusText = document.getElementById('statusText');
+            const statusIndicator = document.querySelector('.status-indicator');
+            const dashboardWrapper = document.querySelector('.dashboard-wrapper');
+            const settingsToggle = document.getElementById('shop_status');
+            const isOpen = checkbox.checked;
+            
+            // Update status indicator
+            if (statusIndicator) {
+                statusIndicator.className = `status-indicator ${isOpen ? 'open' : 'closed'}`;
+                const statusText = statusIndicator.querySelector('.status-text');
+                if (statusText) statusText.textContent = isOpen ? 'Open' : 'Closed';
+            }
+            
+            // Update toggle text
+            const switchText = document.querySelector('.switch-text');
+            if (switchText) switchText.textContent = isOpen ? 'Open' : 'Closed';
+            
+            // Update dashboard wrapper status
+            if (dashboardWrapper) {
+                dashboardWrapper.setAttribute('data-status', isOpen ? 'open' : 'closed');
+            }
+            
+            // Sync settings page toggle
+            if (settingsToggle) settingsToggle.checked = isOpen;
+            
+            // Send AJAX request
+            fetch('/toggle_shop_status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ is_open: isOpen })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    // Revert if failed
+                    checkbox.checked = !isOpen;
+                    if (statusIndicator) {
+                        statusIndicator.className = `status-indicator ${!isOpen ? 'open' : 'closed'}`;
+                        const statusText = statusIndicator.querySelector('.status-text');
+                        if (statusText) statusText.textContent = !isOpen ? 'Open' : 'Closed';
+                    }
+                    if (switchText) switchText.textContent = !isOpen ? 'Open' : 'Closed';
+                    if (dashboardWrapper) {
+                        dashboardWrapper.setAttribute('data-status', !isOpen ? 'open' : 'closed');
+                    }
+                    if (settingsToggle) settingsToggle.checked = !isOpen;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Revert if failed
+                checkbox.checked = !isOpen;
+                if (statusIndicator) {
+                    statusIndicator.className = `status-indicator ${!isOpen ? 'open' : 'closed'}`;
+                    const statusText = statusIndicator.querySelector('.status-text');
+                    if (statusText) statusText.textContent = !isOpen ? 'Open' : 'Closed';
+                }
+                if (switchText) switchText.textContent = !isOpen ? 'Open' : 'Closed';
+                if (dashboardWrapper) {
+                    dashboardWrapper.setAttribute('data-status', !isOpen ? 'open' : 'closed');
+                }
+                if (settingsToggle) settingsToggle.checked = !isOpen;
+            });
+        }
+
+        // Load shop image, name, and email when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Don't load from localStorage - use server data only
+        });
+        
+        window.addEventListener('click', function(event) {
+            if (!event.target.closest('.profile-section') && !event.target.closest('.notification-wrapper')) {
+                document.querySelectorAll('.dropdown-content').forEach(content => {
+                    content.classList.remove('show');
+                });
+            }
+            // Close sidebar when clicking outside on mobile
+            if (!event.target.closest('.sidebar') && !event.target.closest('.hamburger-menu')) {
+                document.querySelector('.sidebar').classList.remove('active');
+            }
+        });
+        
+        // Shop image modal functions
+        function showShopImageModal() {
+            const modal = document.createElement('div');
+            modal.id = 'headerShopImageModal';
+            modal.className = 'modal';
+            modal.style.cssText = 'display:block;position:fixed;z-index:10000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.5);';
+            modal.innerHTML = `
+                <div style="background:white;margin:10% auto;padding:20px;border-radius:12px;width:90%;max-width:350px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                        <h3 style="margin:0;">Change Profile Image</h3>
+                        <span onclick="closeHeaderShopImageModal()" style="cursor:pointer;font-size:24px;">&times;</span>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
+                        <button onclick="uploadHeaderImage()" style="display:flex;align-items:center;gap:10px;padding:12px;background:#f0f0f0;border:none;border-radius:8px;cursor:pointer;font-size:14px;">
+                            <i class="fa-solid fa-upload"></i> Upload from Device
+                        </button>
+                        <button onclick="showHeaderEmojiPicker()" style="display:flex;align-items:center;gap:10px;padding:12px;background:#f0f0f0;border:none;border-radius:8px;cursor:pointer;font-size:14px;">
+                            <i class="fa-solid fa-smile"></i> Choose Avatar/Emoji
+                        </button>
+                    </div>
+                    <div id="headerEmojiGrid" style="display:none;">
+                        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding-top:12px;border-top:1px solid #e0e0e0;">
+                            <span class="emoji-option" onclick="selectHeaderEmoji('🏪')" style="font-size:2rem;cursor:pointer;text-align:center;padding:10px;border-radius:8px;transition:all 0.3s;">🏪</span>
+                            <span class="emoji-option" onclick="selectHeaderEmoji('🍕')" style="font-size:2rem;cursor:pointer;text-align:center;padding:10px;border-radius:8px;transition:all 0.3s;">🍕</span>
+                            <span class="emoji-option" onclick="selectHeaderEmoji('🍔')" style="font-size:2rem;cursor:pointer;text-align:center;padding:10px;border-radius:8px;transition:all 0.3s;">🍔</span>
+                            <span class="emoji-option" onclick="selectHeaderEmoji('🍜')" style="font-size:2rem;cursor:pointer;text-align:center;padding:10px;border-radius:8px;transition:all 0.3s;">🍜</span>
+                            <span class="emoji-option" onclick="selectHeaderEmoji('🥘')" style="font-size:2rem;cursor:pointer;text-align:center;padding:10px;border-radius:8px;transition:all 0.3s;">🥘</span>
+                            <span class="emoji-option" onclick="selectHeaderEmoji('🍛')" style="font-size:2rem;cursor:pointer;text-align:center;padding:10px;border-radius:8px;transition:all 0.3s;">🍛</span>
+                            <span class="emoji-option" onclick="selectHeaderEmoji('🥗')" style="font-size:2rem;cursor:pointer;text-align:center;padding:10px;border-radius:8px;transition:all 0.3s;">🥗</span>
+                            <span class="emoji-option" onclick="selectHeaderEmoji('☕')" style="font-size:2rem;cursor:pointer;text-align:center;padding:10px;border-radius:8px;transition:all 0.3s;">☕</span>
+                        </div>
+                    </div>
+                    <input type="file" id="headerImageUpload" accept="image/*" style="display:none;" onchange="handleHeaderImageUpload(this)">
+                </div>
+            `;
+            document.body.appendChild(modal);
+            document.querySelectorAll('.emoji-option').forEach(el => {
+                el.addEventListener('mouseenter', function() { this.style.background = '#f0f0f0'; this.style.transform = 'scale(1.1)'; });
+                el.addEventListener('mouseleave', function() { this.style.background = ''; this.style.transform = ''; });
+            });
+        }
+        
+        function showHeaderEmojiPicker() {
+            document.getElementById('headerEmojiGrid').style.display = 'block';
+        }
+        
+        function uploadHeaderImage() {
+            document.getElementById('headerImageUpload').click();
+        }
+        
+        function handleHeaderImageUpload(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const base64Image = e.target.result;
+                    fetch('/vendor/update_shop_image', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({shop_image: base64Image})
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            const imgTag = `<img src="${base64Image}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                            document.getElementById('headerShopImage').innerHTML = imgTag;
+                            document.getElementById('dropdownShopImage').innerHTML = imgTag;
+                            const settingsImage = document.getElementById('shopImage');
+                            if (settingsImage) settingsImage.innerHTML = imgTag;
+                        }
+                    });
+                    closeHeaderShopImageModal();
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        
+        function closeHeaderShopImageModal() {
+            const modal = document.getElementById('headerShopImageModal');
+            if (modal) modal.remove();
+        }
+        
+        function selectHeaderEmoji(emoji) {
+            fetch('/vendor/update_shop_image', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({shop_image: emoji})
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('headerShopImage').innerHTML = emoji;
+                    document.getElementById('dropdownShopImage').innerHTML = emoji;
+                    const settingsImage = document.getElementById('shopImage');
+                    if (settingsImage) settingsImage.innerHTML = emoji;
+                }
+            });
+            closeHeaderShopImageModal();
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

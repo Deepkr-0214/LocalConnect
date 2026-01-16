@@ -1,0 +1,105 @@
+{% extends "vendor/base.html" %}
+
+{% block page_title %}Reviews Management{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/vendor/reviews.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="reviews-container">
+    <!-- Reviews Overview Stats -->
+    <div class="reviews-overview">
+        <div class="overview-card rating-summary">
+            <div class="card-icon">
+                <i class="fa-solid fa-star"></i>
+            </div>
+            <div class="card-content">
+                <h3>{{ avg_rating }}</h3>
+                <p>Average Rating</p>
+                <div class="stars-display">
+                    {% for i in range(5) %}
+                        {% if i < avg_rating|int %}
+                            <i class="fa-solid fa-star"></i>
+                        {% elif i < avg_rating %}
+                            <i class="fa-solid fa-star-half-stroke"></i>
+                        {% else %}
+                            <i class="fa-regular fa-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="overview-card total-reviews">
+            <div class="card-icon">
+                <i class="fa-solid fa-comments"></i>
+            </div>
+            <div class="card-content">
+                <h3>{{ total_count }}</h3>
+                <p>Total Reviews</p>
+                <div class="card-info">
+                    <span>{{ recent_count }} this month</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="overview-card response-stats">
+            <div class="card-icon">
+                <i class="fa-solid fa-reply"></i>
+            </div>
+            <div class="card-content">
+                <h3>{{ response_rate }}%</h3>
+                <p>Response Rate</p>
+                <div class="card-info">
+                    <span>{{ responded_count }}/{{ total_count }} responded</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reviews List -->
+    <div class="reviews-list">
+        {% for review in reviews %}
+        <div class="review-card">
+            <div class="review-header">
+                <div class="customer-info">
+                    <div class="customer-avatar">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="customer-details">
+                        <h4 class="customer-name">{{ review.customer_name }}</h4>
+                        <div class="review-meta">
+                            <span class="review-date">{{ review.created_at.strftime('%d %b %Y, %I:%M %p') }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="review-rating">
+                    <div class="stars">
+                        {% for i in range(5) %}
+                            {% if i < review.review_rating|int %}
+                                <i class="fa-solid fa-star"></i>
+                            {% else %}
+                                <i class="fa-regular fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <span class="rating-number">{{ review.review_rating }}/5</span>
+                </div>
+            </div>
+            
+            <div class="review-content">
+                <p class="review-comment">{{ review.review_comment }}</p>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fa-solid fa-star"></i>
+            <h4>No Reviews Yet</h4>
+            <p>Customer reviews will appear here once they start rating your service.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

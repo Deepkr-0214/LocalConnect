@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocalConnect | Vendor Details</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/customer/base.css">
+    <link rel="stylesheet" href="/static/css/customer/viewdet.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="logo" onclick="window.location.href='/customer/dashboard'">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <span>LocalConnect</span>
+            </div>
+            
+            <div class="search-wrapper" id="searchWrapper">
+                <input type="text" id="searchInput" placeholder="Search menu items...">
+                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </div>
+
+            <div class="user-profile">
+                <span class="welcome-text">Welcome, {{ user_name or 'Guest' }}</span>
+                <div class="avatar" id="profileIcon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="dropdown-item" onclick="viewProfile()">
+                        <i class="fa-solid fa-user"></i>
+                        <span>View Profile</span>
+                    </div>
+                    <div class="dropdown-item" onclick="myOrders()">
+                        <i class="fa-solid fa-shopping-bag"></i>
+                        <span>My Orders</span>
+                    </div>
+                    <div class="dropdown-item" onclick="logout()">
+                        <i class="fa-solid fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+<main class="main-content">
+        <section class="banner-section">
+            <div class="banner-img">
+                <div class="banner-overlay">
+                    <h1>{{ vendor.business_name }}</h1>
+                </div>
+            </div>
+            
+            <div class="restaurant-details-card">
+                <div class="title-row">
+                    <h2>{{ vendor.business_name }}</h2>
+                    <div class="badge-row">
+                        <span class="rating-box"><i class="fa-solid fa-star"></i> 4.5</span>
+                        <span class="reviews">(1,200 verified)</span>
+                        <span class="distance"><i class="fa-solid fa-location-dot"></i> 1.2 km away</span>
+                        <span class="type-badge">{{ vendor.business_category }}</span>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <span class="status-green"><i class="fa-solid fa-circle-check"></i> Open Now</span>
+                    <span><i class="fa-solid fa-bag-shopping"></i> Takeaway</span>
+                    <span><i class="fa-solid fa-indian-rupee-sign"></i> 100—300</span>
+                    <span class="map-link"><i class="fa-solid fa-map-location-dot"></i> View on Map</span>
+                </div>
+            </div>
+        </section>
+
+        <div class="tab-container">
+            <div class="tabs-nav-inline">
+                <div class="tab active" data-target="menu-section">Menu</div>
+                <div class="tab" data-target="about-section">About</div>
+                <div class="tab" data-target="reviews-section">Reviews</div>
+            </div>
+            <section id="menu-section" class="tab-content active">
+                <div class="menu-section-inner" style="padding:30px 5% 120px;background:#f5f7f8;">
+                    <div id="menu-grid" class="menu-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:25px;">
+                        <!-- Menu items will be loaded dynamically -->
+                    </div>
+                </div>
+            </section>
+
+            <section id="about-section" class="tab-content">
+                <div class="about-container">
+                    <div class="about-main-card">
+                        <div class="brand-badge">Since 1998</div>
+                        <h3>Our Flavorful Journey</h3>
+                        <p>Serving Delhi's most authentic street flavors for over two decades. We use 100% RO-purified water and hand-picked spices to ensure every bite is safe and delicious.</p>
+                        
+                        <div class="amenities-grid">
+                            <div class="amenity-item"><i class="fa-solid fa-leaf"></i> <span>Pure Veg</span></div>
+                            <div class="amenity-item"><i class="fa-solid fa-wind"></i> <span>Outdoor Seating</span></div>
+                            <div class="amenity-item"><i class="fa-solid fa-truck-ramp-box"></i> <span>Home Delivery</span></div>
+                            <div class="amenity-item"><i class="fa-solid fa-wifi"></i> <span>Free Wi-Fi</span></div>
+                        </div>
+
+                        <div class="contact-strip">
+                            <div class="contact-info"><h4>Timings</h4><p>10:30 AM - 11:00 PM</p></div>
+                            <div class="contact-info"><h4>Contact</h4><p>+91 98765 43210</p></div>
+                            <div class="contact-info"><h4>Address</h4><p>Sector 15, Near Central Mall</p></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="reviews-section" class="tab-content">
+                <div class="reviews-container">
+                    <div class="review-header">
+                        <div class="big-rating">4.5</div>
+                        <div class="stat-text">Based on 1,200 verified reviews</div>
+                    </div>
+                    <div id="reviews-list">
+                        <div class="review-card">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+                                <strong>Priya Sharma</strong>
+                                <span style="color:#f1c40f;">★★★★★</span>
+                            </div>
+                            <p style="color:#7f8c8d;margin:0;">Amazing pani puri! The taste is authentic and the service is quick. Highly recommended!</p>
+                        </div>
+                        <div class="review-card">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+                                <strong>Rahul Kumar</strong>
+                                <span style="color:#f1c40f;">★★★★☆</span>
+                            </div>
+                            <p style="color:#7f8c8d;margin:0;">Good food quality and hygiene. The bhel puri is my favorite. Will visit again.</p>
+                        </div>
+                        <div class="review-card">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+                                <strong>Anjali Verma</strong>
+                                <span style="color:#f1c40f;">★★★★★</span>
+                            </div>
+                            <p style="color:#7f8c8d;margin:0;">Best street food in the area! Fresh ingredients and great taste. The pav bhaji is delicious.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div id="cart-footer" class="cart-footer hidden">
+        <div class="cart-info"><span id="cart-count">0 items</span> | <span id="cart-total">₹0</span></div>
+        <button class="view-cart-btn" onclick="openCart()">View Cart</button>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cart-modal" class="cart-modal">
+        <div class="cart-content">
+            <div class="cart-header">
+                <h2>Your Cart</h2>
+                <button class="close-cart" onclick="closeCart()">&times;</button>
+            </div>
+            <div id="cart-items-list"></div>
+            <div class="cart-total">
+                <h3 id="modal-total">₹0</h3>
+                <button class="buy-btn" onclick="proceedToBuy()">Proceed to Buy</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-button" id="chatBtn">
+        <div class="chat-pulse"></div>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+            <path d="M12 2a10 10 0 0 0-10 10c0 2.5.9 4.8 2.4 6.6l-.4 3.4 3.4-.4c1.8 1.5 4.1 2.4 6.6 2.4a10 10 0 0 0 10-10A10 10 0 0 0 12 2zm-3 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm6 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"></path>
+        </svg>
+    </div>
+
+    <script src="/static/js/customer/base.js"></script>
+    <script>
+        const userId = '{{ user_id if user_id else "" }}';
+        const vendorId = {{ vendor_id }};
+        const vendorName = '{{ vendor.business_name }}';
+        
+        // Clear ALL localStorage if different user logs in
+        const lastUserId = localStorage.getItem('lastUserId');
+        if (lastUserId && lastUserId !== userId && userId) {
+            localStorage.clear();
+        }
+        if (userId) localStorage.setItem('lastUserId', userId);
+        
+        const ordersKey = userId ? `user_${userId}_orders` : 'orders';
+        let menuItems = [];
+
+        // Load menu from API
+        fetch(`/api/vendor/${vendorId}/menu`)
+            .then(res => res.json())
+            .then(items => {
+                menuItems = items.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    sub_name: item.sub_name,
+                    price: item.price,
+                    qty: 0,
+                    available: item.is_available,
+                    image_file: item.image_file
+                }));
+                renderMenuCards();
+            });
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.getAttribute('data-target')).classList.add('active');
+            });
+        });
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            document.querySelectorAll('.menu-card').forEach(card => {
+                const name = card.querySelector('h4').textContent.toLowerCase();
+                card.style.display = name.includes(term) ? 'flex' : 'none';
+            });
+        });
+
+        function renderMenuCards() {
+            const menuGrid = document.getElementById('menu-grid');
+            menuGrid.innerHTML = menuItems.map(item => {
+                const imageUrl = item.image_file && item.image_file !== 'default.jpg' 
+                    ? `/static/images/food/${item.image_file}` 
+                    : 'https://via.placeholder.com/400x300?text=No+Image';
+                return `
+                <div class="menu-card" style="background:white;border-radius:15px;padding:15px;border:1px solid #eee;display:flex;flex-direction:column;box-shadow:0 4px 15px rgba(0,0,0,0.04);${!item.available ? 'opacity:0.6;' : ''}">
+                    <img src="${imageUrl}" alt="${item.name}" class="item-img" style="width:100%;height:180px;object-fit:cover;border-radius:10px;margin-bottom:15px;" onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'">
+                    <h4 style="margin:0 0 8px 0;">${item.name}</h4>
+                    <p style="margin:0 0 10px 0;color:#7f8c8d;font-size:14px;">${item.sub_name || ''}</p>
+                    <div class="action-row" style="display:flex;justify-content:space-between;align-items:center;margin-top:auto;">
+                        ${!item.available ? 
+                            '<span style="font-weight:700;color:#e74c3c;font-size:14px;">Not Available</span>' :
+                            item.qty > 0 ?
+                                `<span style="font-weight:700;color:#27ae60;font-size:18px;">₹${item.price}</span><div style="display:flex;align-items:center;background:#27ae60;color:white;border-radius:8px;padding:4px 8px;gap:10px;"><button onclick="updateQty(${item.id}, -1)" style="background:none;border:none;color:white;cursor:pointer;font-size:16px;">-</button><span style="font-weight:700;">${item.qty}</span><button onclick="updateQty(${item.id}, 1)" style="background:none;border:none;color:white;cursor:pointer;font-size:16px;">+</button></div>` :
+                                `<span style="font-weight:700;color:#27ae60;font-size:18px;">₹${item.price}</span><button class="btn-add" onclick="addToCart(${item.id})" style="background:#27ae60;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">Add</button>`
+                        }
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function addToCart(itemId) {
+            const item = menuItems.find(i => i.id === itemId);
+            if(!item.available) {
+                alert('Sorry, this item is currently not available.');
+                return;
+            }
+            item.qty++;
+            updateCart();
+            renderMenuCards();
+        }
+
+        function updateQty(itemId, change) {
+            const item = menuItems.find(i => i.id === itemId);
+            item.qty = Math.max(0, item.qty + change);
+            updateCart();
+            renderMenuCards();
+        }
+
+        function updateCart() {
+            const count = menuItems.reduce((s, i) => s + i.qty, 0);
+            const total = menuItems.reduce((s, i) => s + (i.qty * i.price), 0);
+            if(count > 0) {
+                document.getElementById('cart-footer').classList.remove('hidden');
+                document.getElementById('cart-count').textContent = `${count} items`;
+                document.getElementById('cart-total').textContent = `₹${total}`;
+            } else {
+                document.getElementById('cart-footer').classList.add('hidden');
+            }
+        }
+
+        function openCart() {
+            const cartItems = menuItems.filter(i => i.qty > 0);
+            const total = cartItems.reduce((s, i) => s + (i.qty * i.price), 0);
+            const cartItemsList = document.getElementById('cart-items-list');
+            const modalTotal = document.getElementById('modal-total');
+            
+            if (cartItems.length === 0) {
+                cartItemsList.innerHTML = '<div class="empty-cart"><i class="fa-solid fa-shopping-cart"></i><h3>Your cart is empty</h3><p>Add some delicious items to get started!</p></div>';
+                modalTotal.style.display = 'none';
+            } else {
+                cartItemsList.innerHTML = cartItems.map(item => `
+                    <div class="cart-item">
+                        <div class="cart-item-info"><h4>${item.name}</h4><p>₹${item.price} each</p></div>
+                        <div class="cart-item-controls">
+                            <div style="display:flex;align-items:center;background:#27ae60;color:white;border-radius:8px;padding:4px 8px;gap:10px;">
+                                <button onclick="updateQty(${item.id}, -1)" style="background:none;border:none;color:white;cursor:pointer;font-size:16px;">-</button>
+                                <span style="font-weight:700;min-width:20px;text-align:center;">${item.qty}</span>
+                                <button onclick="updateQty(${item.id}, 1)" style="background:none;border:none;color:white;cursor:pointer;font-size:16px;">+</button>
+                            </div>
+                            <span style="font-weight:600;color:#27ae60;">₹${item.qty * item.price}</span>
+                        </div>
+                    </div>
+                `).join('');
+                modalTotal.innerHTML = `Total: ₹${total}`;
+                modalTotal.style.display = 'block';
+            }
+            document.getElementById('cart-modal').classList.add('active');
+        }
+
+        function closeCart() {
+            document.getElementById('cart-modal').classList.remove('active');
+        }
+
+        function proceedToBuy() {
+            const cartItems = menuItems.filter(i => i.qty > 0);
+            if (cartItems.length === 0) { alert('Your cart is empty!'); return; }
+            const total = cartItems.reduce((s, i) => s + (i.qty * i.price), 0);
+            showDeliverySelection(total);
+        }
+
+        function showDeliverySelection(total) {
+            document.getElementById('cart-items-list').innerHTML = `
+                <div class="order-step"><h3>Choose Delivery Option</h3>
+                    <div class="delivery-options">
+                        <div class="delivery-option" onclick="selectDelivery('takeaway', ${total})">
+                            <div class="option-icon">🏪</div>
+                            <div class="option-details"><h4>Takeaway</h4><p>Ready in 15-20 minutes</p><span class="price">Free</span></div>
+                        </div>
+                        <div class="delivery-option" onclick="selectDelivery('delivery', ${total})">
+                            <div class="option-icon">🚚</div>
+                            <div class="option-details"><h4>Home Delivery</h4><p>Delivered in 25-30 minutes</p><span class="price">₹30</span></div>
+                        </div>
+                    </div>
+                </div>`;
+            document.getElementById('modal-total').innerHTML = `Subtotal: ₹${total}`;
+        }
+
+        function selectDelivery(type, subtotal) {
+            const deliveryFee = type === 'delivery' ? 30 : 0;
+            const total = subtotal + deliveryFee;
+            document.getElementById('cart-items-list').innerHTML = `
+                <div class="order-step"><h3>Payment Method</h3>
+                    <div class="order-summary">
+                        <div class="summary-row"><span>Subtotal:</span><span>₹${subtotal}</span></div>
+                        <div class="summary-row"><span>${type === 'delivery' ? 'Delivery Fee:' : 'Takeaway:'}</span><span>${deliveryFee > 0 ? '₹' + deliveryFee : 'Free'}</span></div>
+                        <div class="summary-row total-row"><span>Total:</span><span>₹${total}</span></div>
+                    </div>
+                    <div class="payment-options">
+                        <div class="payment-option" onclick="processPayment('online', '${type}', ${total})">
+                            <div class="option-icon">💳</div>
+                            <div class="option-details"><h4>Online Payment</h4><p>Pay now with card/UPI</p></div>
+                        </div>
+                        <div class="payment-option" onclick="processPayment('cash', '${type}', ${total})">
+                            <div class="option-icon">💵</div>
+                            <div class="option-details"><h4>Cash on ${type === 'delivery' ? 'Delivery' : 'Pickup'}</h4><p>Pay when you receive</p></div>
+                        </div>
+                    </div>
+                </div>`;
+            document.getElementById('modal-total').style.display = 'none';
+        }
+
+        function processPayment(paymentType, deliveryType, total) {
+            const cartItems = menuItems.filter(i => i.qty > 0);
+            const orderData = {
+                vendor_id: vendorId,
+                vendor: vendorName,
+                items: cartItems.map(i => ({name: i.name, qty: i.qty, price: i.price})),
+                deliveryType: deliveryType,
+                paymentType: paymentType,
+                total: total
+            };
+            
+            fetch('/api/orders', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(orderData)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    menuItems.forEach(i => i.qty = 0);
+                    updateCart();
+                    renderMenuCards();
+                    closeCart();
+                    const paymentMethod = paymentType === 'online' ? 'Online Payment' : `Cash on ${deliveryType === 'delivery' ? 'Delivery' : 'Pickup'}`;
+                    const timeEstimate = deliveryType === 'delivery' ? '25-30 minutes' : '15-20 minutes';
+                    alert(`🎉 Order placed successfully!\n\nDelivery: ${deliveryType === 'delivery' ? 'Home Delivery' : 'Takeaway'}\nPayment: ${paymentMethod}\nTotal: ₹${total}\n\nYour order will be ready in ${timeEstimate}.\nThank you for choosing Raj's Chaat Corner!`);
+                }
+            });
+        }
+
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'cart-modal') closeCart();
+        });
+        
+        // Load user reviews from database orders
+        function loadUserReviews() {
+            // Reviews will be loaded from database via orders page
+        }
+        
+        loadUserReviews();
+    </script>
+</body>
+</html>

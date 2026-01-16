@@ -1,0 +1,82 @@
+/**
+ * Complete Reviews System JavaScript
+ * Handles all filtering, expansion, response, and helpful functionality
+ */
+
+document.addEventListener('DOMContentLoaded', () => {
+    initializeSystem();
+});
+
+function initializeSystem() {
+    initializeFilters();
+    initializeCharacterCounters();
+    updateFilterCounts();
+}
+
+// Initialize Filter System
+function initializeFilters() {
+    const filterTabs = document.querySelectorAll('.filter-tab');
+    
+    filterTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Remove active from all tabs
+            filterTabs.forEach(t => t.classList.remove('active'));
+            // Add active to clicked tab
+            tab.classList.add('active');
+            
+            const filter = tab.getAttribute('data-filter');
+            filterReviews(filter);
+        });
+    });
+}
+
+// Filter Reviews Function
+function filterReviews(filter) {
+    const reviewCards = document.querySelectorAll('.review-card');
+    let visibleCount = 0;
+    
+    reviewCards.forEach(card => {
+        const rating = parseInt(card.getAttribute('data-rating'));
+        const responded = card.getAttribute('data-responded') === 'true';
+        
+        let shouldShow = false;
+        
+        switch(filter) {
+            case 'all':
+                shouldShow = true;
+                break;
+            case '5':
+                shouldShow = (rating === 5);
+                break;
+            case '4':
+                shouldShow = (rating === 4);
+                break;
+            case '3':
+                shouldShow = (rating === 3);
+                break;
+            case '2':
+                shouldShow = (rating === 2);
+                break;
+            case '1':
+                shouldShow = (rating === 1);
+                break;
+            case 'pending':
+                shouldShow = !responded;
+                break;
+            case 'responded':
+                shouldShow = responded;
+                break;
+        }
+        
+        if (shouldShow) {
+            card.style.display = 'block';
+            visibleCount++;
+            // Add smooth fade in animation
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                card.style.transition = 'all 0.3s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 50);
+        } else {\n            card.style.display = 'none';\n        }\n    });\n    \n    // Show empty state if needed\n    showEmptyState(visibleCount === 0, filter);\n}\n\n// Show Empty State\nfunction showEmptyState(isEmpty, filter) {\n    const container = document.getElementById('reviewsContainer');\n    let emptyState = container.querySelector('.filter-empty-state');\n    \n    if (isEmpty) {\n        if (!emptyState) {\n            emptyState = document.createElement('div');\n            emptyState.className = 'empty-state filter-empty-state';\n            container.appendChild(emptyState);\n        }\n        \n        let message, description;\n        switch(filter) {\n            case '5':\n                message = 'No 5-Star Reviews';\n                description = 'You don\\'t have any 5-star reviews yet. Keep up the great work!';\n                break;\n            case '4':\n                message = 'No 4-Star Reviews';\n                description = 'You don\\'t have any 4-star reviews yet.';\n                break;\n            case '3':\n                message = 'No 3-Star Reviews';\n                description = 'You don\\'t have any 3-star reviews yet.';\n                break;\n            case '2':\n                message = 'No 2-Star Reviews';\n                description = 'You don\\'t have any 2-star reviews yet.';\n                break;\n            case '1':\n                message = 'No 1-Star Reviews';\n                description = 'You don\\'t have any 1-star reviews yet.';\n                break;\n            case 'pending':\n                message = 'No Pending Reviews';\n                description = 'All reviews have been responded to. Great job!';\n                break;\n            case 'responded':\n                message = 'No Responded Reviews';\n                description = 'You haven\\'t responded to any reviews yet.';\n                break;\n            default:\n                message = 'No Reviews Found';\n                description = 'No reviews match the selected criteria.';\n        }\n        \n        emptyState.innerHTML = `\n            <i class=\"fa-solid fa-filter\"></i>\n            <h3>${message}</h3>\n            <p>${description}</p>\n        `;\n        emptyState.style.display = 'block';\n    } else if (emptyState) {\n        emptyState.style.display = 'none';\n    }\n}\n\n// Toggle Review Expansion (Inbox Style)\nfunction toggleReviewExpansion(reviewId) {\n    const reviewCard = document.querySelector(`[data-review-id=\"${reviewId}\"]`);\n    const isExpanded = reviewCard.classList.contains('expanded');\n    \n    // Close all other expanded cards first\n    document.querySelectorAll('.review-card.expanded').forEach(card => {\n        if (card !== reviewCard) {\n            card.classList.remove('expanded');\n        }\n    });\n    \n    // Toggle current card\n    if (isExpanded) {\n        reviewCard.classList.remove('expanded');\n    } else {\n        reviewCard.classList.add('expanded');\n    }\n}\n\n// Show Response Form\nfunction showResponseForm(reviewId) {\n    const responseForm = document.getElementById(`form-${reviewId}`);\n    const respondBtn = responseForm.previousElementSibling;\n    \n    // Hide respond button and show form\n    respondBtn.style.display = 'none';\n    responseForm.style.display = 'block';\n    \n    // Auto-populate with template based on rating\n    const reviewCard = responseForm.closest('.review-card');\n    const rating = parseInt(reviewCard.getAttribute('data-rating'));\n    const textarea = document.getElementById(`textarea-${reviewId}`);\n    \n    let template = '';\n    if (rating >= 4) {\n        template = \"Thank you so much for your wonderful review! We're delighted that you enjoyed your experience with us. Your feedback means a lot to our team, and we look forward to serving you again soon!\";\n    } else if (rating === 3) {\n        template = \"Thank you for your honest feedback. We truly appreciate you taking the time to share your experience with us. We're always working to improve our service, and your comments help us do better.\";\n    } else {\n        template = \"We sincerely apologize for not meeting your expectations. Your feedback is very important to us, and we take all concerns seriously. We would love the opportunity to make things right.\";\n    }\n    \n    textarea.value = template;\n    updateCharacterCount(reviewId);\n    \n    // Focus on textarea\n    setTimeout(() => {\n        textarea.focus();\n        textarea.setSelectionRange(template.length, template.length);\n    }, 100);\n}\n\n// Hide Response Form\nfunction hideResponseForm(reviewId) {\n    const responseForm = document.getElementById(`form-${reviewId}`);\n    const respondBtn = responseForm.previousElementSibling;\n    \n    // Show respond button and hide form\n    respondBtn.style.display = 'flex';\n    responseForm.style.display = 'none';\n    \n    // Clear textarea\n    const textarea = document.getElementById(`textarea-${reviewId}`);\n    textarea.value = '';\n    updateCharacterCount(reviewId);\n}\n\n// Submit Response\nasync function submitResponse(event, reviewId) {\n    event.preventDefault();\n    \n    const form = event.target;\n    const submitBtn = form.querySelector('.btn-submit');\n    const textarea = document.getElementById(`textarea-${reviewId}`);\n    const responseText = textarea.value.trim();\n    \n    if (!responseText) {\n        showToast('Please enter a response.', 'error');\n        return;\n    }\n    \n    // Show loading state\n    const originalText = submitBtn.innerHTML;\n    submitBtn.innerHTML = '<i class=\"fa-solid fa-circle-notch fa-spin\"></i> Sending...';\n    submitBtn.disabled = true;\n    \n    try {\n        // Simulate API call (replace with actual endpoint)\n        await new Promise(resolve => setTimeout(resolve, 1000));\n        \n        // Update the review card\n        updateReviewWithResponse(reviewId, responseText);\n        \n        // Update filter counts\n        updateFilterCounts();\n        \n        // Show success message\n        showToast('✅ Response sent successfully!', 'success');\n        \n    } catch (error) {\n        console.error('Error:', error);\n        showToast('Failed to send response. Please try again.', 'error');\n        submitBtn.innerHTML = originalText;\n        submitBtn.disabled = false;\n    }\n}\n\n// Update Review with Response\nfunction updateReviewWithResponse(reviewId, responseText) {\n    const reviewCard = document.querySelector(`[data-review-id=\"${reviewId}\"]`);\n    const pendingSection = reviewCard.querySelector('.pending-response');\n    \n    // Update data attribute\n    reviewCard.setAttribute('data-responded', 'true');\n    \n    // Create response HTML\n    const currentDate = new Date().toLocaleDateString('en-GB', {\n        day: '2-digit',\n        month: 'short',\n        year: 'numeric'\n    });\n    \n    const responseHTML = `\n        <div class=\"shop-response\">\n            <div class=\"response-header\">\n                <i class=\"fa-solid fa-reply\"></i>\n                <span class=\"response-label\">Shop Response</span>\n                <span class=\"response-date\">${currentDate}</span>\n            </div>\n            <div class=\"response-text\">${responseText}</div>\n            <div class=\"response-actions\">\n                <button class=\"btn-edit\" onclick=\"event.stopPropagation(); editResponse(${reviewId})\">\n                    <i class=\"fa-solid fa-pen\"></i> Edit Response\n                </button>\n                <button class=\"btn-helpful\" onclick=\"event.stopPropagation(); markAsHelpful(${reviewId}, this)\">\n                    <i class=\"fa-regular fa-heart\"></i> Mark as Helpful\n                </button>\n            </div>\n        </div>\n    `;\n    \n    // Replace pending section with response\n    pendingSection.outerHTML = responseHTML;\n}\n\n// Mark as Helpful\nfunction markAsHelpful(reviewId, buttonElement) {\n    const reviewCard = buttonElement.closest('.review-card');\n    \n    // Update data attribute\n    reviewCard.setAttribute('data-helpful', 'true');\n    \n    // Create helpful status HTML\n    const helpfulHTML = `\n        <div class=\"helpful-status\">\n            <i class=\"fa-solid fa-heart\"></i>\n            <span>Thank you very much!</span>\n        </div>\n    `;\n    \n    // Replace button with helpful status\n    buttonElement.outerHTML = helpfulHTML;\n    \n    // Add success animation to the card\n    reviewCard.style.transition = 'all 0.5s ease';\n    reviewCard.style.boxShadow = '0 12px 40px rgba(220, 38, 38, 0.2)';\n    reviewCard.style.borderColor = '#fecaca';\n    \n    setTimeout(() => {\n        reviewCard.style.boxShadow = '';\n        reviewCard.style.borderColor = '';\n    }, 1000);\n    \n    // Update filter counts\n    updateFilterCounts();\n    \n    // Show success toast with heart\n    showToast('❤️ Thank you! Review marked as helpful!', 'success');\n}\n\n// Use Quick Template\nfunction useQuickTemplate(reviewId, rating) {\n    const textarea = document.getElementById(`textarea-${reviewId}`);\n    \n    let template = '';\n    if (rating >= 4) {\n        template = \"Thank you so much for your wonderful review! We're delighted that you enjoyed your experience with us. Your feedback means a lot to our team, and we look forward to serving you again soon!\";\n    } else if (rating === 3) {\n        template = \"Thank you for your honest feedback. We truly appreciate you taking the time to share your experience with us. We're always working to improve our service, and your comments help us do better. We hope to have the opportunity to serve you again and provide you with an even better experience.\";\n    } else {\n        template = \"We sincerely apologize for not meeting your expectations. Your feedback is very important to us, and we take all concerns seriously. We would love the opportunity to make things right and improve your experience. Please feel free to contact us directly so we can address your concerns properly.\";\n    }\n    \n    textarea.value = template;\n    updateCharacterCount(reviewId);\n    \n    // Show template applied feedback\n    showToast('Template applied successfully!', 'info');\n}\n\n// Initialize Character Counters\nfunction initializeCharacterCounters() {\n    document.addEventListener('input', (e) => {\n        if (e.target.classList.contains('response-textarea')) {\n            const reviewId = e.target.id.replace('textarea-', '');\n            updateCharacterCount(reviewId);\n        }\n    });\n}\n\n// Update Character Count\nfunction updateCharacterCount(reviewId) {\n    const textarea = document.getElementById(`textarea-${reviewId}`);\n    const counter = document.getElementById(`char-count-${reviewId}`);\n    \n    if (textarea && counter) {\n        const count = textarea.value.length;\n        counter.textContent = count;\n        \n        // Update color based on count\n        if (count > 450) {\n            counter.style.color = '#ef4444';\n        } else if (count > 400) {\n            counter.style.color = '#f59e0b';\n        } else {\n            counter.style.color = '#64748b';\n        }\n    }\n}\n\n// Update Filter Counts\nfunction updateFilterCounts() {\n    const reviewCards = document.querySelectorAll('.review-card');\n    \n    const counts = {\n        all: 0,\n        '5': 0,\n        '4': 0,\n        '3': 0,\n        '2': 0,\n        '1': 0,\n        pending: 0,\n        responded: 0\n    };\n    \n    reviewCards.forEach(card => {\n        const rating = parseInt(card.getAttribute('data-rating'));\n        const responded = card.getAttribute('data-responded') === 'true';\n        \n        counts.all++;\n        counts[rating.toString()]++;\n        \n        if (responded) {\n            counts.responded++;\n        } else {\n            counts.pending++;\n        }\n    });\n    \n    // Update count displays\n    Object.keys(counts).forEach(filter => {\n        const countElement = document.getElementById(`count-${filter}`);\n        if (countElement) {\n            countElement.textContent = counts[filter];\n        }\n    });\n}\n\n// Edit Response (placeholder)\nfunction editResponse(reviewId) {\n    showToast('Edit response functionality would open an edit modal here.', 'info');\n}\n\n// Show Toast Message\nfunction showToast(message, type = 'info') {\n    const container = document.getElementById('toastContainer');\n    if (!container) {\n        // Create container if it doesn't exist\n        const newContainer = document.createElement('div');\n        newContainer.id = 'toastContainer';\n        newContainer.className = 'toast-container';\n        document.body.appendChild(newContainer);\n    }\n    \n    const toast = document.createElement('div');\n    toast.className = `toast ${type}`;\n    toast.textContent = message;\n    \n    document.getElementById('toastContainer').appendChild(toast);\n    \n    // Animate in\n    setTimeout(() => {\n        toast.classList.add('show');\n    }, 100);\n    \n    // Remove after 4 seconds\n    setTimeout(() => {\n        toast.classList.remove('show');\n        setTimeout(() => {\n            if (toast.parentNode) {\n                toast.parentNode.removeChild(toast);\n            }\n        }, 300);\n    }, 4000);\n}\n\n// Utility Functions\nfunction formatDate(date) {\n    return new Date(date).toLocaleDateString('en-GB', {\n        day: '2-digit',\n        month: 'short',\n        year: 'numeric'\n    });\n}\n\nfunction formatDateTime(date) {\n    return new Date(date).toLocaleDateString('en-GB', {\n        day: '2-digit',\n        month: 'short',\n        year: 'numeric',\n        hour: '2-digit',\n        minute: '2-digit'\n    });\n}

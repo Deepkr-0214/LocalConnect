@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Localconnect Vendor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive-utils.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>Localconnect</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li class="{{ 'active' if request.path == '/' }}">
+                        <a href="/"><i class="fa-solid fa-desktop"></i> Dashboard</a>
+                    </li>
+                    <li class="{{ 'active' if request.path == '/orders' }}">
+                        <a href="/orders"><i class="fa-regular fa-file-lines"></i> Orders</a>
+                    </li>
+                    <li class="{{ 'active' if request.path == '/menu' }}">
+                        <a href="/menu"><i class="fa-solid fa-utensils"></i> Menu Management</a>
+                    </li>
+                    <li class="{{ 'active' if request.path == '/earnings' }}">
+                        <a href="/earnings"><i class="fa-solid fa-indian-rupee-sign"></i> Earnings</a>
+                    </li>
+                    <li class="{{ 'active' if request.path == '/reviews' }}">
+                        <a href="/reviews"><i class="fa-regular fa-star"></i> Reviews</a>
+                    </li>
+                    <li class="{{ 'active' if request.path == '/settings' }}">
+                        <a href="/settings"><i class="fa-solid fa-gear"></i> Settings</a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="hamburger-menu" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="page-title-section">
+                        <h2 id="page-title">{% block page_title %}{% endblock %}</h2>
+                        <div class="status-indicator {{ 'open' if vendor_profile and vendor_profile.is_open else 'closed' }}">
+                            <span class="status-dot"></span>
+                            <span class="status-text">{{ 'Open' if vendor_profile and vendor_profile.is_open else 'Closed' }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <div class="header-actions">
+                        <div class="notification-wrapper">
+                            <button class="notification-btn" onclick="toggleDropdown('notif-content')" aria-label="Notifications">
+                                <i class="fa-regular fa-bell"></i>
+                                {% if unread_count > 0 %}
+                                    <span class="notification-badge">{{ unread_count }}</span>
+                                {% endif %}
+                            </button>
+                            <div id="notif-content" class="dropdown-content notification-dropdown">
+                                <div class="dropdown-header">
+                                    <span>Notifications</span>
+                                    <span class="notification-count">{{ unread_count or 0 }}</span>
+                                </div>
+                                <div class="notification-list">
+                                    <div class="notif-item">
+                                        <i class="fa-solid fa-shopping-cart"></i>
+                                        <div class="notif-content">
+                                            <span class="notif-title">New Order Received</span>
+                                            <span class="notif-time">2 minutes ago</span>
+                                        </div>
+                                    </div>
+                                    <div class="notif-item">
+                                        <i class="fa-solid fa-star"></i>
+                                        <div class="notif-content">
+                                            <span class="notif-title">Customer Review</span>
+                                            <span class="notif-time">1 hour ago</span>
+                                        </div>
+                                    </div>
+                                    <div class="notif-item">
+                                        <i class="fa-solid fa-check-circle"></i>
+                                        <div class="notif-content">
+                                            <span class="notif-title">Order Completed</span>
+                                            <span class="notif-time">3 hours ago</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="notification-footer">
+                                    <a href="/notifications">View All Notifications</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="shop-status-toggle">
+                            <div class="toggle-switch premium">
+                                <input type="checkbox" id="header_shop_status" {{ 'checked' if vendor_profile and vendor_profile.is_open else '' }} onchange="toggleShopStatus(this)">
+                                <label for="header_shop_status" class="switch-label" aria-label="Toggle shop status">
+                                    <span class="switch-slider"></span>
+                                    <span class="switch-text">{{ 'Open' if vendor_profile and vendor_profile.is_open else 'Closed' }}</span>
+                                </label>
+                            </div>
+                        </div>
+            
+                        <div class="profile-section dropdown">
+                            <div class="profile-pill" onclick="toggleDropdown('profile-content')" aria-label="Profile menu">
+                                <div class="profile-avatar" id="headerShopImage">
+                                    <i class="fa-solid fa-store"></i>
+                                </div>
+                                <div class="profile-info">
+                                    <span class="profile-name">
+                                        {% if vendor_profile and vendor_profile.shop_name %}
+                                            {{ vendor_profile.shop_name[:15] }}{% if vendor_profile.shop_name|length > 15 %}...{% endif %}
+                                        {% else %}
+                                            Localconnect
+                                        {% endif %}
+                                    </span>
+                                    <span class="profile-role">Vendor</span>
+                                </div>
+                                <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
+                            </div>
+                            <div id="profile-content" class="dropdown-content profile-menu">
+                                <div class="profile-header">
+                                    <div class="profile-avatar large" id="dropdownShopImage">
+                                        <i class="fa-solid fa-store"></i>
+                                    </div>
+                                    <div class="profile-details">
+                                        <span class="profile-name">
+                                            {% if vendor_profile and vendor_profile.shop_name %}
+                                                {{ vendor_profile.shop_name }}
+                                            {% else %}
+                                                Localconnect Shop
+                                            {% endif %}
+                                        </span>
+                                        <span class="profile-email">vendor@localconnect.com</span>
+                                    </div>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <a href="/settings" class="dropdown-item">
+                                    <i class="fa-solid fa-gear"></i>
+                                    <span>Settings</span>
+                                </a>
+                                <a href="/logout" class="dropdown-item logout">
+                                    <i class="fa-solid fa-right-from-bracket"></i>
+                                    <span>Logout</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="content">
+                {% block content %}{% endblock %}
+            </section>
+        </main>
+    </div>
+
+    <script>
+        function toggleDropdown(id) {
+            // Close all other dropdowns first
+            document.querySelectorAll('.dropdown-content').forEach(content => {
+                if (content.id !== id) {
+                    content.classList.remove('show');
+                }
+            });
+            
+            // Toggle the clicked dropdown
+            const dropdown = document.getElementById(id);
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+                console.log('Dropdown toggled:', id, dropdown.classList.contains('show'));
+            } else {
+                console.log('Dropdown not found:', id);
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('active');
+        }
+        
+        function toggleShopStatus(checkbox) {
+            const headerStatusText = document.getElementById('statusText');
+            const statusIndicator = document.querySelector('.status-indicator');
+            const dashboardWrapper = document.querySelector('.dashboard-wrapper');
+            const isOpen = checkbox.checked;
+            
+            // Update status indicator
+            if (statusIndicator) {
+                statusIndicator.className = `status-indicator ${isOpen ? 'open' : 'closed'}`;
+                const statusText = statusIndicator.querySelector('.status-text');
+                if (statusText) statusText.textContent = isOpen ? 'Open' : 'Closed';
+            }
+            
+            // Update toggle text
+            const switchText = document.querySelector('.switch-text');
+            if (switchText) switchText.textContent = isOpen ? 'Open' : 'Closed';
+            
+            // Update dashboard wrapper status
+            if (dashboardWrapper) {
+                dashboardWrapper.setAttribute('data-status', isOpen ? 'open' : 'closed');
+            }
+            
+            // Send AJAX request
+            fetch('/toggle_shop_status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ is_open: isOpen })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    // Revert if failed
+                    checkbox.checked = !isOpen;
+                    if (statusIndicator) {
+                        statusIndicator.className = `status-indicator ${!isOpen ? 'open' : 'closed'}`;
+                        const statusText = statusIndicator.querySelector('.status-text');
+                        if (statusText) statusText.textContent = !isOpen ? 'Open' : 'Closed';
+                    }
+                    if (switchText) switchText.textContent = !isOpen ? 'Open' : 'Closed';
+                    if (dashboardWrapper) {
+                        dashboardWrapper.setAttribute('data-status', !isOpen ? 'open' : 'closed');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Revert if failed
+                checkbox.checked = !isOpen;
+                if (statusIndicator) {
+                    statusIndicator.className = `status-indicator ${!isOpen ? 'open' : 'closed'}`;
+                    const statusText = statusIndicator.querySelector('.status-text');
+                    if (statusText) statusText.textContent = !isOpen ? 'Open' : 'Closed';
+                }
+                if (switchText) switchText.textContent = !isOpen ? 'Open' : 'Closed';
+                if (dashboardWrapper) {
+                    dashboardWrapper.setAttribute('data-status', !isOpen ? 'open' : 'closed');
+                }
+            });
+        }
+
+        // Load shop image on all pages
+        function loadGlobalShopImage() {
+            const savedImage = localStorage.getItem('shopImage');
+            const imageType = localStorage.getItem('shopImageType');
+            
+            if (savedImage && imageType) {
+                const headerImage = document.getElementById('headerShopImage');
+                const dropdownImage = document.getElementById('dropdownShopImage');
+                
+                if (imageType === 'emoji') {
+                    if (headerImage) {
+                        headerImage.innerHTML = savedImage;
+                        headerImage.style.fontSize = '1.2rem';
+                        headerImage.style.background = '#f3f4f6';
+                    }
+                    if (dropdownImage) {
+                        dropdownImage.innerHTML = savedImage;
+                        dropdownImage.style.fontSize = '1.8rem';
+                        dropdownImage.style.background = '#f3f4f6';
+                    }
+                } else if (imageType === 'upload') {
+                    if (headerImage) {
+                        headerImage.innerHTML = `<img src="${savedImage}" alt="Shop" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                        headerImage.style.background = 'transparent';
+                    }
+                    if (dropdownImage) {
+                        dropdownImage.innerHTML = `<img src="${savedImage}" alt="Shop" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                        dropdownImage.style.background = 'transparent';
+                    }
+                }
+            }
+        }
+        
+        // Load shop name on all pages
+        function loadGlobalShopName() {
+            const savedShopName = localStorage.getItem('shopName');
+            if (savedShopName) {
+                const headerProfileName = document.querySelector('.profile-name');
+                const dropdownProfileName = document.querySelector('.profile-details .profile-name');
+                
+                if (headerProfileName) {
+                    const displayName = savedShopName.length > 15 ? savedShopName.substring(0, 15) + '...' : savedShopName;
+                    headerProfileName.textContent = displayName;
+                }
+                
+                if (dropdownProfileName) {
+                    dropdownProfileName.textContent = savedShopName;
+                }
+            }
+        }
+        
+        // Load shop email on all pages
+        function loadGlobalShopEmail() {
+            const savedShopEmail = localStorage.getItem('shopEmail');
+            const dropdownProfileEmail = document.querySelector('.profile-details .profile-email');
+            
+            if (dropdownProfileEmail) {
+                if (savedShopEmail) {
+                    dropdownProfileEmail.textContent = savedShopEmail;
+                } else {
+                    dropdownProfileEmail.textContent = 'vendor@localconnect.com';
+                }
+            }
+        }
+        
+        // Load shop image, name, and email when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadGlobalShopImage();
+            loadGlobalShopName();
+            loadGlobalShopEmail();
+        });
+        
+        window.addEventListener('click', function(event) {
+            if (!event.target.closest('.profile-section') && !event.target.closest('.notification-wrapper')) {
+                document.querySelectorAll('.dropdown-content').forEach(content => {
+                    content.classList.remove('show');
+                });
+            }
+            // Close sidebar when clicking outside on mobile
+            if (!event.target.closest('.sidebar') && !event.target.closest('.hamburger-menu')) {
+                document.querySelector('.sidebar').classList.remove('active');
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

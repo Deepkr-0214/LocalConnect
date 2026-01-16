@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block page_title %}Reviews Management{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/reviews.css') }}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/reviews.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="reviews-container">
+    <!-- Reviews Overview Stats -->
+    <div class="reviews-overview">
+        <div class="overview-card rating-summary">
+            <div class="card-icon">
+                <i class="fa-solid fa-star"></i>
+            </div>
+            <div class="card-content">
+                <h3>{{ avg_rating }}</h3>
+                <p>Average Rating</p>
+                <div class="stars-display">
+                    {% for i in range(5) %}
+                        {% if i < avg_rating|int %}
+                            <i class="fa-solid fa-star"></i>
+                        {% elif i < avg_rating %}
+                            <i class="fa-solid fa-star-half-stroke"></i>
+                        {% else %}
+                            <i class="fa-regular fa-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="overview-card total-reviews">
+            <div class="card-icon">
+                <i class="fa-solid fa-comments"></i>
+            </div>
+            <div class="card-content">
+                <h3>{{ total_count }}</h3>
+                <p>Total Reviews</p>
+                <div class="card-info">
+                    <span>{{ recent_count }} this month</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="overview-card response-stats">
+            <div class="card-icon">
+                <i class="fa-solid fa-reply"></i>
+            </div>
+            <div class="card-content">
+                <h3>{{ response_rate }}%</h3>
+                <p>Response Rate</p>
+                <div class="card-info">
+                    <span>{{ responded_count }}/{{ total_count }} responded</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filter Tabs -->
+    <div class="review-filters">
+        <a href="{{ url_for('reviews', filter='all') }}" class="filter-btn {{ 'active' if current_filter == 'all' else '' }}">
+            All Reviews <span class="count">({{ total_count }})</span>
+        </a>
+        <a href="{{ url_for('reviews', filter='5') }}" class="filter-btn {{ 'active' if current_filter == '5' else '' }}">
+            5 Stars <span class="count">({{ five_star_count }})</span>
+        </a>
+        <a href="{{ url_for('reviews', filter='4') }}" class="filter-btn {{ 'active' if current_filter == '4' else '' }}">
+            4 Stars <span class="count">({{ four_star_count }})</span>
+        </a>
+        <a href="{{ url_for('reviews', filter='3') }}" class="filter-btn {{ 'active' if current_filter == '3' else '' }}">
+            3 Stars <span class="count">({{ three_star_count }})</span>
+        </a>
+        <a href="{{ url_for('reviews', filter='2') }}" class="filter-btn {{ 'active' if current_filter == '2' else '' }}">
+            2 Stars <span class="count">({{ two_star_count }})</span>
+        </a>
+        <a href="{{ url_for('reviews', filter='1') }}" class="filter-btn {{ 'active' if current_filter == '1' else '' }}">
+            1 Star <span class="count">({{ one_star_count }})</span>
+        </a>
+        <a href="{{ url_for('reviews', filter='pending') }}" class="filter-btn {{ 'active' if current_filter == 'pending' else '' }}">
+            Pending Response <span class="count">({{ pending_count }})</span>
+        </a>
+        <a href="{{ url_for('reviews', filter='responded') }}" class="filter-btn {{ 'active' if current_filter == 'responded' else '' }}">
+            Responded <span class="count">({{ responded_count }})</span>
+        </a>
+    </div>
+    
+    <!-- Reviews List -->
+    <div class="reviews-list" id="reviewsList">
+        {% for review in reviews %}
+        <div class="review-card" 
+             data-rating="{{ review.rating|int }}" 
+             data-responded="{{ 'true' if review.response else 'false' }}"
+             data-helpful="{{ 'true' if review.is_helpful else 'false' }}"
+             data-review-id="{{ review.id }}">
+            
+            <!-- Review Header -->
+            <div class="review-header">
+                <div class="customer-info">
+                    <div class="customer-avatar">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="customer-details">
+                        <h4 class="customer-name">{{ review.customer_name }}</h4>
+                        <div class="review-meta">
+                            <span class="review-date">{{ review.date_posted.strftime('%d %b %Y, %I:%M %p') }}</span>
+                            <span class="review-separator">•</span>
+                            <span class="review-type">Verified Customer</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="review-rating">
+                    <div class="stars">
+                        {% for i in range(5) %}
+                            {% if i < review.rating|int %}
+                                <i class="fa-solid fa-star"></i>
+                            {% else %}
+                                <i class="fa-regular fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <span class="rating-number">{{ review.rating }}/5</span>
+                </div>
+            </div>
+            
+            <!-- Customer Review Content -->
+            <div class="review-content">
+                <p class="review-comment">{{ review.comment }}</p>
+            </div>
+            
+            <!-- Shop Response Section -->
+            {% if review.response %}
+            <div class="shop-response">
+                <div class="response-header">
+                    <div class="response-label">
+                        <i class="fa-solid fa-reply"></i>
+                        <span>Shop Response</span>
+                    </div>
+                    <span class="response-date">{{ review.response_date.strftime('%d %b %Y') if review.response_date else '' }}</span>
+                </div>
+                <div class="response-content" id="responseContent{{ review.id }}">
+                    <p class="response-text">{{ review.response }}</p>
+                </div>
+                <div class="edit-form" id="editForm{{ review.id }}" style="display: none;">
+                    <textarea class="edit-textarea" id="editText{{ review.id }}">{{ review.response }}</textarea>
+                    <div class="edit-actions">
+                        <button class="btn-cancel-edit" onclick="cancelEdit({{ review.id }})">
+                            Cancel
+                        </button>
+                        <button class="btn-save-edit" onclick="saveEdit({{ review.id }})">
+                            Save
+                        </button>
+                    </div>
+                </div>
+                <div class="response-actions">
+                    <button class="btn-edit" onclick="editResponse({{ review.id }})">
+                        <i class="fa-solid fa-pen"></i> Edit Response
+                    </button>
+                    <button class="btn-helpful" onclick="markHelpful({{ review.id }})">
+                        <i class="fa-solid fa-heart"></i> Mark as Helpful
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <!-- Respond to Review Section -->
+            <div class="respond-section">
+                <button class="btn-respond" onclick="toggleResponseBox({{ review.id }})">
+                    <i class="fa-solid fa-arrow-right"></i> Respond
+                </button>
+                
+                <div class="response-box" id="responseBox{{ review.id }}" style="display: none;">
+                    <form class="response-form" onsubmit="submitResponse(event, {{ review.id }})">
+                        <textarea class="response-textarea" 
+                                  id="responseText{{ review.id }}"
+                                  placeholder="Type your response here…" 
+                                  maxlength="500"
+                                  required></textarea>
+                        
+                        <div class="quick-responses">
+                            <button type="button" class="quick-btn" onclick="useTemplate({{ review.id }}, 'thank')">
+                                Thank You
+                            </button>
+                            <button type="button" class="quick-btn" onclick="useTemplate({{ review.id }}, 'improve')">
+                                We'll Improve
+                            </button>
+                            <button type="button" class="quick-btn" onclick="useTemplate({{ review.id }}, 'apologize')">
+                                Apologize
+                            </button>
+                        </div>
+                        
+                        <div class="response-actions">
+                            <button type="button" class="btn-cancel" onclick="toggleResponseBox({{ review.id }})">
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn-send">
+                                <i class="fa-solid fa-paper-plane"></i> Send Response
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fa-solid fa-star"></i>
+            <h4>No Reviews Yet</h4>
+            <p>Customer reviews will appear here once they start rating your service.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Pagination -->
+<div class="pagination-footer">
+    <button class="p-btn"><i class="fa-solid fa-chevron-left"></i> Previous</button>
+    <span class="p-num active">1</span>
+    <button class="p-btn">Next <i class="fa-solid fa-chevron-right"></i></button>
+</div>
+
+<!-- Success/Error Messages -->
+<div id="messageContainer" class="message-container"></div>
+
+{% endblock %}
