@@ -110,9 +110,13 @@
                             <div class="profile-pill" onclick="toggleDropdown('profile-content')" aria-label="Profile menu">
                                 <div class="profile-avatar" id="headerShopImage" onclick="event.stopPropagation(); showShopImageModal();" style="cursor: pointer;" title="Click to change profile image">
                                     {% if vendor_profile and vendor_profile.shop_image %}
-                                        {{ vendor_profile.shop_image }}
+                                        {% if vendor_profile.shop_image.startswith('data:image') %}
+                                            <img src="{{ vendor_profile.shop_image }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+                                        {% else %}
+                                            {{ vendor_profile.shop_image }}
+                                        {% endif %}
                                     {% else %}
-                                        <i class="fa-solid fa-store"></i>
+                                        🏪
                                     {% endif %}
                                 </div>
                                 <div class="profile-info">
@@ -131,9 +135,13 @@
                                 <div class="profile-header">
                                     <div class="profile-avatar large" id="dropdownShopImage" onclick="showShopImageModal()" style="cursor: pointer;" title="Click to change image">
                                         {% if vendor_profile and vendor_profile.shop_image %}
-                                            {{ vendor_profile.shop_image }}
+                                            {% if vendor_profile.shop_image.startswith('data:image') %}
+                                                <img src="{{ vendor_profile.shop_image }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+                                            {% else %}
+                                                {{ vendor_profile.shop_image }}
+                                            {% endif %}
                                         {% else %}
-                                            <i class="fa-solid fa-store"></i>
+                                            🏪
                                         {% endif %}
                                     </div>
                                     <div class="profile-details">

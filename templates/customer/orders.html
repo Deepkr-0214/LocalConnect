@@ -135,6 +135,7 @@
                     <div class="status-info">
                         <span class="status-badge ${order.status}">${order.status.replace('_', ' ')}</span>
                         <span class="order-type">${order.deliveryType === 'delivery' ? '🚚 Delivery' : '🏪 Takeaway'}</span>
+                        ${order.status === 'ready' ? `<span style="background:#27ae60;color:white;padding:8px 15px;border-radius:20px;font-weight:600;margin-top:10px;display:inline-block;">${order.deliveryType === 'delivery' ? '✓ Ready to Deliver' : '✓ Ready to Take'}</span>` : ''}
                     </div>
                 </div>
                 

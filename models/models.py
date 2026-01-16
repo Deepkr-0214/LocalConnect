@@ -32,7 +32,7 @@ class Vendor(db.Model):
     phone = db.Column(db.String(20), nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     is_open = db.Column(db.Boolean, default=True)
-    shop_image = db.Column(db.String(200), default='🏪')
+    shop_image = db.Column(db.Text, default='🏪')
     about = db.Column(db.Text)
     category_type = db.Column(db.String(50))
     veg_nonveg = db.Column(db.String(20))
