@@ -1,4 +1,4 @@
-git remote add origin https://github.com/Deepkr-0214/LocalConnect.git:root {
+:root {
     --primary: #22c55e;
     --neon-gradient: linear-gradient(135deg, #10b981 0%, #34d399 50%, #6ee7b7 100%);
     --text-dark: #0f172a;
