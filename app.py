@@ -98,17 +98,33 @@ def customer_dashboard():
 @app.route('/customer/food-restaurants')
 @customer_required
 def food_restaurants():
+    from sqlalchemy import func
     user_id = session.get('user_id')
     vendors = Vendor.query.all()
-    vendors_data = [{
-        'id': v.id,
-        'name': v.business_name,
-        'category': v.business_category,
-        'is_open': v.is_open if hasattr(v, 'is_open') else True,
-        'shop_image': v.shop_image if hasattr(v, 'shop_image') else '🏪',
-        'address': v.business_address,
-        'phone': v.phone
-    } for v in vendors]
+    vendors_data = []
+    
+    for v in vendors:
+        # Get min and max prices from vendor's menu
+        price_query = db.session.query(
+            func.min(MenuItem.price).label('min_price'),
+            func.max(MenuItem.price).label('max_price')
+        ).filter_by(vendor_id=v.id).first()
+        
+        min_price = int(price_query.min_price) if price_query.min_price else 100
+        max_price = int(price_query.max_price) if price_query.max_price else 300
+        
+        vendors_data.append({
+            'id': v.id,
+            'name': v.business_name,
+            'category': v.business_category,
+            'is_open': v.is_open if hasattr(v, 'is_open') else True,
+            'shop_image': v.shop_image if hasattr(v, 'shop_image') else '🏪',
+            'address': v.business_address,
+            'phone': v.phone,
+            'min_price': min_price,
+            'max_price': max_price
+        })
+    
     return render_template('customer/food&rest.html', user_name=session.get('user_name'), user_id=user_id, vendors=vendors_data)
 
 @app.route('/customer/orders')
@@ -667,6 +683,24 @@ def vendor_settings():
         vendor.business_category = request.form.get('business_category', vendor.business_category)
         vendor.phone = request.form.get('phone', vendor.phone)
         vendor.business_address = request.form.get('address', vendor.business_address)
+        vendor.about = request.form.get('about', vendor.about)
+        vendor.category_type = request.form.get('category_type')
+        vendor.veg_nonveg = request.form.get('veg_nonveg')
+        opening_time = request.form.get('opening_time')
+        opening_period = request.form.get('opening_period')
+        closing_time = request.form.get('closing_time')
+        closing_period = request.form.get('closing_period')
+        vendor.opening_time = f"{opening_time} {opening_period}" if opening_time and opening_period else None
+        vendor.closing_time = f"{closing_time} {closing_period}" if closing_time and closing_period else None
+        vendor.indoor_seating = request.form.get('indoor_seating') == '1'
+        vendor.outdoor_seating = request.form.get('outdoor_seating') == '1'
+        vendor.home_delivery = request.form.get('home_delivery') == '1'
+        vendor.takeaway = request.form.get('takeaway') == '1'
+        vendor.free_wifi = request.form.get('free_wifi') == '1'
+        vendor.ac = request.form.get('ac') == '1'
+        vendor.cooler = request.form.get('cooler') == '1'
+        vendor.parking = request.form.get('parking')
+        vendor.other_amenities = request.form.get('other_amenities')
         db.session.commit()
         
         # Update session

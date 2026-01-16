@@ -26,7 +26,7 @@ class FoodRestaurantPage {
             distance: (Math.random() * 3 + 0.5).toFixed(1) + ' km',
             image: v.shop_image || '🏪',
             cuisine: v.category,
-            priceRange: '₹100-300',
+            priceRange: `₹${v.min_price}-${v.max_price}`,
             deliveryTime: '15-25 min',
             isOpen: v.is_open
         }));

@@ -56,6 +56,9 @@
                     <select id="business_category" name="business_category" required>
                         <option value="">Select Category</option>
                         <option value="food" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'food' else '' }}>Food & Restaurant</option>
+                        <option value="Restaurant" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Restaurant' else '' }}>Restaurant</option>
+                        <option value="Street Food" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Street Food' else '' }}>Street Food</option>
+                        <option value="Dhaba" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Dhaba' else '' }}>Dhaba</option>
                         <option value="medicine" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'medicine' else '' }}>Medicine</option>
                         <option value="groceries" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'groceries' else '' }}>Groceries</option>
                         <option value="other" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'other' else '' }}>Other</option>
@@ -70,6 +73,94 @@
                 <div class="form-group">
                     <label for="phone">Phone</label>
                     <input type="tel" id="phone" name="phone" value="{{ vendor_profile.phone if vendor_profile else '' }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="about">About</label>
+                    <textarea id="about" name="about" placeholder="Tell customers about your shop" rows="4">{{ vendor_profile.about if vendor_profile and vendor_profile.about else '' }}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category_type">Category Type <span style="color:red;">*</span></label>
+                    <input type="text" id="category_type" name="category_type" placeholder="e.g., Chinese, Italian, Street Food, etc." value="{{ vendor_profile.category_type if vendor_profile and vendor_profile.category_type else '' }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="veg_nonveg">Veg/Non-Veg <span style="color:red;">*</span></label>
+                    <select id="veg_nonveg" name="veg_nonveg" required>
+                        <option value="">Select Type</option>
+                        <option value="Pure Veg" {{ 'selected' if vendor_profile and vendor_profile.veg_nonveg == 'Pure Veg' else '' }}>Pure Veg</option>
+                        <option value="Non Veg" {{ 'selected' if vendor_profile and vendor_profile.veg_nonveg == 'Non Veg' else '' }}>Non Veg</option>
+                        <option value="Both" {{ 'selected' if vendor_profile and vendor_profile.veg_nonveg == 'Both' else '' }}>Both</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Timings <span style="color:red;">*</span></label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+                        <div style="position:relative;display:flex;align-items:center;border:2px solid #e0e0e0;border-radius:10px;overflow:hidden;transition:border-color 0.3s;" onmouseover="this.style.borderColor='#27ae60'" onmouseout="this.style.borderColor='#e0e0e0'">
+                            <span style="padding:0 12px;color:#666;font-size:1.1rem;">🕐</span>
+                            <input type="time" name="opening_time" value="{{ vendor_profile.opening_time.split()[0] if vendor_profile and vendor_profile.opening_time and ' ' in vendor_profile.opening_time else '' }}" required style="flex:1;padding:12px 8px;border:none;outline:none;font-size:1rem;">
+                            <select name="opening_period" required style="border:none;border-left:2px solid #e0e0e0;padding:12px 15px;background:#f8f9fa;outline:none;cursor:pointer;font-weight:600;color:#555;">
+                                <option value="AM" {{ 'selected' if vendor_profile and vendor_profile.opening_time and 'AM' in vendor_profile.opening_time else '' }}>AM</option>
+                                <option value="PM" {{ 'selected' if vendor_profile and vendor_profile.opening_time and 'PM' in vendor_profile.opening_time else '' }}>PM</option>
+                            </select>
+                        </div>
+                        <div style="position:relative;display:flex;align-items:center;border:2px solid #e0e0e0;border-radius:10px;overflow:hidden;transition:border-color 0.3s;" onmouseover="this.style.borderColor='#27ae60'" onmouseout="this.style.borderColor='#e0e0e0'">
+                            <span style="padding:0 12px;color:#666;font-size:1.1rem;">🕐</span>
+                            <input type="time" name="closing_time" value="{{ vendor_profile.closing_time.split()[0] if vendor_profile and vendor_profile.closing_time and ' ' in vendor_profile.closing_time else '' }}" required style="flex:1;padding:12px 8px;border:none;outline:none;font-size:1rem;">
+                            <select name="closing_period" required style="border:none;border-left:2px solid #e0e0e0;padding:12px 15px;background:#f8f9fa;outline:none;cursor:pointer;font-weight:600;color:#555;">
+                                <option value="AM" {{ 'selected' if vendor_profile and vendor_profile.closing_time and 'AM' in vendor_profile.closing_time else '' }}>AM</option>
+                                <option value="PM" {{ 'selected' if vendor_profile and vendor_profile.closing_time and 'PM' in vendor_profile.closing_time else '' }}>PM</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Amenities (Optional)</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" name="indoor_seating" value="1" {{ 'checked' if vendor_profile and vendor_profile.indoor_seating else '' }}>
+                            <span>Indoor Seating</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" name="outdoor_seating" value="1" {{ 'checked' if vendor_profile and vendor_profile.outdoor_seating else '' }}>
+                            <span>Outdoor Seating</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" name="home_delivery" value="1" {{ 'checked' if vendor_profile and vendor_profile.home_delivery else '' }}>
+                            <span>Home Delivery</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" name="takeaway" value="1" {{ 'checked' if vendor_profile and vendor_profile.takeaway else '' }}>
+                            <span>Takeaway</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" name="free_wifi" value="1" {{ 'checked' if vendor_profile and vendor_profile.free_wifi else '' }}>
+                            <span>Free Wi-Fi</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" name="ac" value="1" {{ 'checked' if vendor_profile and vendor_profile.ac else '' }}>
+                            <span>AC</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" name="cooler" value="1" {{ 'checked' if vendor_profile and vendor_profile.cooler else '' }}>
+                            <span>Cooler</span>
+                        </label>
+                    </div>
+                    <div style="margin-top:15px;">
+                        <label style="display:block;margin-bottom:8px;">Parking</label>
+                        <select name="parking" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;">
+                            <option value="">Select Parking Option</option>
+                            <option value="Available" {{ 'selected' if vendor_profile and vendor_profile.parking == 'Available' else '' }}>Parking Available</option>
+                            <option value="Not Available" {{ 'selected' if vendor_profile and vendor_profile.parking == 'Not Available' else '' }}>Parking Not Available</option>
+                        </select>
+                    </div>
+                    <div style="margin-top:15px;">
+                        <label style="display:block;margin-bottom:8px;">Other Amenities</label>
+                        <textarea name="other_amenities" placeholder="Add other amenities (comma separated)" rows="2" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;">{{ vendor_profile.other_amenities if vendor_profile and vendor_profile.other_amenities else '' }}</textarea>
+                    </div>
                 </div>
                 
                 <div class="form-actions">
