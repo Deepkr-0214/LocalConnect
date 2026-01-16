@@ -4,89 +4,32 @@
 
 class FoodRestaurantPage {
     constructor() {
-        this.vendors = [
-            {
-                id: 1,
-                name: "Raj's Chaat Corner",
-                category: "street",
-                rating: 4.5,
-                reviews: 1200,
-                distance: "1.2 km",
-                image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=300&h=200&fit=crop",
-                cuisine: "Street Food",
-                priceRange: "₹100-300",
-                deliveryTime: "15-25 min",
-                isOpen: true
-            },
-            {
-                id: 2,
-                name: "Sharma Sweets & Snacks",
-                category: "shop",
-                rating: 4.3,
-                reviews: 850,
-                distance: "0.8 km",
-                image: "https://images.unsplash.com/photo-1559181567-c3190ca9959b?w=300&h=200&fit=crop",
-                cuisine: "Sweets & Snacks",
-                priceRange: "₹50-200",
-                deliveryTime: "10-20 min",
-                isOpen: true
-            },
-            {
-                id: 3,
-                name: "Delhi Darbar Restaurant",
-                category: "restaurant",
-                rating: 4.7,
-                reviews: 2100,
-                distance: "2.1 km",
-                image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=300&h=200&fit=crop",
-                cuisine: "North Indian",
-                priceRange: "₹300-800",
-                deliveryTime: "25-35 min",
-                isOpen: true
-            },
-            {
-                id: 4,
-                name: "Momos Point",
-                category: "street",
-                rating: 4.2,
-                reviews: 650,
-                distance: "0.5 km",
-                image: "https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=300&h=200&fit=crop",
-                cuisine: "Momos & Chinese",
-                priceRange: "₹80-250",
-                deliveryTime: "10-15 min",
-                isOpen: false
-            },
-            {
-                id: 5,
-                name: "Fresh Fruits Corner",
-                category: "shop",
-                rating: 4.1,
-                reviews: 320,
-                distance: "1.5 km",
-                image: "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=300&h=200&fit=crop",
-                cuisine: "Fresh Fruits",
-                priceRange: "₹30-150",
-                deliveryTime: "5-15 min",
-                isOpen: true
-            },
-            {
-                id: 6,
-                name: "Punjabi Dhaba",
-                category: "restaurant",
-                rating: 4.4,
-                reviews: 1800,
-                distance: "3.2 km",
-                image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=300&h=200&fit=crop",
-                cuisine: "Punjabi",
-                priceRange: "₹250-600",
-                deliveryTime: "30-40 min",
-                isOpen: true
-            }
-        ];
-
+        this.vendors = this.loadVendors();
         this.filteredVendors = [...this.vendors];
         this.init();
+    }
+
+    loadVendors() {
+        const categoryMap = {
+            'Street Food': 'street',
+            'Food Shop': 'shop',
+            'Restaurant': 'restaurant',
+            'Dhaba': 'restaurant'
+        };
+        
+        return vendorsFromServer.map(v => ({
+            id: v.id,
+            name: v.name,
+            category: categoryMap[v.category] || 'shop',
+            rating: 4.5,
+            reviews: Math.floor(Math.random() * 1000) + 100,
+            distance: (Math.random() * 3 + 0.5).toFixed(1) + ' km',
+            image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=300&h=200&fit=crop',
+            cuisine: v.category,
+            priceRange: '₹100-300',
+            deliveryTime: '15-25 min',
+            isOpen: v.is_open
+        }));
     }
 
     init() {
