@@ -100,12 +100,21 @@
     </div>
 
     <script src="/static/js/customer/base.js"></script>
+    <script type="application/json" id="vendors-data">
+        {{ vendors| tojson | safe }}
+    </script>
+    <script type="application/json" id="customer-lat">
+        {{ customer_lat| tojson | safe }}
+    </script>
+    <script type="application/json" id="customer-lon">
+        {{ customer_lon| tojson | safe }}
+    </script>
     <script>
-        // Load vendors from server
-        const vendorsFromServer = {{ vendors| tojson | safe }};
+        // Load vendors from server using the JSON script block to avoid linter errors
+        const vendorsFromServer = JSON.parse(document.getElementById('vendors-data').textContent);
         // Customer stored coordinates (from profile)
-        const customerStoredLat = {{ customer_lat| tojson | safe }};
-        const customerStoredLon = {{ customer_lon| tojson | safe }};
+        const customerStoredLat = JSON.parse(document.getElementById('customer-lat').textContent);
+        const customerStoredLon = JSON.parse(document.getElementById('customer-lon').textContent);
     </script>
     <script src="/static/js/customer/scripts.js"></script>
 </body>

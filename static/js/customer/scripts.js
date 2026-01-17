@@ -22,8 +22,8 @@ class FoodRestaurantPage {
             id: v.id,
             name: v.name,
             category: categoryMap[v.category] || 'shop',
-            rating: 4.5,
-            reviews: Math.floor(Math.random() * 1000) + 100,
+            rating: v.rating || 0,
+            reviews: v.review_count || 0,
             distance: 'Getting location...',
             image: v.shop_image || '🏪',
             cuisine: v.category,
@@ -69,7 +69,7 @@ class FoodRestaurantPage {
             console.log('Using stored customer location');
             calculateDistances(customerStoredLat, customerStoredLon);
         }
-        
+
         // Always try to get live browser location for real-time distance
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(

@@ -119,6 +119,15 @@ def food_restaurants():
         min_price = int(price_query.min_price) if price_query.min_price else 100
         max_price = int(price_query.max_price) if price_query.max_price else 300
         
+        # Get rating stats
+        rating_data = db.session.query(
+            func.avg(Order.review_rating).label('avg_rating'),
+            func.count(Order.review_rating).label('review_count')
+        ).filter(Order.vendor_id==v.id, Order.review_rating!=None).first()
+        
+        avg_rating = round(rating_data.avg_rating, 1) if rating_data.avg_rating else 0
+        review_count = rating_data.review_count if rating_data.review_count else 0
+        
         vendors_data.append({
             'id': v.id,
             'name': v.business_name,
@@ -130,7 +139,9 @@ def food_restaurants():
             'min_price': min_price,
             'max_price': max_price,
             'latitude': v.latitude if hasattr(v, 'latitude') else None,
-            'longitude': v.longitude if hasattr(v, 'longitude') else None
+            'longitude': v.longitude if hasattr(v, 'longitude') else None,
+            'rating': avg_rating,
+            'review_count': review_count
         })
     
     return render_template('customer/food&rest.html', 
