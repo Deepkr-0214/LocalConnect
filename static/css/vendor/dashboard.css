@@ -99,6 +99,8 @@
 .blue-bg { background: linear-gradient(135deg, #dbeafe 0%, #93c5fd 100%); color: #1e40af; }
 .star-bg { background: linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%); color: #92400e; }
 .orange-bg { background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%); color: #c2410c; }
+.purple-bg { background: linear-gradient(135deg, #e9d5ff 0%, #c084fc 100%); color: #7c2d12; }
+.red-bg { background: linear-gradient(135deg, #fecaca 0%, #f87171 100%); color: #991b1b; }
 
 .stat-info {
     flex: 1;

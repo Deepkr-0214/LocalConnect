@@ -97,6 +97,18 @@ class Order(db.Model):
     review_comment = db.Column(db.Text)
     review_date = db.Column(db.DateTime)
     
+    # Status timestamps
+    preparing_at = db.Column(db.DateTime)
+    out_for_delivery_at = db.Column(db.DateTime)
+    ready_at = db.Column(db.DateTime)
+    completed_at = db.Column(db.DateTime)
+    rejected_at = db.Column(db.DateTime)
+    
+    # Vendor Response Fields
+    vendor_response = db.Column(db.Text)
+    vendor_response_date = db.Column(db.DateTime)
+    response_helpful = db.Column(db.Integer, default=0)
+    
     def get_items(self):
         return json.loads(self.items)
     

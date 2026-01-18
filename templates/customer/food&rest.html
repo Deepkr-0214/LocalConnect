@@ -110,6 +110,26 @@
         {{ customer_lon| tojson | safe }}
     </script>
     <script>
+        // Global functions for profile dropdown
+        function viewProfile() {
+            window.location.href = '/customer/profile';
+        }
+        
+        function myOrders() {
+            window.location.href = '/customer/orders';
+        }
+        
+        function logout() {
+            // Clear any local storage or session storage
+            if (typeof(Storage) !== "undefined") {
+                localStorage.clear();
+                sessionStorage.clear();
+            }
+            
+            // Redirect to logout endpoint
+            window.location.href = '/logout';
+        }
+        
         // Load vendors from server using the JSON script block to avoid linter errors
         const vendorsFromServer = JSON.parse(document.getElementById('vendors-data').textContent);
         // Customer stored coordinates (from profile)

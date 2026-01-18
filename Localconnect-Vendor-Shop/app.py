@@ -42,7 +42,7 @@ def dashboard():
         )
     ).count()
     
-    # Today's Earnings - sum of completed orders today for this vendor
+    # Today's Earnings - ONLY completed orders today for this vendor
     todays_earnings = db.session.query(func.sum(Order.total)).filter(
         and_(
             Order.vendor_id == vendor_id,
@@ -51,11 +51,12 @@ def dashboard():
         )
     ).scalar() or 0.0
     
-    # Average Rating from order reviews for this vendor
+    # Average Rating from completed order reviews only for this vendor
     avg_rating = db.session.query(func.avg(Order.review_rating)).filter(
         and_(
             Order.vendor_id == vendor_id,
-            Order.review_rating.isnot(None)
+            Order.review_rating.isnot(None),
+            Order.status == 'Completed'
         )
     ).scalar() or 0.0
     
@@ -212,77 +213,44 @@ def update_order(order_id):
 def earnings():
     from datetime import datetime, timedelta
     from sqlalchemy import and_, extract, func as sql_func
+    from order_filters import OrderFilters
     
     vendor_id = 1  # Default vendor ID for standalone vendor app
     
     try:
-        # Get current date and time periods
-        now = datetime.now()
-        today = now.date()
-        week_start = today - timedelta(days=today.weekday())
-        month_start = today.replace(day=1)
+        # All earnings calculations use ONLY completed orders with DB aggregation
+        total_earnings = OrderFilters.calculate_total_earnings(Order, db, vendor_id)
+        month_earnings = OrderFilters.calculate_month_earnings(Order, db, vendor_id)
+        week_earnings = OrderFilters.calculate_week_earnings(Order, db, vendor_id)
+        today_earnings = OrderFilters.calculate_today_earnings(Order, db, vendor_id)
         
-        # 1. Total Earnings (all completed orders for this vendor)
-        total_earnings = db.session.query(sql_func.sum(Order.total)).filter(
-            and_(
-                Order.vendor_id == vendor_id,
-                Order.status == 'Completed'
-            )
-        ).scalar() or 0.0
-        
-        # 2. This Month Earnings
-        month_earnings = db.session.query(sql_func.sum(Order.total)).filter(
-            and_(
-                Order.vendor_id == vendor_id,
-                Order.status == 'Completed',
-                Order.date_posted >= month_start
-            )
-        ).scalar() or 0.0
-        
-        # 3. This Week Earnings
-        week_earnings = db.session.query(sql_func.sum(Order.total)).filter(
-            and_(
-                Order.vendor_id == vendor_id,
-                Order.status == 'Completed',
-                Order.date_posted >= week_start
-            )
-        ).scalar() or 0.0
-        
-        # 4. Today Earnings
-        today_earnings = db.session.query(sql_func.sum(Order.total)).filter(
-            and_(
-                Order.vendor_id == vendor_id,
-                Order.status == 'Completed',
-                sql_func.date(Order.date_posted) == today
-            )
-        ).scalar() or 0.0
-        
-        # 5. Order statistics
-        total_orders = Order.query.filter(Order.vendor_id == vendor_id, Order.status == 'Completed').count()
-        completed_orders = total_orders
+        # Order statistics - only from completed orders
+        completed_orders = OrderFilters.get_completed_orders_count(Order, vendor_id)
+        total_orders = completed_orders  # For consistency
         pending_orders = Order.query.filter(Order.vendor_id == vendor_id, Order.status == 'Pending').count()
         all_orders_count = Order.query.filter(Order.vendor_id == vendor_id).count()
         completion_rate = (completed_orders / all_orders_count * 100) if all_orders_count > 0 else 0
         
-        # 6. Average order value
-        avg_order_value = total_earnings / total_orders if total_orders > 0 else 0
+        # Average order value - only from completed orders using DB aggregation
+        avg_order_value = OrderFilters.calculate_average_order_value(Order, db, vendor_id)
         
-        # 7. Daily average (simplified)
+        # Daily average (simplified)
         first_order = Order.query.filter_by(vendor_id=vendor_id).order_by(Order.date_posted.asc()).first()
         if first_order:
+            now = datetime.now()
             days_in_business = (now.date() - first_order.date_posted.date()).days + 1
             daily_average = total_earnings / days_in_business if days_in_business > 0 else 0
         else:
             daily_average = 0
         
-        # 8. Simple growth calculations (placeholder)
+        # Simple growth calculations (placeholder)
         month_growth = 15.5  # Placeholder
         week_growth = 8.2    # Placeholder
         
-        # 9. Top category (simplified)
+        # Top category (simplified)
         top_category = 'Veg'  # Placeholder
         
-        # 10. Other metrics (simplified)
+        # Other metrics (simplified)
         peak_hour = 19
         highest_order = db.session.query(sql_func.max(Order.total)).filter(
             and_(
@@ -291,36 +259,16 @@ def earnings():
             )
         ).scalar() or 0
         
-        best_day = db.session.query(sql_func.max(Order.total)).filter(
-            and_(
-                Order.vendor_id == vendor_id,
-                Order.status == 'Completed'
-            )
-        ).scalar() or 0
+        best_day = highest_order  # Simplified
         
-        # 11. Chart data for last 7 days (simplified)
-        chart_data = []
-        chart_labels = []
-        chart_values = []
+        # Chart data for last 7 days - only completed orders with DB aggregation
+        chart_labels, chart_values = OrderFilters.get_earnings_chart_data(Order, db, vendor_id, 7)
         
-        for i in range(6, -1, -1):
-            date = today - timedelta(days=i)
-            day_earnings = db.session.query(sql_func.sum(Order.total)).filter(
-                and_(
-                    Order.vendor_id == vendor_id,
-                    Order.status == 'Completed',
-                    sql_func.date(Order.date_posted) == date
-                )
-            ).scalar() or 0
-            
-            chart_labels.append(date.strftime('%d %b'))
-            chart_values.append(float(day_earnings))
-        
-        # 12. Category data (simplified)
+        # Category data (simplified)
         category_labels = ['Veg', 'Non-Veg', 'Beverages']
         category_values = [float(total_earnings * 0.6), float(total_earnings * 0.3), float(total_earnings * 0.1)]
         
-        # 13. Recent transactions
+        # Recent transactions - only completed orders
         recent_transactions = Order.query.filter(
             and_(
                 Order.vendor_id == vendor_id,
@@ -328,7 +276,7 @@ def earnings():
             )
         ).order_by(Order.date_posted.desc()).limit(5).all()
         
-        # 14. Earnings history
+        # Earnings history - show all orders but earnings only from completed
         earnings_history = Order.query.filter_by(vendor_id=vendor_id).order_by(Order.date_posted.desc()).limit(50).all()
         
         return render_template('earnings_simple.html',
@@ -390,11 +338,12 @@ def reviews():
     vendor_id = 1  # Default vendor ID for standalone vendor app
     filter_type = request.args.get('filter', 'all')
     
-    # Base query - get orders with reviews for this vendor
+    # Base query - get orders with reviews for this vendor (only completed orders)
     query = Order.query.filter(
         and_(
             Order.vendor_id == vendor_id,
-            Order.review_rating.isnot(None)
+            Order.review_rating.isnot(None),
+            Order.status == 'Completed'
         )
     )
     
@@ -412,18 +361,20 @@ def reviews():
     
     filtered_reviews = query.order_by(Order.review_date.desc()).all()
     
-    # Calculate metrics for all reviews (not filtered) for this vendor
+    # Calculate metrics for all reviews (not filtered) for this vendor - only completed orders
     avg_rating = db.session.query(func.avg(Order.review_rating)).filter(
         and_(
             Order.vendor_id == vendor_id,
-            Order.review_rating.isnot(None)
+            Order.review_rating.isnot(None),
+            Order.status == 'Completed'
         )
     ).scalar() or 0.0
     
     total_count = Order.query.filter(
         and_(
             Order.vendor_id == vendor_id,
-            Order.review_rating.isnot(None)
+            Order.review_rating.isnot(None),
+            Order.status == 'Completed'
         )
     ).count()
     
@@ -432,7 +383,8 @@ def reviews():
         and_(
             Order.vendor_id == vendor_id,
             Order.review_rating.isnot(None),
-            Order.review_date >= current_month
+            Order.review_date >= current_month,
+            Order.status == 'Completed'
         )
     ).count()
     
@@ -440,11 +392,12 @@ def reviews():
     responded_count = 0
     response_rate = 0
     
-    five_star_count = Order.query.filter(Order.vendor_id == vendor_id, Order.review_rating == 5).count()
-    four_star_count = Order.query.filter(Order.vendor_id == vendor_id, Order.review_rating == 4).count()
-    three_star_count = Order.query.filter(Order.vendor_id == vendor_id, Order.review_rating == 3).count()
-    two_star_count = Order.query.filter(Order.vendor_id == vendor_id, Order.review_rating == 2).count()
-    one_star_count = Order.query.filter(Order.vendor_id == vendor_id, Order.review_rating == 1).count()
+    # Star counts - only from completed orders
+    five_star_count = Order.query.filter(Order.vendor_id == vendor_id, Order.review_rating == 5, Order.status == 'Completed').count()
+    four_star_count = Order.query.filter(Order.vendor_id == vendor_id, Order.review_rating == 4, Order.status == 'Completed').count()
+    three_star_count = Order.query.filter(Order.vendor_id == vendor_id, Order.review_rating == 3, Order.status == 'Completed').count()
+    two_star_count = Order.query.filter(Order.vendor_id == vendor_id, Order.review_rating == 2, Order.status == 'Completed').count()
+    one_star_count = Order.query.filter(Order.vendor_id == vendor_id, Order.review_rating == 1, Order.status == 'Completed').count()
     pending_count = 0
 
     return render_template('reviews_system.html',

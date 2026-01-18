@@ -74,19 +74,23 @@
             <div class="restaurant-details-card">
                 <div class="title-row">
                     <h2>{{ vendor.business_name }}</h2>
+                    <div class="vendor-highlights" style="display: flex; gap: 12px; margin-top: 15px; flex-wrap: wrap; animation: slideInUp 0.6s ease-out 0.4s both;">
+                        <span class="highlight-badge premium-badge" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: white; padding: 8px 16px; border-radius: 25px; font-size: 0.85rem; font-weight: 700; box-shadow: 0 4px 15px rgba(255,107,107,0.3); display: flex; align-items: center; gap: 6px; transition: all 0.3s ease;">⭐ Premium Quality</span>
+                        <span class="highlight-badge speed-badge" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 8px 16px; border-radius: 25px; font-size: 0.85rem; font-weight: 700; box-shadow: 0 4px 15px rgba(79,172,254,0.3); display: flex; align-items: center; gap: 6px; transition: all 0.3s ease;">🚀 Fast Service</span>
+                        <span class="highlight-badge verified-badge" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 8px 16px; border-radius: 25px; font-size: 0.85rem; font-weight: 700; box-shadow: 0 4px 15px rgba(67,233,123,0.3); display: flex; align-items: center; gap: 6px; transition: all 0.3s ease;">💯 Verified</span>
+                    </div>
                     <div class="badge-row">
-                        <span class="rating-box"><i class="fa-solid fa-star"></i> <span id="vendor-rating">4.5</span></span>
-                        <span class="reviews">(<span id="review-count">0</span> verified)</span>
+                        <span class="rating-box pulse-animation"><i class="fa-solid fa-star"></i> <span id="vendor-rating">4.5</span></span>
                         <span class="distance"><i class="fa-solid fa-location-dot"></i> <span id="vendor-distance">Calculating...</span></span>
                         <span class="type-badge">{{ vendor.business_category }}</span>
                     </div>
                 </div>
-                <div class="info-row">
-                    <span class="{{ 'status-green' if vendor.is_open else 'status-red' }}"><i class="fa-solid fa-circle-{{ 'check' if vendor.is_open else 'xmark' }}"></i> {{ 'Open Now' if vendor.is_open else 'Closed' }}</span>
-                    {% if vendor.takeaway %}<span><i class="fa-solid fa-bag-shopping"></i> Takeaway</span>{% endif %}
-                    {% if vendor.home_delivery %}<span><i class="fa-solid fa-motorcycle"></i> Delivery</span>{% endif %}
-                    <span><i class="fa-solid fa-indian-rupee-sign"></i> <span id="price-range">Loading...</span></span>
-                    <span class="map-link" onclick="showMapModal()"><i class="fa-solid fa-map-location-dot"></i> View on Map</span>
+                <div class="info-row" style="animation: slideInUp 0.6s ease-out 0.6s both;">
+                    <span class="status-badge {{ 'status-green' if vendor.is_open else 'status-red' }}" style="position: relative; overflow: hidden;"><i class="fa-solid fa-circle-{{ 'check' if vendor.is_open else 'xmark' }}"></i> {{ 'Open Now' if vendor.is_open else 'Closed' }}</span>
+                    {% if vendor.takeaway %}<span class="service-badge takeaway-badge" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; position: relative; overflow: hidden;"><i class="fa-solid fa-bag-shopping"></i> Takeaway</span>{% endif %}
+                    {% if vendor.home_delivery %}<span class="service-badge delivery-badge" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; position: relative; overflow: hidden;"><i class="fa-solid fa-motorcycle"></i> Delivery</span>{% endif %}
+                    <span class="price-badge" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: #2c3e50; font-weight: 700; position: relative; overflow: hidden;"><i class="fa-solid fa-indian-rupee-sign"></i> <span id="price-range">Loading...</span></span>
+                    <span class="map-link enhanced-map-btn" onclick="showMapModal()" style="position: relative; overflow: hidden;"><i class="fa-solid fa-map-location-dot"></i> View on Map</span>
                 </div>
             </div>
         </section>
@@ -135,64 +139,73 @@
                         <!-- Amenities Section -->
                         {% if vendor.indoor_seating or vendor.outdoor_seating or vendor.home_delivery or vendor.takeaway or vendor.free_wifi or vendor.ac or vendor.cooler or vendor.parking or vendor.other_amenities %}
                         <div style="margin-bottom:35px;">
-                            <h4 style="margin:0 0 20px 0;color:#2c3e50;font-size:1.4rem;font-weight:700;display:flex;align-items:center;gap:10px;">
-                                <i class="fa-solid fa-star" style="color:#f39c12;font-size:1.2rem;"></i>
+                            <h4 style="margin:0 0 25px 0;color:#2c3e50;font-size:1.6rem;font-weight:800;display:flex;align-items:center;gap:12px;">
+                                <i class="fa-solid fa-sparkles" style="color:#f39c12;font-size:1.4rem;animation: sparkle 2s infinite;"></i>
                                 Amenities & Features
                             </h4>
-                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;">
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;">
                                 {% if vendor.indoor_seating %}
-                                <div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;padding:15px 20px;border-radius:12px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 15px rgba(102,126,234,0.2);transition:transform 0.3s;">
-                                    <i class="fa-solid fa-couch" style="font-size:1.5rem;"></i>
-                                    <span style="font-weight:600;">Indoor Seating</span>
+                                <div class="amenity-card" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;padding:18px 22px;border-radius:15px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 20px rgba(102,126,234,0.25);transition:all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);position:relative;overflow:hidden;">
+                                    <i class="fa-solid fa-couch" style="font-size:1.8rem;z-index:2;"></i>
+                                    <span style="font-weight:700;font-size:1rem;z-index:2;">Indoor Seating</span>
+                                    <div class="amenity-shine" style="position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent,rgba(255,255,255,0.1),transparent);transform:rotate(45deg);transition:all 0.6s ease;"></div>
                                 </div>
                                 {% endif %}
                                 {% if vendor.outdoor_seating %}
-                                <div style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%);color:white;padding:15px 20px;border-radius:12px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 15px rgba(240,147,251,0.2);transition:transform 0.3s;">
-                                    <i class="fa-solid fa-wind" style="font-size:1.5rem;"></i>
-                                    <span style="font-weight:600;">Outdoor Seating</span>
+                                <div class="amenity-card" style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%);color:white;padding:18px 22px;border-radius:15px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 20px rgba(240,147,251,0.25);transition:all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);position:relative;overflow:hidden;">
+                                    <i class="fa-solid fa-wind" style="font-size:1.8rem;z-index:2;"></i>
+                                    <span style="font-weight:700;font-size:1rem;z-index:2;">Outdoor Seating</span>
+                                    <div class="amenity-shine" style="position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent,rgba(255,255,255,0.1),transparent);transform:rotate(45deg);transition:all 0.6s ease;"></div>
                                 </div>
                                 {% endif %}
                                 {% if vendor.home_delivery %}
-                                <div style="background:linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);color:white;padding:15px 20px;border-radius:12px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 15px rgba(79,172,254,0.2);transition:transform 0.3s;">
-                                    <i class="fa-solid fa-truck-ramp-box" style="font-size:1.5rem;"></i>
-                                    <span style="font-weight:600;">Home Delivery</span>
+                                <div class="amenity-card" style="background:linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);color:white;padding:18px 22px;border-radius:15px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 20px rgba(79,172,254,0.25);transition:all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);position:relative;overflow:hidden;">
+                                    <i class="fa-solid fa-truck-ramp-box" style="font-size:1.8rem;z-index:2;"></i>
+                                    <span style="font-weight:700;font-size:1rem;z-index:2;">Home Delivery</span>
+                                    <div class="amenity-shine" style="position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent,rgba(255,255,255,0.1),transparent);transform:rotate(45deg);transition:all 0.6s ease;"></div>
                                 </div>
                                 {% endif %}
                                 {% if vendor.takeaway %}
-                                <div style="background:linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);color:white;padding:15px 20px;border-radius:12px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 15px rgba(67,233,123,0.2);transition:transform 0.3s;">
-                                    <i class="fa-solid fa-bag-shopping" style="font-size:1.5rem;"></i>
-                                    <span style="font-weight:600;">Takeaway</span>
+                                <div class="amenity-card" style="background:linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);color:white;padding:18px 22px;border-radius:15px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 20px rgba(67,233,123,0.25);transition:all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);position:relative;overflow:hidden;">
+                                    <i class="fa-solid fa-bag-shopping" style="font-size:1.8rem;z-index:2;"></i>
+                                    <span style="font-weight:700;font-size:1rem;z-index:2;">Takeaway</span>
+                                    <div class="amenity-shine" style="position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent,rgba(255,255,255,0.1),transparent);transform:rotate(45deg);transition:all 0.6s ease;"></div>
                                 </div>
                                 {% endif %}
                                 {% if vendor.free_wifi %}
-                                <div style="background:linear-gradient(135deg, #fa709a 0%, #fee140 100%);color:white;padding:15px 20px;border-radius:12px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 15px rgba(250,112,154,0.2);transition:transform 0.3s;">
-                                    <i class="fa-solid fa-wifi" style="font-size:1.5rem;"></i>
-                                    <span style="font-weight:600;">Free Wi-Fi</span>
+                                <div class="amenity-card" style="background:linear-gradient(135deg, #fa709a 0%, #fee140 100%);color:white;padding:18px 22px;border-radius:15px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 20px rgba(250,112,154,0.25);transition:all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);position:relative;overflow:hidden;">
+                                    <i class="fa-solid fa-wifi" style="font-size:1.8rem;z-index:2;"></i>
+                                    <span style="font-weight:700;font-size:1rem;z-index:2;">Free Wi-Fi</span>
+                                    <div class="amenity-shine" style="position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent,rgba(255,255,255,0.1),transparent);transform:rotate(45deg);transition:all 0.6s ease;"></div>
                                 </div>
                                 {% endif %}
                                 {% if vendor.ac %}
-                                <div style="background:linear-gradient(135deg, #30cfd0 0%, #330867 100%);color:white;padding:15px 20px;border-radius:12px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 15px rgba(48,207,208,0.2);transition:transform 0.3s;">
-                                    <i class="fa-solid fa-snowflake" style="font-size:1.5rem;"></i>
-                                    <span style="font-weight:600;">AC</span>
+                                <div class="amenity-card" style="background:linear-gradient(135deg, #30cfd0 0%, #330867 100%);color:white;padding:18px 22px;border-radius:15px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 20px rgba(48,207,208,0.25);transition:all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);position:relative;overflow:hidden;">
+                                    <i class="fa-solid fa-snowflake" style="font-size:1.8rem;z-index:2;"></i>
+                                    <span style="font-weight:700;font-size:1rem;z-index:2;">AC</span>
+                                    <div class="amenity-shine" style="position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent,rgba(255,255,255,0.1),transparent);transform:rotate(45deg);transition:all 0.6s ease;"></div>
                                 </div>
                                 {% endif %}
                                 {% if vendor.cooler %}
-                                <div style="background:linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);color:#2c3e50;padding:15px 20px;border-radius:12px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 15px rgba(168,237,234,0.2);transition:transform 0.3s;">
-                                    <i class="fa-solid fa-fan" style="font-size:1.5rem;"></i>
-                                    <span style="font-weight:600;">Cooler</span>
+                                <div class="amenity-card" style="background:linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);color:#2c3e50;padding:18px 22px;border-radius:15px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 20px rgba(168,237,234,0.25);transition:all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);position:relative;overflow:hidden;">
+                                    <i class="fa-solid fa-fan" style="font-size:1.8rem;z-index:2;"></i>
+                                    <span style="font-weight:700;font-size:1rem;z-index:2;">Cooler</span>
+                                    <div class="amenity-shine" style="position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent,rgba(255,255,255,0.1),transparent);transform:rotate(45deg);transition:all 0.6s ease;"></div>
                                 </div>
                                 {% endif %}
                                 {% if vendor.parking %}
-                                <div style="background:linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);color:#2c3e50;padding:15px 20px;border-radius:12px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 15px rgba(255,154,158,0.2);transition:transform 0.3s;">
-                                    <i class="fa-solid fa-square-parking" style="font-size:1.5rem;"></i>
-                                    <span style="font-weight:600;">Parking {{ vendor.parking }}</span>
+                                <div class="amenity-card" style="background:linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);color:#2c3e50;padding:18px 22px;border-radius:15px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 20px rgba(255,154,158,0.25);transition:all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);position:relative;overflow:hidden;">
+                                    <i class="fa-solid fa-square-parking" style="font-size:1.8rem;z-index:2;"></i>
+                                    <span style="font-weight:700;font-size:1rem;z-index:2;">Parking {{ vendor.parking }}</span>
+                                    <div class="amenity-shine" style="position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent,rgba(255,255,255,0.1),transparent);transform:rotate(45deg);transition:all 0.6s ease;"></div>
                                 </div>
                                 {% endif %}
                                 {% if vendor.other_amenities %}
                                     {% for amenity in vendor.other_amenities.split(',') %}
-                                    <div style="background:linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);color:#2c3e50;padding:15px 20px;border-radius:12px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 15px rgba(253,203,110,0.2);transition:transform 0.3s;">
-                                        <i class="fa-solid fa-check-circle" style="font-size:1.5rem;"></i>
-                                        <span style="font-weight:600;">{{ amenity.strip() }}</span>
+                                    <div class="amenity-card" style="background:linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);color:#2c3e50;padding:18px 22px;border-radius:15px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 20px rgba(253,203,110,0.25);transition:all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);position:relative;overflow:hidden;">
+                                        <i class="fa-solid fa-check-circle" style="font-size:1.8rem;z-index:2;"></i>
+                                        <span style="font-weight:700;font-size:1rem;z-index:2;">{{ amenity.strip() }}</span>
+                                        <div class="amenity-shine" style="position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent,rgba(255,255,255,0.1),transparent);transform:rotate(45deg);transition:all 0.6s ease;"></div>
                                     </div>
                                     {% endfor %}
                                 {% endif %}
@@ -232,34 +245,11 @@
             <section id="reviews-section" class="tab-content">
                 <div class="reviews-container">
                     <div class="review-header">
-                        <div class="big-rating">4.5</div>
-                        <div class="stat-text">Based on 1,200 verified reviews</div>
+                        <div class="big-rating" id="reviews-avg-rating">4.5</div>
+                        <div class="stat-text">Based on <span id="reviews-total-count">0</span> verified reviews</div>
                     </div>
                     <div id="reviews-list">
-                        <div class="review-card">
-                            <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
-                                <strong>Priya Sharma</strong>
-                                <span style="color:#f1c40f;">★★★★★</span>
-                            </div>
-                            <p style="color:#7f8c8d;margin:0;">Amazing pani puri! The taste is authentic and the service
-                                is quick. Highly recommended!</p>
-                        </div>
-                        <div class="review-card">
-                            <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
-                                <strong>Rahul Kumar</strong>
-                                <span style="color:#f1c40f;">★★★★☆</span>
-                            </div>
-                            <p style="color:#7f8c8d;margin:0;">Good food quality and hygiene. The bhel puri is my
-                                favorite. Will visit again.</p>
-                        </div>
-                        <div class="review-card">
-                            <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
-                                <strong>Anjali Verma</strong>
-                                <span style="color:#f1c40f;">★★★★★</span>
-                            </div>
-                            <p style="color:#7f8c8d;margin:0;">Best street food in the area! Fresh ingredients and great
-                                taste. The pav bhaji is delicious.</p>
-                        </div>
+                        <!-- Reviews will be loaded dynamically -->
                     </div>
                 </div>
             </section>
@@ -310,6 +300,26 @@
 
     <script src="/static/js/customer/base.js"></script>
     <script>
+        // Global functions for profile dropdown
+        function viewProfile() {
+            window.location.href = '/customer/profile';
+        }
+        
+        function myOrders() {
+            window.location.href = '/customer/orders';
+        }
+        
+        function logout() {
+            // Clear any local storage or session storage
+            if (typeof(Storage) !== "undefined") {
+                localStorage.clear();
+                sessionStorage.clear();
+            }
+            
+            // Redirect to logout endpoint
+            window.location.href = '/logout';
+        }
+        
         const userId = '{{ user_id if user_id else "" }}';
         const vendorId = {{ vendor_id }};
         const vendorName = '{{ vendor.business_name }}';
@@ -590,6 +600,11 @@
             item.qty = Math.max(0, item.qty + change);
             updateCart();
             renderMenuCards();
+            
+            // Update cart modal if it's open
+            if (document.getElementById('cart-modal').classList.contains('active')) {
+                openCart();
+            }
         }
 
         function updateCart() {
@@ -614,6 +629,10 @@
                 cartItemsList.innerHTML = '<div class="empty-cart"><i class="fa-solid fa-shopping-cart"></i><h3>Your cart is empty</h3><p>Add some delicious items to get started!</p></div>';
                 modalTotal.style.display = 'none';
             } else {
+                const cashRestricted = total > 200;
+                const paymentMessage = cashRestricted ? 
+                    '<div style="background:#fff3cd;border:1px solid #ffeaa7;color:#856404;padding:12px;border-radius:8px;margin:15px 0;font-size:14px;"><i class="fa-solid fa-info-circle"></i> <strong>Note:</strong> Orders above ₹200 require online payment only. Cash payment is available for orders ₹200 and below.</div>' : '';
+                
                 cartItemsList.innerHTML = cartItems.map(item => `
                     <div class="cart-item">
                         <div class="cart-item-info"><h4>${item.name}</h4><p>₹${item.price} each</p></div>
@@ -626,7 +645,7 @@
                             <span style="font-weight:600;color:#27ae60;">₹${item.qty * item.price}</span>
                         </div>
                     </div>
-                `).join('');
+                `).join('') + paymentMessage;
                 modalTotal.innerHTML = `Total: ₹${total}`;
                 modalTotal.style.display = 'block';
             }
@@ -664,6 +683,12 @@
         function selectDelivery(type, subtotal) {
             const deliveryFee = type === 'delivery' ? 30 : 0;
             const total = subtotal + deliveryFee;
+            
+            // Check if total is above 200 for cash payment restriction
+            const cashRestricted = total > 200;
+            const cashMessage = cashRestricted ? 
+                '<div style="background:#fff3cd;border:1px solid #ffeaa7;color:#856404;padding:12px;border-radius:8px;margin:15px 0;font-size:14px;"><i class="fa-solid fa-info-circle"></i> <strong>Note:</strong> Orders above ₹200 require online payment only. Cash payment is available for orders ₹200 and below.</div>' : '';
+            
             document.getElementById('cart-items-list').innerHTML = `
                 <div class="order-step"><h3>Payment Method</h3>
                     <div class="order-summary">
@@ -671,14 +696,19 @@
                         <div class="summary-row"><span>${type === 'delivery' ? 'Delivery Fee:' : 'Takeaway:'}</span><span>${deliveryFee > 0 ? '₹' + deliveryFee : 'Free'}</span></div>
                         <div class="summary-row total-row"><span>Total:</span><span>₹${total}</span></div>
                     </div>
+                    ${cashMessage}
+                    <div style="margin:20px 0;">
+                        <label style="display:block;margin-bottom:8px;font-weight:600;color:#2c3e50;">Special Instructions (Optional):</label>
+                        <textarea id="customerSuggestion" placeholder="Any special requests or instructions for the vendor..." style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;min-height:80px;resize:vertical;font-family:inherit;"></textarea>
+                    </div>
                     <div class="payment-options">
-                        <div class="payment-option" onclick="processPayment('online', '${type}', ${total})">
+                        <div class="payment-option" onclick="if(!window.processingPayment) processPayment('online', '${type}', ${total})">
                             <div class="option-icon">💳</div>
                             <div class="option-details"><h4>Online Payment</h4><p>Pay now with card/UPI</p></div>
                         </div>
-                        <div class="payment-option" onclick="processPayment('cash', '${type}', ${total})">
+                        <div class="payment-option ${cashRestricted ? 'disabled' : ''}" ${cashRestricted ? '' : `onclick="if(!window.processingPayment) processPayment('cash', '${type}', ${total})"`}>
                             <div class="option-icon">💵</div>
-                            <div class="option-details"><h4>Cash on ${type === 'delivery' ? 'Delivery' : 'Pickup'}</h4><p>Pay when you receive</p></div>
+                            <div class="option-details"><h4>Cash on ${type === 'delivery' ? 'Delivery' : 'Pickup'}</h4><p>${cashRestricted ? 'Not available for orders above ₹200' : 'Pay when you receive'}</p></div>
                         </div>
                     </div>
                 </div>`;
@@ -686,14 +716,20 @@
         }
 
         function processPayment(paymentType, deliveryType, total) {
+            // Prevent multiple clicks
+            if (window.processingPayment) return;
+            window.processingPayment = true;
+            
             const cartItems = menuItems.filter(i => i.qty > 0);
+            const customerSuggestion = document.getElementById('customerSuggestion')?.value?.trim() || '';
             const orderData = {
                 vendor_id: vendorId,
                 vendor: vendorName,
                 items: cartItems.map(i => ({ name: i.name, qty: i.qty, price: i.price })),
                 deliveryType: deliveryType,
                 paymentType: paymentType,
-                total: total
+                total: total,
+                customerSuggestion: customerSuggestion
             };
 
             fetch('/api/orders', {
@@ -701,75 +737,24 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(orderData)
             })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        const orderId = data.order_id;
-
-                        if (paymentType === 'online') {
-                            // Create Razorpay Order
-                            fetch('/api/payment/create', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ order_id: orderId })
-                            })
-                                .then(res => res.json())
-                                .then(payData => {
-                                    if (payData.error) {
-                                        alert('Error initiating payment: ' + payData.error);
-                                        return;
-                                    }
-
-                                    const options = {
-                                        "key": payData.razorpay_key_id,
-                                        "amount": payData.amount,
-                                        "currency": "INR",
-                                        "name": "LocalConnect",
-                                        "description": "Payment for Order #" + orderId,
-                                        "image": "/static/images/logo.png",
-                                        "order_id": payData.razorpay_order_id,
-                                        "handler": function (response) {
-                                            // Verify signature
-                                            fetch('/api/payment/verify', {
-                                                method: 'POST',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({
-                                                    order_id: orderId,
-                                                    razorpay_order_id: response.razorpay_order_id,
-                                                    razorpay_payment_id: response.razorpay_payment_id,
-                                                    razorpay_signature: response.razorpay_signature
-                                                })
-                                            })
-                                                .then(res => res.json())
-                                                .then(verifyData => {
-                                                    if (verifyData.success) {
-                                                        finalizeOrder(paymentType, deliveryType, total);
-                                                    } else {
-                                                        alert('Payment verification failed. Please contact support.');
-                                                    }
-                                                });
-                                        },
-                                        "prefill": {
-                                            "name": payData.customer_name,
-                                            "email": payData.customer_email,
-                                            "contact": payData.customer_phone
-                                        },
-                                        "readonly": {
-                                            "contact": true,
-                                            "email": true
-                                        },
-                                        "theme": {
-                                            "color": "#27ae60"
-                                        }
-                                    };
-                                    const rzp1 = new Razorpay(options);
-                                    rzp1.open();
-                                });
-                        } else {
-                            finalizeOrder(paymentType, deliveryType, total);
-                        }
+            .then(res => res.json())
+            .then(data => {
+                window.processingPayment = false;
+                if (data.success) {
+                    const orderId = data.order_id;
+                    if (paymentType === 'cash') {
+                        finalizeOrder(paymentType, deliveryType, total);
+                    } else {
+                        // Online payment logic here
                     }
-                });
+                } else {
+                    alert('Error creating order: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                window.processingPayment = false;
+                alert('Failed to create order. Please try again.');
+            });
         }
 
         function finalizeOrder(paymentType, deliveryType, total) {
@@ -787,24 +772,68 @@
             if (e.target.id === 'map-modal') closeMapModal();
         });
 
-        // Load user reviews from database orders
-        function loadUserReviews() {
-            // Reviews will be loaded from database via orders page
+        // Load vendor reviews and display them
+        function loadVendorReviews() {
+            fetch(`/api/vendor/${vendorId}/reviews`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('vendor-rating').textContent = data.avg_rating || '4.5';
+                    document.getElementById('review-count').textContent = data.review_count || '0';
+                    document.getElementById('reviews-avg-rating').textContent = data.avg_rating || '4.5';
+                    document.getElementById('reviews-total-count').textContent = data.review_count || '0';
+                })
+                .catch(() => {
+                    document.getElementById('vendor-rating').textContent = '4.5';
+                    document.getElementById('review-count').textContent = '0';
+                    document.getElementById('reviews-avg-rating').textContent = '4.5';
+                    document.getElementById('reviews-total-count').textContent = '0';
+                });
+            
+            // Load actual reviews
+            fetch(`/api/vendor/${vendorId}/all-reviews`)
+                .then(res => res.json())
+                .then(reviews => {
+                    const reviewsList = document.getElementById('reviews-list');
+                    if (reviews.length === 0) {
+                        reviewsList.innerHTML = `
+                            <div style="text-align:center;padding:40px;color:#7f8c8d;">
+                                <i class="fa-solid fa-star" style="font-size:48px;margin-bottom:15px;color:#ddd;"></i>
+                                <h3>No Reviews Yet</h3>
+                                <p>Be the first to review this vendor!</p>
+                            </div>
+                        `;
+                    } else {
+                        reviewsList.innerHTML = reviews.map(review => `
+                            <div class="review-card">
+                                <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+                                    <strong>${review.customer_name}</strong>
+                                    <span style="color:#f1c40f;">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</span>
+                                </div>
+                                <p style="color:#7f8c8d;margin:0;">${review.comment}</p>
+                                <small style="color:#bdc3c7;margin-top:8px;display:block;">${new Date(review.date).toLocaleDateString()}</small>
+                                ${review.vendor_response ? `
+                                    <div style="background:#e3f2fd;padding:12px;border-radius:8px;margin-top:12px;border-left:3px solid #2196f3;">
+                                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                            <strong style="color:#1976d2;font-size:14px;">Shop Response</strong>
+                                            <small style="color:#7f8c8d;">${new Date(review.response_date).toLocaleDateString()}</small>
+                                        </div>
+                                        <p style="margin:0;color:#2c3e50;font-size:14px;">${review.vendor_response}</p>
+                                        ${review.helpful_count > 0 ? `<small style="color:#27ae60;margin-top:8px;display:block;">👍 ${review.vendor_name} found this helpful</small>` : ''}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('');
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('reviews-list').innerHTML = `
+                        <div style="text-align:center;padding:40px;color:#7f8c8d;">
+                            <p>Unable to load reviews at this time.</p>
+                        </div>
+                    `;
+                });
         }
-
-        // Load user reviews from database orders
-        fetch(`/api/vendor/${vendorId}/reviews`)
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('vendor-rating').textContent = data.avg_rating || '4.5';
-                document.getElementById('review-count').textContent = data.review_count || '0';
-            })
-            .catch(() => {
-                document.getElementById('vendor-rating').textContent = '4.5';
-                document.getElementById('review-count').textContent = '0';
-            });
-
-        loadUserReviews();
+        loadVendorReviews();
     </script>
 </body>
 

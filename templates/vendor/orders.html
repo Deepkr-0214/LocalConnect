@@ -4,6 +4,23 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/vendor/orders.css') }}">
+<style>
+.quick-reason-btn {
+    background: #ecf0f1;
+    border: 1px solid #bdc3c7;
+    color: #2c3e50;
+    padding: 8px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s;
+}
+.quick-reason-btn:hover {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -21,6 +38,7 @@
             <div class="order-header-row">
                 <div class="header-left">
                     <span class="order-number">Order #{{ order.id }}</span>
+                    <span class="order-time" data-timestamp="{{ order.created_at.timestamp() }}">{{ order.created_at.strftime('%b %d, %I:%M %p') }} | {{ order.created_at.strftime('%H:%M') }}</span>
                 </div>
                 <div class="header-right">
                     <span class="type-badge {{ order.delivery_type|lower }}">
@@ -37,7 +55,7 @@
                             {{ item.name }} x{{ item.qty }}{% if not loop.last %}, {% endif %}
                         {% endfor %}
                     </p>
-                    <p class="total-row">Total: <strong>₹{{ order.total }}</strong></p>
+                    <p class="total-row">Total: <strong>₹{{ order.total }}</strong> | Payment: <strong>{{ 'Online' if order.payment_type == 'online' else 'Cash' }}</strong></p>
                 </div>
 
                 <div class="order-footer-actions">
@@ -52,8 +70,20 @@
 
                     <div class="action-buttons-group">
                         {% if order.status == 'Pending' %}
-                        <button class="btn-green-action" onclick="updateStatus({{ order.id }}, 'Completed')">Accept</button>
+                        <button class="btn-green-action" onclick="updateStatus({{ order.id }}, 'preparing')">Accept</button>
                         <button class="btn-red-action" onclick="openRejectModal({{ order.id }})">Reject</button>
+                        {% elif order.status == 'preparing' %}
+                        <button class="btn-green-action" onclick="updateStatus({{ order.id }}, '{{ 'out_for_delivery' if order.delivery_type == 'delivery' else 'ready' }}')">
+                            {% if order.delivery_type == 'takeaway' %}
+                                Ready for Takeaway
+                            {% else %}
+                                Out for Delivery
+                            {% endif %}
+                        </button>
+                        {% elif order.status == 'ready' and order.delivery_type == 'takeaway' %}
+                        <button class="btn-green-action" onclick="updateStatus({{ order.id }}, 'Completed')">Order Delivered</button>
+                        {% elif order.status == 'out_for_delivery' %}
+                        <span class="status-badge-static out_for_delivery">Out for Delivery</span>
                         {% else %}
                         <span class="status-badge-static {{ order.status.lower() }}">
                             {{ order.status }}
@@ -84,6 +114,14 @@
         </div>
         <div class="modal-body">
             <p>Please provide a reason for rejecting this order:</p>
+            <div style="margin-bottom: 15px;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                    <button type="button" class="quick-reason-btn" onclick="setRejectionReason('Items not available')">Items not available</button>
+                    <button type="button" class="quick-reason-btn" onclick="setRejectionReason('Shop is closed')">Shop is closed</button>
+                    <button type="button" class="quick-reason-btn" onclick="setRejectionReason('Too busy right now')">Too busy right now</button>
+                    <button type="button" class="quick-reason-btn" onclick="setRejectionReason('Payment issue')">Payment issue</button>
+                </div>
+            </div>
             <form id="rejectForm" onsubmit="submitReject(event)">
                 <input type="hidden" id="rejectOrderId">
                 <textarea id="rejectionReason" placeholder="Enter rejection reason..." required></textarea>
@@ -108,8 +146,76 @@ function updateStatus(orderId, status) {
     })
     .then(res => res.json())
     .then(data => {
-        if (data.success) location.reload();
+        if (data.success) {
+            if (status === 'Completed') {
+                // Get order amount and show banner
+                const orderCard = document.querySelector(`[data-status="ready"]`);
+                const amountElement = orderCard.querySelector('.total-row strong');
+                const amount = amountElement.textContent.replace('₹', '');
+                showEarningsBanner(amount);
+                
+                // Wait 2 seconds then reload to show updated status and earnings
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                location.reload();
+            }
+        }
     });
+}
+
+function showEarningsBanner(amount) {
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.5); z-index: 9998;
+        display: flex; align-items: center; justify-content: center;
+    `;
+    
+    // Create banner
+    const banner = document.createElement('div');
+    banner.style.cssText = `
+        background: #f0f9f0; padding: 40px; border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        text-align: center; position: relative; min-width: 300px;
+        border: 3px solid #4CAF50; animation: popIn 0.3s ease-out;
+    `;
+    
+    banner.innerHTML = `
+        <button onclick="this.closest('.overlay').remove()" style="
+            position: absolute; top: 15px; right: 15px; background: none;
+            border: none; font-size: 24px; cursor: pointer; color: #666;
+            width: 30px; height: 30px; border-radius: 50%;
+        ">×</button>
+        <div style="font-size: 24px; color: #4CAF50; margin-bottom: 15px; font-weight: 600;">
+            Order Completed 🎉
+        </div>
+        <div style="font-size: 32px; font-weight: bold; color: #2E7D32;">
+            You've Earned ₹${amount}
+        </div>
+    `;
+    
+    // Add animation
+    if (!document.getElementById('popupStyles')) {
+        const style = document.createElement('style');
+        style.id = 'popupStyles';
+        style.textContent = `
+            @keyframes popIn {
+                from { transform: scale(0.8); opacity: 0; }
+                to { transform: scale(1); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    overlay.className = 'overlay';
+    overlay.appendChild(banner);
+    document.body.appendChild(overlay);
+    
+    // Auto close after 10 seconds
+    setTimeout(() => {
+        if (overlay.parentElement) overlay.remove();
+    }, 10000);
 }
 
 function submitReject(event) {
@@ -130,5 +236,52 @@ function submitReject(event) {
         }
     });
 }
+
+function setRejectionReason(reason) {
+    document.getElementById('rejectionReason').value = reason;
+}
+
+function openRejectModal(orderId) {
+    document.getElementById('rejectOrderId').value = orderId;
+    document.getElementById('rejectionReason').value = '';
+    document.getElementById('rejectModal').style.display = 'block';
+}
+
+function closeRejectModal() {
+    document.getElementById('rejectModal').style.display = 'none';
+}
+
+// Real-time time updates for vendor orders
+function updateRelativeTimes() {
+    document.querySelectorAll('[data-timestamp]').forEach(element => {
+        const timestamp = parseFloat(element.getAttribute('data-timestamp'));
+        const orderDate = new Date(timestamp * 1000);
+        const now = new Date();
+        const diff = (now.getTime() - orderDate.getTime()) / 1000;
+        
+        let relativeText;
+        if (diff < 60) {
+            relativeText = 'Just now';
+        } else if (diff < 3600) {
+            const mins = Math.floor(diff / 60);
+            relativeText = `${mins} min${mins > 1 ? 's' : ''} ago`;
+        } else if (diff < 86400) {
+            const hours = Math.floor(diff / 3600);
+            relativeText = `${hours} hour${hours > 1 ? 's' : ''} ago`;
+        } else {
+            relativeText = orderDate.toLocaleDateString('en-IN');
+        }
+        
+        const time24 = orderDate.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit', hour12: false});
+        const time12 = orderDate.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', hour12: true}).replace(/AM|PM/, match => match.charAt(0) + '.M');
+        
+        element.textContent = `${relativeText} | ${time24}(${time12})`;
+        element.title = orderDate.toLocaleString('en-IN');
+    });
+}
+
+// Update times immediately and every 30 seconds
+updateRelativeTimes();
+setInterval(updateRelativeTimes, 30000);
 </script>
 {% endblock %}

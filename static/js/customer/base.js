@@ -185,7 +185,12 @@ function myOrders() {
     window.location.href = '/customer/orders';
 }
 function logout() {
-    if (confirm('Are you sure you want to logout?')) {
-        window.location.href = '/logout';
+    // Clear any local storage or session storage
+    if (typeof(Storage) !== "undefined") {
+        localStorage.clear();
+        sessionStorage.clear();
     }
+    
+    // Redirect to logout endpoint
+    window.location.href = '/logout';
 }

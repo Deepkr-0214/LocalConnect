@@ -57,35 +57,42 @@
     </header>
     <main class="content-wrapper">
         <div class="orders-container">
-            <h2 class="page-title">My Orders</h2>
+            <h2 class="page-title enhanced-title">My Orders <span class="orders-count">{{ orders_query|length if orders_query else 0 }}</span></h2>
             <div class="orders-list" id="orders-list">
                 {% if orders_query %}
                     {% for order in orders_query %}
-                    <div class="order-card" onclick="showOrderDetails({{ order.id }})">
+                    <div class="order-card enhanced-order-card" onclick="showOrderDetails({{ order.id }})">
+                        <div class="order-status-indicator {{ 'delivered' if order.status == 'Completed' else order.status }}"></div>
                         <div class="order-header">
                             <div class="order-info">
-                                <h4>Order #{{ order.id }}</h4>
-                                <p class="vendor-name">{{ order.vendor_name }}</p>
+                                <h4><span class="order-number">#{{ order.id }}</span></h4>
+                                <p class="vendor-name"><i class="fa-solid fa-store"></i> {{ order.vendor_name }}</p>
                             </div>
                             <div class="order-status">
-                                <span class="status-badge {{ order.status }}">{{ order.status.replace('_', ' ').title() }}</span>
-                                <span class="order-total">₹{{ order.total }}</span>
+                                <span class="status-badge enhanced-status {{ 'delivered' if order.status == 'Completed' else order.status }}">{{ 'Delivered' if order.status == 'Completed' else order.status.replace('_', ' ').title() }}</span>
+                                <span class="order-total enhanced-total"><i class="fa-solid fa-indian-rupee-sign"></i>{{ order.total }}</span>
                             </div>
                         </div>
-                        <div class="order-items">
-                            <p>{% for item in order.get_items() %}{{ item.name }} x{{ item.qty }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
+                        <div class="order-items enhanced-items">
+                            <p><i class="fa-solid fa-utensils"></i> {% for item in order.get_items() %}{{ item.name }} x{{ item.qty }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
                         </div>
-                        <div class="order-meta">
+                        <div class="order-meta enhanced-meta">
                             <span class="order-type">{{ '🚚 Delivery' if order.delivery_type == 'delivery' else '🏪 Takeaway' }}</span>
-                            <span class="order-date">{{ order.created_at.strftime('%b %d, %Y %I:%M %p') }}</span>
+                            <span class="order-date" data-timestamp="{{ order.created_at.timestamp() }}">{{ order.created_at.strftime('%b %d, %Y %I:%M %p') }} | {{ order.created_at.strftime('%H:%M') }}</span>
                         </div>
                     </div>
                     {% endfor %}
                 {% else %}
-                    <div style="text-align:center;padding:60px 20px;color:#7f8c8d;">
-                        <i class="fa-solid fa-shopping-bag" style="font-size:48px;margin-bottom:20px;color:#27ae60;"></i>
-                        <h3>No orders yet</h3>
-                        <p>Your orders will appear here after you place them.</p>
+                    <div class="empty-orders-state">
+                        <div class="empty-icon-container">
+                            <i class="fa-solid fa-shopping-bag empty-icon"></i>
+                            <div class="empty-icon-bg"></div>
+                        </div>
+                        <h3 class="empty-title">No orders yet</h3>
+                        <p class="empty-description">Your delicious orders will appear here after you place them.</p>
+                        <button class="explore-btn" onclick="window.location.href='/customer/dashboard'">
+                            <i class="fa-solid fa-compass"></i> Explore Restaurants
+                        </button>
                     </div>
                 {% endif %}
             </div>
@@ -103,6 +110,73 @@
 
     <script src="/static/js/customer/base.js"></script>
     <script>
+        // Global functions for profile dropdown
+        function viewProfile() {
+            window.location.href = '/customer/profile';
+        }
+        
+        function myOrders() {
+            window.location.href = '/customer/orders';
+        }
+        
+        function logout() {
+            // Clear any local storage or session storage
+            if (typeof(Storage) !== "undefined") {
+                localStorage.clear();
+                sessionStorage.clear();
+            }
+            
+            // Redirect to logout endpoint
+            window.location.href = '/logout';
+        }
+        
+        // Real-time time updates
+        function updateRelativeTimes() {
+            document.querySelectorAll('[data-timestamp]').forEach(element => {
+                const timestamp = parseFloat(element.getAttribute('data-timestamp'));
+                const orderDate = new Date(timestamp * 1000);
+                const now = new Date();
+                const diff = (now.getTime() - orderDate.getTime()) / 1000;
+                
+                let relativeText;
+                if (diff < 60) {
+                    relativeText = 'Just now';
+                } else if (diff < 3600) {
+                    const mins = Math.floor(diff / 60);
+                    relativeText = `${mins} min${mins > 1 ? 's' : ''} ago`;
+                } else if (diff < 86400) {
+                    const hours = Math.floor(diff / 3600);
+                    relativeText = `${hours} hour${hours > 1 ? 's' : ''} ago`;
+                } else if (diff < 604800) {
+                    const days = Math.floor(diff / 86400);
+                    relativeText = `${days} day${days > 1 ? 's' : ''} ago`;
+                } else {
+                    relativeText = orderDate.toLocaleDateString('en-IN');
+                }
+                
+                const time24 = orderDate.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit', hour12: false});
+                const time12 = orderDate.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', hour12: true}).replace(/AM|PM/, match => match.charAt(0) + '.M');
+                
+                element.textContent = `${relativeText} | ${time24}(${time12})`;
+                element.title = orderDate.toLocaleString('en-IN');
+            });
+        }
+        
+        // Update times immediately and every 30 seconds
+        updateRelativeTimes();
+        setInterval(updateRelativeTimes, 30000);
+        
+        // Update current time display
+        function updateCurrentTime() {
+            const timeElements = document.querySelectorAll('.current-time');
+            timeElements.forEach(el => {
+                el.textContent = new Date().toLocaleTimeString();
+            });
+        }
+        
+        updateCurrentTime();
+        setInterval(updateCurrentTime, 1000);
+        
         const ordersData = {{ orders | tojson | safe }};
         const orders = ordersData.map(o => ({
             id: o.id,
@@ -113,8 +187,13 @@
             paymentType: o.payment_type,
             status: o.status,
             date: o.created_at,
+            preparing_at: o.preparing_at,
+            out_for_delivery_at: o.out_for_delivery_at,
+            ready_at: o.ready_at,
+            completed_at: o.completed_at,
             reviewRating: o.review_rating,
-            reviewComment: o.review_comment
+            reviewComment: o.review_comment,
+            rejectionReason: o.rejectionReason
         }));
 
         function showOrderDetails(orderId) {
@@ -125,17 +204,18 @@
             document.getElementById('order-details').classList.remove('hidden');
             document.getElementById('order-title').textContent = `Order #${orderId}`;
 
-            const canReview = order.status === 'delivered' || order.status === 'ready';
+            const canReview = order.status === 'Completed';
             const hasReview = order.reviewRating;
             
             document.getElementById('details-content').innerHTML = `
                 <div class="order-summary">
                     <h4>${order.vendor}</h4>
-                    <p class="order-date">${new Date(order.date).toLocaleString()}</p>
+                    <p class="order-date" data-timestamp="${new Date(order.date).getTime() / 1000}">${new Date(order.date).toLocaleString()}</p>
                     <div class="status-info">
-                        <span class="status-badge ${order.status}">${order.status.replace('_', ' ')}</span>
+                        <span class="status-badge ${order.status}">${order.status === 'Completed' ? 'Delivered' : order.status === 'Rejected' ? 'Rejected' : order.status.replace('_', ' ')}</span>
                         <span class="order-type">${order.deliveryType === 'delivery' ? '🚚 Delivery' : '🏪 Takeaway'}</span>
                         ${order.status === 'ready' ? `<span style="background:#27ae60;color:white;padding:8px 15px;border-radius:20px;font-weight:600;margin-top:10px;display:inline-block;">${order.deliveryType === 'delivery' ? '✓ Ready to Deliver' : '✓ Ready to Take'}</span>` : ''}
+                        ${order.status === 'Rejected' && order.rejectionReason ? `<div style="background:#ffebee;color:#c62828;padding:10px;border-radius:8px;margin-top:10px;border-left:4px solid #f44336;"><strong>Rejection Reason:</strong><br>${order.rejectionReason}</div>` : ''}
                     </div>
                 </div>
                 
@@ -147,7 +227,12 @@
                 
                 ${hasReview ? `
                     <div style="background:#f8f9fa;padding:20px;border-radius:10px;margin-top:20px;">
-                        <h5 style="margin:0 0 10px 0;">Your Review</h5>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                            <h5 style="margin:0;">Your Review</h5>
+                            <button onclick="editReview(${order.id}, ${order.reviewRating}, '${order.reviewComment}')" style="background:#3498db;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">
+                                <i class="fa-solid fa-edit"></i> Edit
+                            </button>
+                        </div>
                         <div style="color:#f1c40f;margin-bottom:10px;">${'★'.repeat(order.reviewRating)}${'☆'.repeat(5-order.reviewRating)}</div>
                         <p style="margin:0;color:#2c3e50;">${order.reviewComment}</p>
                     </div>
@@ -167,13 +252,13 @@
                             <i class="fa-solid fa-truck"></i> Track Order
                         </button>
                     `}
-                    ${order.status === 'Pending' || order.status === 'preparing' ? `
+                    ${order.status === 'out_for_delivery' && order.deliveryType === 'delivery' ? `
+                        <button class="action-btn" onclick="markOrderReceived(${order.id})" style="background:#27ae60;color:white;flex:1;">
+                            <i class="fa-solid fa-check-circle"></i> Order Received
+                        </button>
+                    ` : order.status === 'Pending' || order.status === 'preparing' ? `
                         <button class="action-btn" onclick="cancelOrder(${order.id})" style="background:#e74c3c;color:white;flex:1;">
                             <i class="fa-solid fa-times-circle"></i> Cancel
-                        </button>
-                    ` : (order.status === 'cancelled' || order.status === 'delivered') ? `
-                        <button class="action-btn" onclick="deleteOrder(${order.id})" style="background:#95a5a6;color:white;flex:1;">
-                            <i class="fa-solid fa-trash"></i> Delete
                         </button>
                     ` : ''}
                 </div>
@@ -315,12 +400,59 @@
                 return;
             }
             
+            // Dynamic tracking steps based on current order status
             const steps = [
-                { status: 'Order Placed', completed: true, time: new Date(order.date).toLocaleTimeString() },
-                { status: 'Preparing', completed: order.status !== 'preparing', time: order.status !== 'preparing' ? '...' : '' },
-                { status: 'Out for Delivery', completed: order.status === 'delivered', time: order.status === 'delivered' ? '...' : '' },
-                { status: 'Delivered', completed: order.status === 'delivered', time: order.status === 'delivered' ? '...' : '' }
+                { 
+                    status: 'Order Placed', 
+                    completed: true, 
+                    time: formatOrderTime(new Date(order.date)),
+                    current: order.status === 'Pending'
+                },
+                { 
+                    status: 'Preparing', 
+                    completed: ['preparing', 'out_for_delivery', 'ready', 'Completed'].includes(order.status), 
+                    time: order.preparing_at ? formatOrderTime(new Date(order.preparing_at)) : 
+                          ['preparing', 'out_for_delivery', 'ready', 'Completed'].includes(order.status) ? 'Completed' : 'Waiting',
+                    current: order.status === 'preparing'
+                },
+                { 
+                    status: order.deliveryType === 'delivery' ? 'Out for Delivery' : 'Ready for Pickup', 
+                    completed: ['out_for_delivery', 'ready', 'Completed'].includes(order.status), 
+                    time: (order.out_for_delivery_at || order.ready_at) ? formatOrderTime(new Date(order.out_for_delivery_at || order.ready_at)) : 
+                          ['out_for_delivery', 'ready', 'Completed'].includes(order.status) ? 'Completed' : 'Pending',
+                    current: order.status === 'out_for_delivery' || order.status === 'ready'
+                },
+                { 
+                    status: 'Delivered', 
+                    completed: order.status === 'Completed', 
+                    time: order.completed_at ? formatOrderTime(new Date(order.completed_at)) : 
+                          order.status === 'Completed' ? 'Completed' : 'Pending',
+                    current: false
+                }
             ];
+            
+            function formatOrderTime(date) {
+                const now = new Date();
+                const diff = (now.getTime() - date.getTime()) / 1000;
+                
+                let relativeText;
+                if (diff < 60) {
+                    relativeText = 'Just now';
+                } else if (diff < 3600) {
+                    const mins = Math.floor(diff / 60);
+                    relativeText = `${mins} min${mins > 1 ? 's' : ''} ago`;
+                } else if (diff < 86400) {
+                    const hours = Math.floor(diff / 3600);
+                    relativeText = `${hours} hour${hours > 1 ? 's' : ''} ago`;
+                } else {
+                    relativeText = date.toLocaleDateString('en-IN');
+                }
+                
+                const time24 = date.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit', hour12: false});
+                const time12 = date.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', hour12: true}).replace(/AM|PM/, match => match.charAt(0) + '.M');
+                
+                return `${relativeText} | ${time24}(${time12})`;
+            }
             
             document.getElementById('details-content').innerHTML = `
                 <div class="tracking-section">
@@ -331,20 +463,27 @@
                     <div style="background:#f8f9fa;padding:15px;border-radius:10px;margin-bottom:20px;">
                         <p><strong>Estimated Delivery:</strong> 25-30 minutes</p>
                         <p><strong>Delivery Address:</strong> Your Location</p>
+                        <p><strong>Current Status:</strong> <span style="color:#27ae60;font-weight:600;">${order.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span></p>
                     </div>
                     <div style="display:flex;flex-direction:column;gap:20px;">
                         ${steps.map(step => `
                             <div style="display:flex;gap:15px;align-items:flex-start;">
-                                <div style="width:40px;height:40px;border-radius:50%;background:${step.completed ? '#27ae60' : '#e0e0e0'};display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;">
-                                    <i class="fa-solid ${step.completed ? 'fa-check' : 'fa-clock'}"></i>
+                                <div style="width:40px;height:40px;border-radius:50%;background:${step.completed ? '#27ae60' : step.current ? '#f39c12' : '#e0e0e0'};display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;${step.current ? 'animation:pulse 2s infinite;' : ''}">
+                                    <i class="fa-solid ${step.completed ? 'fa-check' : step.current ? 'fa-spinner fa-spin' : 'fa-clock'}"></i>
                                 </div>
                                 <div>
-                                    <h5 style="margin:0 0 5px 0;color:${step.completed ? '#27ae60' : '#7f8c8d'};">${step.status}</h5>
-                                    <p style="margin:0;color:#7f8c8d;font-size:14px;">${step.time || 'Pending'}</p>
+                                    <h5 style="margin:0 0 5px 0;color:${step.completed ? '#27ae60' : step.current ? '#f39c12' : '#7f8c8d'};">${step.status}</h5>
+                                    <p style="margin:0;color:#7f8c8d;font-size:14px;">${step.time}</p>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
+                    ${order.status === 'out_for_delivery' ? `
+                        <div style="background:#e8f5e9;border:1px solid #27ae60;padding:15px;border-radius:10px;margin-top:20px;text-align:center;">
+                            <p style="margin:0;color:#27ae60;font-weight:600;">📦 Your order is on the way!</p>
+                            <p style="margin:5px 0 0 0;color:#666;font-size:14px;">Click "Order Received" when you receive your delivery</p>
+                        </div>
+                    ` : ''}
                 </div>
             `;
         }
@@ -362,6 +501,28 @@
                 });
         }
 
+        function markOrderReceived(orderId) {
+            if (!confirm('Confirm that you have received your order?')) return;
+            
+            fetch(`/api/orders/${orderId}/received`, { 
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Show delivery success banner for customer
+                    showDeliveryBanner();
+                    
+                    // Reload page after banner
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                }
+            })
+            .catch(() => {});
+        }
+        
         function deleteOrder(orderId) {
             if (!confirm('Are you sure you want to delete this order? This cannot be undone.')) return;
             
@@ -369,11 +530,140 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Order deleted successfully');
                         location.reload();
                     }
                 })
-                .catch(() => alert('Failed to delete order'));
+                .catch(() => {});
+        }
+        
+        function showDeliveryBanner() {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0, 0, 0, 0.5); z-index: 9998;
+                display: flex; align-items: center; justify-content: center;
+            `;
+            
+            const banner = document.createElement('div');
+            banner.style.cssText = `
+                background: #f0f9f0; padding: 40px; border-radius: 16px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                text-align: center; position: relative; min-width: 300px;
+                border: 3px solid #4CAF50; animation: popIn 0.3s ease-out;
+            `;
+            
+            banner.innerHTML = `
+                <button onclick="this.closest('div').remove()" style="
+                    position: absolute; top: 15px; right: 15px; background: none;
+                    border: none; font-size: 24px; cursor: pointer; color: #666;
+                    width: 30px; height: 30px; border-radius: 50%;
+                ">×</button>
+                <div style="font-size: 24px; color: #4CAF50; margin-bottom: 15px; font-weight: 600;">
+                    Order Delivered Successfully! 🎉
+                </div>
+                <div style="font-size: 18px; color: #2E7D32;">
+                    Thank you for using LocalConnect!
+                </div>
+            `;
+            
+            // Add animation
+            if (!document.getElementById('popupStyles')) {
+                const style = document.createElement('style');
+                style.id = 'popupStyles';
+                style.textContent = `
+                    @keyframes popIn {
+                        from { transform: scale(0.8); opacity: 0; }
+                        to { transform: scale(1); opacity: 1; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            overlay.appendChild(banner);
+            document.body.appendChild(overlay);
+            
+            // Auto close after 20 seconds
+            setTimeout(() => {
+                if (overlay.parentElement) overlay.remove();
+            }, 20000);
+        }
+        
+        function showDeliveryBanner() {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0, 0, 0, 0.5); z-index: 9998;
+                display: flex; align-items: center; justify-content: center;
+            `;
+            
+            const banner = document.createElement('div');
+            banner.style.cssText = `
+                background: #f0f9f0; padding: 40px; border-radius: 16px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                text-align: center; position: relative; min-width: 300px;
+                border: 3px solid #4CAF50; animation: popIn 0.3s ease-out;
+            `;
+            
+            banner.innerHTML = `
+                <button onclick="this.closest('div').remove()" style="
+                    position: absolute; top: 15px; right: 15px; background: none;
+                    border: none; font-size: 24px; cursor: pointer; color: #666;
+                    width: 30px; height: 30px; border-radius: 50%;
+                ">×</button>
+                <div style="font-size: 24px; color: #4CAF50; margin-bottom: 15px; font-weight: 600;">
+                    Order Delivered Successfully! 🎉
+                </div>
+                <div style="font-size: 18px; color: #2E7D32;">
+                    Thank you for using LocalConnect!
+                </div>
+            `;
+            
+            // Add animation
+            if (!document.getElementById('popupStyles')) {
+                const style = document.createElement('style');
+                style.id = 'popupStyles';
+                style.textContent = `
+                    @keyframes popIn {
+                        from { transform: scale(0.8); opacity: 0; }
+                        to { transform: scale(1); opacity: 1; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            overlay.appendChild(banner);
+            document.body.appendChild(overlay);
+            
+            // Auto close after 20 seconds
+            setTimeout(() => {
+                if (overlay.parentElement) overlay.remove();
+            }, 20000);
+        }
+
+        function editReview(orderId, currentRating, currentComment) {
+            const order = orders.find(o => o.id === orderId);
+            document.getElementById('details-content').innerHTML = `
+                <div style="max-width:500px;margin:0 auto;">
+                    <button class="back-btn" onclick="showOrderDetails(${orderId})" style="margin-bottom:20px;">← Back</button>
+                    <h3 style="text-align:center;margin-bottom:30px;">Edit Your Review</h3>
+                    <div style="text-align:center;margin-bottom:30px;">
+                        <h4 style="margin-bottom:15px;">${order.vendor}</h4>
+                        <div id="starRating" style="font-size:40px;cursor:pointer;">
+                            <span onclick="setRating(1)">☆</span>
+                            <span onclick="setRating(2)">☆</span>
+                            <span onclick="setRating(3)">☆</span>
+                            <span onclick="setRating(4)">☆</span>
+                            <span onclick="setRating(5)">☆</span>
+                        </div>
+                    </div>
+                    <textarea id="reviewComment" placeholder="Share your experience..." style="width:100%;padding:15px;border:1px solid #ddd;border-radius:10px;min-height:120px;resize:vertical;margin-bottom:20px;">${currentComment}</textarea>
+                    <button onclick="submitReview(${orderId})" style="width:100%;padding:15px;background:#27ae60;color:white;border:none;border-radius:10px;font-weight:600;cursor:pointer;">
+                        <i class="fa-solid fa-paper-plane"></i> Update Review
+                    </button>
+                </div>
+            `;
+            // Set the current rating
+            setTimeout(() => setRating(currentRating), 100);
         }
 
         let currentRating = 0;
@@ -423,8 +713,7 @@
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    alert('Thank you for your review!');
-                    location.reload();
+                    window.location.href = '/customer/orders';
                 }
             });
         }

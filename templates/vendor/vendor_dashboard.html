@@ -5,6 +5,23 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/vendor/dashboard.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/vendor/menu.css') }}">
+<style>
+.quick-reason-btn {
+    background: #ecf0f1;
+    border: 1px solid #bdc3c7;
+    color: #2c3e50;
+    padding: 8px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s;
+}
+.quick-reason-btn:hover {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+</style>
 {% endblock %}
 
 {% block extra_js %}
@@ -58,9 +75,6 @@ function toggleDashboardStatus(checkbox) {
 }
 
 function updateOrderStatus(orderId, status) {
-    const statusBadge = document.getElementById(`status-${orderId}`);
-    const actionsDiv = document.getElementById(`actions-${orderId}`);
-    
     fetch(`/vendor/orders/${orderId}/status`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -69,18 +83,79 @@ function updateOrderStatus(orderId, status) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            if (statusBadge && actionsDiv) {
-                statusBadge.textContent = status;
-                statusBadge.className = `status-badge-compact status-${status.toLowerCase()}`;
-                actionsDiv.innerHTML = '';
+            if (status === 'Completed') {
+                // Get order amount and show banner
+                const orderCard = document.querySelector(`[data-order-id="${orderId}"]`);
+                const amountText = orderCard.querySelector('.order-amount').textContent;
+                const amount = amountText.replace('₹', '');
+                showEarningsBanner(amount);
+                
+                // Wait 2 seconds then reload to show updated status and earnings
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                location.reload();
             }
-            updatePendingCount();
         }
     })
     .catch(error => {
         console.error('Error:', error);
         alert('Failed to update order status');
     });
+}
+
+function showEarningsBanner(amount) {
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.5); z-index: 9998;
+        display: flex; align-items: center; justify-content: center;
+    `;
+    
+    // Create banner
+    const banner = document.createElement('div');
+    banner.style.cssText = `
+        background: #f0f9f0; padding: 40px; border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        text-align: center; position: relative; min-width: 300px;
+        border: 3px solid #4CAF50; animation: popIn 0.3s ease-out;
+    `;
+    
+    banner.innerHTML = `
+        <button onclick="this.closest('.overlay').remove()" style="
+            position: absolute; top: 15px; right: 15px; background: none;
+            border: none; font-size: 24px; cursor: pointer; color: #666;
+            width: 30px; height: 30px; border-radius: 50%;
+        ">×</button>
+        <div style="font-size: 24px; color: #4CAF50; margin-bottom: 15px; font-weight: 600;">
+            Order Completed 🎉
+        </div>
+        <div style="font-size: 32px; font-weight: bold; color: #2E7D32;">
+            You've Earned ₹${amount}
+        </div>
+    `;
+    
+    // Add animation
+    if (!document.getElementById('popupStyles')) {
+        const style = document.createElement('style');
+        style.id = 'popupStyles';
+        style.textContent = `
+            @keyframes popIn {
+                from { transform: scale(0.8); opacity: 0; }
+                to { transform: scale(1); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    overlay.className = 'overlay';
+    overlay.appendChild(banner);
+    document.body.appendChild(overlay);
+    
+    // Auto close after 10 seconds
+    setTimeout(() => {
+        if (overlay.parentElement) overlay.remove();
+    }, 10000);
 }
 
 function updatePendingCount() {
@@ -90,6 +165,39 @@ function updatePendingCount() {
     if (pendingCountElement) {
         pendingCountElement.textContent = Math.max(0, pendingCards - 1);
     }
+}
+
+function submitReject(event) {
+    event.preventDefault();
+    const orderId = document.getElementById('rejectOrderId').value;
+    const reason = document.getElementById('rejectionReason').value;
+    
+    fetch(`/vendor/orders/${orderId}/status`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({status: 'Rejected', rejection_reason: reason})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            closeRejectModal();
+            location.reload();
+        }
+    });
+}
+
+function setRejectionReason(reason) {
+    document.getElementById('rejectionReason').value = reason;
+}
+
+function openRejectModal(orderId) {
+    document.getElementById('rejectOrderId').value = orderId;
+    document.getElementById('rejectionReason').value = '';
+    document.getElementById('rejectModal').style.display = 'block';
+}
+
+function closeRejectModal() {
+    document.getElementById('rejectModal').style.display = 'none';
 }
 
 function toggleItemAvailability(itemId, isAvailable) {
@@ -115,6 +223,159 @@ function toggleItemAvailability(itemId, isAvailable) {
         checkbox.checked = !isAvailable;
         alert('Failed to update item availability');
     });
+}
+
+// Real-time time updates for vendor dashboard
+function updateRelativeTimes() {
+    document.querySelectorAll('[data-timestamp]').forEach(element => {
+        const timestamp = parseFloat(element.getAttribute('data-timestamp'));
+        const orderDate = new Date(timestamp * 1000);
+        const now = new Date();
+        const diff = (now.getTime() - orderDate.getTime()) / 1000;
+        
+        let relativeText;
+        if (diff < 60) {
+            relativeText = 'Now';
+        } else if (diff < 3600) {
+            const mins = Math.floor(diff / 60);
+            relativeText = `${mins}m ago`;
+        } else if (diff < 86400) {
+            const hours = Math.floor(diff / 3600);
+            relativeText = `${hours}h ago`;
+        } else {
+            relativeText = orderDate.toLocaleDateString('en-IN');
+        }
+        
+        const time24 = orderDate.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit', hour12: false});
+        const time12 = orderDate.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', hour12: true}).replace(/AM|PM/, match => match.charAt(0) + '.M');
+        
+        element.textContent = `${relativeText} | ${time24}(${time12})`;
+        element.title = orderDate.toLocaleString('en-IN');
+    });
+}
+
+// Update times immediately and every 30 seconds
+updateRelativeTimes();
+setInterval(updateRelativeTimes, 30000);
+
+// SMS Test Function
+function testSMSNotification() {
+    const button = event.currentTarget;
+    const originalContent = button.innerHTML;
+    
+    // Show loading state
+    button.innerHTML = `
+        <div class="stat-icon-box purple-bg">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+        </div>
+        <div class="stat-info">
+            <p>SMS Notifications</p>
+            <h3 style="font-size: 14px;">Sending...</h3>
+        </div>
+    `;
+    button.style.pointerEvents = 'none';
+    
+    fetch('/api/twilio/test-notification', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success state
+            button.innerHTML = `
+                <div class="stat-icon-box green-bg">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <div class="stat-info">
+                    <p>SMS Notifications</p>
+                    <h3 style="font-size: 14px;">SMS Sent!</h3>
+                </div>
+            `;
+            
+            // Show success message
+            showNotification('✅ Test SMS sent successfully! Check your phone.', 'success');
+        } else {
+            // Show error state
+            button.innerHTML = `
+                <div class="stat-icon-box red-bg">
+                    <i class="fa-solid fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-info">
+                    <p>SMS Notifications</p>
+                    <h3 style="font-size: 14px;">Failed</h3>
+                </div>
+            `;
+            
+            showNotification('❌ SMS test failed: ' + (data.error || 'Unknown error'), 'error');
+        }
+        
+        // Reset button after 3 seconds
+        setTimeout(() => {
+            button.innerHTML = originalContent;
+            button.style.pointerEvents = 'auto';
+        }, 3000);
+    })
+    .catch(error => {
+        console.error('SMS test error:', error);
+        
+        // Show error state
+        button.innerHTML = `
+            <div class="stat-icon-box red-bg">
+                <i class="fa-solid fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-info">
+                <p>SMS Notifications</p>
+                <h3 style="font-size: 14px;">Error</h3>
+            </div>
+        `;
+        
+        showNotification('❌ SMS test failed: Network error', 'error');
+        
+        // Reset button after 3 seconds
+        setTimeout(() => {
+            button.innerHTML = originalContent;
+            button.style.pointerEvents = 'auto';
+        }, 3000);
+    });
+}
+
+// Notification function
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed; top: 20px; right: 20px; z-index: 10000;
+        padding: 15px 20px; border-radius: 8px; color: white;
+        font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
+        animation: slideIn 0.3s ease-out;
+    `;
+    notification.textContent = message;
+    
+    // Add slide animation
+    if (!document.getElementById('notificationStyles')) {
+        const style = document.createElement('style');
+        style.id = 'notificationStyles';
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.style.animation = 'slideIn 0.3s ease-out reverse';
+            setTimeout(() => notification.remove(), 300);
+        }
+    }, 5000);
 }
 </script>
 {% endblock %}
@@ -161,6 +422,16 @@ function toggleItemAvailability(itemId, isAvailable) {
                 <h3>{{ pending_orders }}</h3>
             </div>
         </div>
+
+        <div class="stat-card" style="cursor: pointer;" onclick="testSMSNotification()">
+            <div class="stat-icon-box purple-bg">
+                <i class="fa-solid fa-sms"></i>
+            </div>
+            <div class="stat-info">
+                <p>SMS Notifications</p>
+                <h3 style="font-size: 14px;">Test SMS</h3>
+            </div>
+        </div>
     </div>
 
     <div class="dashboard-section">
@@ -173,17 +444,24 @@ function toggleItemAvailability(itemId, isAvailable) {
             <div class="order-card compact" data-order-id="{{ order.id }}">
                 <div class="order-header">
                     <div class="order-id">#{{ order.id }}</div>
-                    <div class="order-time">{{ order.created_at.strftime('%H:%M') if order.created_at else 'Now' }}</div>
+                    <div class="order-time" data-timestamp="{{ order.created_at.timestamp() }}">{{ order.created_at.strftime('%H:%M') if order.created_at else 'Now' }} | {{ order.created_at.strftime('%I:%M %p') if order.created_at else 'Now' }}</div>
                 </div>
                 
                 <div class="order-content">
                     <div class="order-items-compact">{{ order.items_summary }}</div>
+                    {% if order.customer_suggestion %}
+                    <div class="customer-note" style="background: #f8f9fa; padding: 8px 12px; border-radius: 6px; margin: 8px 0; border-left: 3px solid #3498db;">
+                        <span style="font-size: 12px; color: #7f8c8d; font-weight: 600;">Customer Note:</span>
+                        <div style="font-size: 13px; color: #2c3e50; margin-top: 2px;">{{ order.customer_suggestion }}</div>
+                    </div>
+                    {% endif %}
                     <div class="order-meta">
-                        <span class="order-type-compact {{ 'delivery' if order.order_type == 'Delivery' else 'takeaway' }}">
-                            <i class="fa-solid {{ 'fa-motorcycle' if order.order_type == 'Delivery' else 'fa-bag-shopping' }}"></i>
-                            {{ order.order_type }}
+                        <span class="order-type-compact {{ 'delivery' if order.delivery_type == 'delivery' else 'takeaway' }}">
+                            <i class="fa-solid {{ 'fa-motorcycle' if order.delivery_type == 'delivery' else 'fa-bag-shopping' }}"></i>
+                            {{ order.delivery_type|title }}
                         </span>
-                        <span class="order-amount">₹{{ order.total_price }}</span>
+                        <span class="order-amount">₹{{ order.total }}</span>
+                        <span class="payment-type">{{ 'Online' if order.payment_type == 'online' else 'Cash' }}</span>
                     </div>
                 </div>
                 
@@ -194,11 +472,23 @@ function toggleItemAvailability(itemId, isAvailable) {
                     
                     <div class="order-actions-compact" id="actions-{{ order.id }}">
                         {% if not order.status or order.status == 'Pending' %}
-                        <button class="btn-action accept" onclick="updateOrderStatus({{ order.id }}, 'Accepted')">
+                        <button class="btn-action accept" onclick="updateOrderStatus({{ order.id }}, 'preparing')">
                             Accept
                         </button>
-                        <button class="btn-action reject" onclick="updateOrderStatus({{ order.id }}, 'Rejected')">
+                        <button class="btn-action reject" onclick="openRejectModal({{ order.id }})">
                             Reject
+                        </button>
+                        {% elif order.status == 'preparing' %}
+                        <button class="btn-action accept" onclick="updateOrderStatus({{ order.id }}, '{{ 'out_for_delivery' if order.delivery_type == 'delivery' else 'ready' }}')">
+                            {% if order.delivery_type == 'takeaway' %}
+                                Ready for Takeaway
+                            {% else %}
+                                Out for Delivery
+                            {% endif %}
+                        </button>
+                        {% elif order.status == 'ready' and order.delivery_type == 'takeaway' %}
+                        <button class="btn-action accept" onclick="updateOrderStatus({{ order.id }}, 'Completed')">
+                            Order Delivered
                         </button>
                         {% endif %}
                     </div>
@@ -319,6 +609,35 @@ function toggleItemAvailability(itemId, isAvailable) {
                     <button type="submit" class="btn-save" id="saveBtn">
                         <i class="fa-solid fa-plus"></i> Add Item
                     </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Order Modal -->
+<div id="rejectModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Reject Order</h3>
+            <span class="close" onclick="closeRejectModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p>Please provide a reason for rejecting this order:</p>
+            <div style="margin-bottom: 15px;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                    <button type="button" class="quick-reason-btn" onclick="setRejectionReason('Items not available')">Items not available</button>
+                    <button type="button" class="quick-reason-btn" onclick="setRejectionReason('Shop is closed')">Shop is closed</button>
+                    <button type="button" class="quick-reason-btn" onclick="setRejectionReason('Too busy right now')">Too busy right now</button>
+                    <button type="button" class="quick-reason-btn" onclick="setRejectionReason('Payment issue')">Payment issue</button>
+                </div>
+            </div>
+            <form id="rejectForm" onsubmit="submitReject(event)">
+                <input type="hidden" id="rejectOrderId">
+                <textarea id="rejectionReason" placeholder="Enter rejection reason..." required style="width: 100%; min-height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;"></textarea>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="closeRejectModal()">Cancel</button>
+                    <button type="submit" class="btn-delete-confirm">Reject Order</button>
                 </div>
             </form>
         </div>

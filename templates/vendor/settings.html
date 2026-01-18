@@ -30,9 +30,11 @@
                     <div class="shop-image" id="shopImage">
                         {% if vendor_profile and vendor_profile.shop_image %}
                             {% if vendor_profile.shop_image.startswith('data:image') %}
-                                <img src="{{ vendor_profile.shop_image }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
-                            {% else %}
+                                <img src="{{ vendor_profile.shop_image }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.innerHTML='🏪';">
+                            {% elif vendor_profile.shop_image|length < 5 %}
                                 {{ vendor_profile.shop_image }}
+                            {% else %}
+                                🏪
                             {% endif %}
                         {% else %}
                             🏪
