@@ -73,7 +73,7 @@ class MenuItem(db.Model):
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False)
-    vendor_id = db.Column(db.Integer, db.ForeignKey('vendor.id'), nullable=False)
+    vendor_id = db.Column(db.Integer, db.ForeignKey('vendor.id'), nullable=True)
     vendor_name = db.Column(db.String(100), nullable=False)
     customer_name = db.Column(db.String(100))
     customer_phone = db.Column(db.String(20))

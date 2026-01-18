@@ -10,14 +10,24 @@ warnings.filterwarnings("ignore", message="pkg_resources is deprecated")
 import razorpay
 from dotenv import load_dotenv
 import pytz
+import logging
 from utils.twilio_notifications import TwilioNotifications
 from utils.enhanced_notifications import EnhancedNotifications
+from geocoding_enhanced import GeocodeServiceEnhanced
+from vendor_location_autofix import auto_fix_on_startup
 
 # Load environment variables
 load_dotenv()
 
 # Set Indian timezone
 IST = pytz.timezone('Asia/Kolkata')
+
+# Configure application logging for geocoding
+logging.basicConfig(level=logging.INFO)
+app_logger = logging.getLogger(__name__)
+
+# Initialize enhanced geocoding service
+geocode_service = GeocodeServiceEnhanced()
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here-change-in-production'
@@ -69,6 +79,18 @@ with app.app_context():
     
     db.create_all()
     print("Database initialized successfully")
+    
+    # Auto-fix all vendors with missing coordinates
+    print("\n" + "="*70)
+    print("Starting automatic vendor location fix...")
+    print("="*70)
+    try:
+        auto_fix_on_startup(app, db, Vendor, GeocodeServiceEnhanced)
+    except Exception as e:
+        print(f"Warning: Auto-fix encountered an error: {e}")
+        import traceback
+        traceback.print_exc()
+    print("="*70 + "\n")
 
 @app.before_request
 def check_session_validity():
@@ -270,6 +292,15 @@ def vendor_details(vendor_id):
     user_id = session.get('user_id')
     vendor = Vendor.query.get_or_404(vendor_id)
     return render_template('customer/viewdet.html', vendor_id=vendor_id, vendor=vendor, user_name=session.get('user_name'), user_id=user_id)
+
+@app.route('/customer/vendor/<int:vendor_id>/map')
+@customer_required
+def vendor_map(vendor_id):
+    vendor = Vendor.query.get_or_404(vendor_id)
+    if not vendor.latitude or not vendor.longitude:
+        flash('Location not available for this vendor', 'warning')
+        return redirect(url_for('vendor_details', vendor_id=vendor_id))
+    return render_template('customer/map_view.html', vendor_id=vendor_id)
 
 @app.route('/api/vendor/<int:vendor_id>/menu')
 def get_vendor_menu(vendor_id):
@@ -1177,6 +1208,12 @@ def vendor_signup():
         phone = request.form['phone']
         password = request.form['password']
 
+        # Log vendor registration attempt
+        app_logger.info(f"=== NEW VENDOR REGISTRATION ===")
+        app_logger.info(f"Business: {business_name}")
+        app_logger.info(f"Email: {email}")
+        app_logger.info(f"Address: {business_address}")
+
         # Check if email already exists
         existing_vendor = Vendor.query.filter_by(email=email).first()
         if existing_vendor:
@@ -1194,18 +1231,27 @@ def vendor_signup():
                            business_address=business_address, phone=phone)
         new_vendor.set_password(password)
         
-        # Geocode the business address to get coordinates
-        from utils.geocoding import geocode_address
-        latitude, longitude = geocode_address(business_address)
+        # Geocode the business address using enhanced service
+        app_logger.info(f"Starting geocoding for address: {business_address}")
+        latitude, longitude = geocode_service.geocode(business_address)
+        
         if latitude and longitude:
             new_vendor.latitude = latitude
             new_vendor.longitude = longitude
             geocoding_status = '✅ Location detected automatically!'
+            app_logger.info(f"✅ GEOCODING SUCCESS: ({latitude:.4f}, {longitude:.4f})")
+            app_logger.info(f"Vendor will appear on map at correct location")
         else:
-            geocoding_status = '⚠️ Location will be updated when you complete your profile.'
+            geocoding_status = '⚠️ Location could not be detected. Please try with a more complete address (include city and state).'
+            app_logger.error(f"❌ GEOCODING FAILED for vendor: {business_name}")
+            app_logger.error(f"   Address: {business_address}")
+            app_logger.error(f"   Vendor may not appear on map until coordinates are updated")
         
         db.session.add(new_vendor)
         db.session.commit()
+
+        app_logger.info(f"Vendor created with ID: {new_vendor.id}")
+        app_logger.info(f"Latitude: {new_vendor.latitude}, Longitude: {new_vendor.longitude}")
 
         session.permanent = True
         session['user_id'] = new_vendor.id
@@ -1261,16 +1307,26 @@ def vendor_settings():
         vendor.parking = request.form.get('parking')
         vendor.other_amenities = request.form.get('other_amenities')
         
-        # If address changed, geocode the new address
+        # If address changed, geocode the new address using enhanced service
         if address_changed:
-            from utils.geocoding import geocode_address
-            latitude, longitude = geocode_address(vendor.business_address)
+            app_logger.info(f"=== VENDOR ADDRESS UPDATE ===")
+            app_logger.info(f"Vendor ID: {vendor_id}")
+            app_logger.info(f"Old address: {vendor.business_address}")
+            app_logger.info(f"New address: {new_address}")
+            app_logger.info(f"Starting geocoding for new address...")
+            
+            latitude, longitude = geocode_service.geocode(new_address)
+            
             if latitude and longitude:
                 vendor.latitude = latitude
                 vendor.longitude = longitude
-                location_message = 'Location updated automatically!'
+                location_message = '✅ Location updated automatically!'
+                app_logger.info(f"✅ GEOCODING SUCCESS: ({latitude:.4f}, {longitude:.4f})")
+                app_logger.info(f"Vendor location updated on map")
             else:
-                location_message = 'Address updated, but location could not be detected.'
+                location_message = '⚠️ Address updated, but location could not be detected. Try a more complete address.'
+                app_logger.error(f"❌ GEOCODING FAILED for vendor: {vendor.business_name}")
+                app_logger.error(f"   New address: {new_address}")
         else:
             location_message = None
         
@@ -1745,6 +1801,113 @@ def map_view(vendor_id):
 @app.route('/signup/success')
 def signup_success():
     return render_template('success.html')
+
+# Admin routes for vendor management
+@app.route('/admin/delete-vendors')
+def admin_delete_vendors_page():
+    """Admin page to delete all vendors"""
+    return render_template('admin/delete_vendors.html')
+
+@app.route('/admin/delete-all-vendors', methods=['POST'])
+def delete_all_vendors():
+    """Delete all vendors and their associated data"""
+    try:
+        # Delete all menu items first (foreign key constraint)
+        MenuItem.query.delete()
+        
+        # Update orders to remove vendor references
+        orders = Order.query.all()
+        for order in orders:
+            if order.vendor_id:
+                order.vendor_name = f"Deleted Vendor (ID: {order.vendor_id})"
+                order.vendor_id = None
+        
+        # Delete all vendors
+        vendor_count = Vendor.query.count()
+        Vendor.query.delete()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Successfully deleted {vendor_count} vendors and all associated menu items',
+            'deleted_count': vendor_count
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# Customer account deletion
+@app.route('/customer/delete-account', methods=['POST'])
+@customer_required
+def delete_customer_account():
+    """Permanently delete customer account and all associated data"""
+    try:
+        customer_id = session['user_id']
+        customer = Customer.query.get(customer_id)
+        
+        if not customer:
+            return jsonify({'success': False, 'error': 'Customer not found'}), 404
+        
+        # Delete all customer orders
+        Order.query.filter_by(customer_id=customer_id).delete()
+        
+        # Delete customer account
+        db.session.delete(customer)
+        db.session.commit()
+        
+        # Clear session
+        session.clear()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Account permanently deleted',
+            'redirect': url_for('home')
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# Vendor account deletion
+@app.route('/vendor/delete-account', methods=['POST'])
+@vendor_required
+def delete_vendor_account():
+    """Permanently delete vendor account and all associated data"""
+    try:
+        vendor_id = session['user_id']
+        vendor = Vendor.query.get(vendor_id)
+        
+        if not vendor:
+            return jsonify({'success': False, 'error': 'Vendor not found'}), 404
+        
+        # Delete all menu items first
+        MenuItem.query.filter_by(vendor_id=vendor_id).delete()
+        
+        # Update orders to remove vendor reference but keep order history
+        orders = Order.query.filter_by(vendor_id=vendor_id).all()
+        for order in orders:
+            order.vendor_name = f"Deleted Vendor: {vendor.business_name}"
+            order.vendor_id = None
+        
+        # Delete vendor account completely
+        vendor_email = vendor.email
+        db.session.delete(vendor)
+        db.session.commit()
+        
+        # Clear session completely
+        session.clear()
+        
+        print(f"Vendor account deleted: {vendor_email}")
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Account permanently deleted',
+            'redirect': url_for('home')
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error deleting vendor account: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
             
 if __name__ == '__main__':
     print("\n" + "="*50)

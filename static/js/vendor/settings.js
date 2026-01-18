@@ -408,6 +408,45 @@ function confirmDeactivate() {
     }
 }
 
+// Delete vendor account permanently
+function deleteVendorAccount() {
+    if (!confirm('Are you sure you want to permanently delete your vendor account? This action cannot be undone!')) {
+        return;
+    }
+    
+    if (!confirm('This will delete all your menu items, orders history, and business data. Type "DELETE" to confirm:')) {
+        return;
+    }
+    
+    const userInput = prompt('Type "DELETE" to confirm account deletion:');
+    if (userInput !== 'DELETE') {
+        alert('Confirmation failed. Account deletion cancelled.');
+        return;
+    }
+    
+    fetch('/vendor/delete-account', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Vendor account deleted successfully. You will be redirected to the home page.');
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = data.redirect;
+        } else {
+            alert('Error deleting account: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Network error. Please try again.');
+    });
+}
+
 // Add CSS for toast animation
 const style = document.createElement('style');
 style.textContent = `
