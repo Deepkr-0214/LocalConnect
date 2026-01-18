@@ -1,0 +1,243 @@
+{% extends "vendor/base.html" %}
+
+{% block title %}Notification Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-chart-line"></i> Notification Dashboard</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Status Overview -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-sms fa-2x mb-2"></i>
+                                    <h5>SMS Status</h5>
+                                    <h3 id="smsStatus">Active</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <i class="fab fa-whatsapp fa-2x mb-2"></i>
+                                    <h5>WhatsApp Status</h5>
+                                    <h3 id="whatsappStatus">Active</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-paper-plane fa-2x mb-2"></i>
+                                    <h5>Today's Sent</h5>
+                                    <h3 id="todaySent">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                                    <h5>Failed Today</h5>
+                                    <h3 id="todayFailed">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5>Quick Actions</h5>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-primary" id="testNotifications">
+                                    <i class="fas fa-paper-plane"></i> Send Test
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="refreshStatus">
+                                    <i class="fas fa-sync"></i> Refresh Status
+                                </button>
+                                <button type="button" class="btn btn-info" id="viewSettings">
+                                    <i class="fas fa-cog"></i> Settings
+                                </button>
+                                <button type="button" class="btn btn-success" id="viewHistory">
+                                    <i class="fas fa-history"></i> History
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Notifications -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h5>Recent Notifications</h5>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>Type</th>
+                                            <th>Recipient</th>
+                                            <th>SMS</th>
+                                            <th>WhatsApp</th>
+                                            <th>Message</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="notificationHistory">
+                                        <tr>
+                                            <td colspan="6" class="text-center">Loading...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notification Types -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h5>Notification Types Enabled</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>📱 SMS Notifications</h6>
+                                    <ul class="list-group">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            New Orders
+                                            <span class="badge bg-success rounded-pill">✓</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Payment Confirmations
+                                            <span class="badge bg-success rounded-pill">✓</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Order Completions
+                                            <span class="badge bg-success rounded-pill">✓</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Daily Summary
+                                            <span class="badge bg-success rounded-pill">✓</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>💬 WhatsApp Notifications</h6>
+                                    <ul class="list-group">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            New Orders
+                                            <span class="badge bg-success rounded-pill">✓</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Order Management
+                                            <span class="badge bg-success rounded-pill">✓</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Payment Confirmations
+                                            <span class="badge bg-success rounded-pill">✓</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Order Completions
+                                            <span class="badge bg-success rounded-pill">✓</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- WhatsApp Commands -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6><i class="fab fa-whatsapp"></i> WhatsApp Order Management Commands</h6>
+                                <p><strong>Accept Order:</strong> Reply "ACCEPT [order_id]"</p>
+                                <p><strong>Reject Order:</strong> Reply "REJECT [order_id] [reason]"</p>
+                                <p class="mb-0"><strong>Example:</strong> "ACCEPT 123" or "REJECT 123 Out of ingredients"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load notification dashboard data
+function loadDashboard() {
+    fetch('/api/vendor/notification-dashboard')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateDashboard(data);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading dashboard:', error);
+        });
+}
+
+function updateDashboard(data) {
+    // Update status cards
+    document.getElementById('todaySent').textContent = data.today_sent || 0;
+    document.getElementById('todayFailed').textContent = data.today_failed || 0;
+    
+    // Update notification history
+    const historyTable = document.getElementById('notificationHistory');
+    if (data.recent_notifications && data.recent_notifications.length > 0) {
+        historyTable.innerHTML = data.recent_notifications.map(notification => `
+            <tr>
+                <td>${new Date(notification.timestamp).toLocaleString()}</td>
+                <td><span class="badge bg-primary">${notification.type}</span></td>
+                <td>${notification.recipient}</td>
+                <td>${notification.sms_success ? '<span class="text-success">✓</span>' : '<span class="text-danger">✗</span>'}</td>
+                <td>${notification.whatsapp_success ? '<span class="text-success">✓</span>' : '<span class="text-danger">✗</span>'}</td>
+                <td>${notification.message.substring(0, 50)}...</td>
+            </tr>
+        `).join('');
+    } else {
+        historyTable.innerHTML = '<tr><td colspan="6" class="text-center">No recent notifications</td></tr>';
+    }
+}
+
+// Event listeners
+document.getElementById('testNotifications').addEventListener('click', function() {
+    fetch('/api/vendor/test-notification', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Test notifications sent successfully!');
+            loadDashboard(); // Refresh dashboard
+        } else {
+            alert('Failed to send test notifications: ' + data.error);
+        }
+    });
+});
+
+document.getElementById('refreshStatus').addEventListener('click', function() {
+    loadDashboard();
+});
+
+document.getElementById('viewSettings').addEventListener('click', function() {
+    window.location.href = '/vendor/notification-settings';
+});
+
+document.getElementById('viewHistory').addEventListener('click', function() {
+    window.location.href = '/vendor/notification-history';
+});
+
+// Load dashboard on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboard();
+    
+    // Auto-refresh every 30 seconds
+    setInterval(loadDashboard, 30000);
+});
+</script>
+{% endblock %}

@@ -2,13 +2,17 @@ from twilio.rest import Client
 import os
 from datetime import datetime
 import pytz
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 class TwilioNotifications:
     def __init__(self):
-        self.account_sid = "AC712fd23c15ce55c8b6abfd9a85cfc3a6"
-        self.auth_token = "c8a2b319b29346a39336582fef3fe024"
-        self.whatsapp_number = "whatsapp:+14155238886"  # WhatsApp number
-        self.sms_number = "+17752786168"  # SMS number
+        self.account_sid = os.getenv('TWILIO_ACCOUNT_SID')
+        self.auth_token = os.getenv('TWILIO_AUTH_TOKEN')
+        self.whatsapp_number = os.getenv('TWILIO_WHATSAPP_NUMBER')
+        self.sms_number = os.getenv('TWILIO_PHONE_NUMBER')
         self.client = Client(self.account_sid, self.auth_token)
         self.ist = pytz.timezone('Asia/Kolkata')
     

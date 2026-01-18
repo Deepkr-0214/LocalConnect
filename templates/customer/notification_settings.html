@@ -1,0 +1,245 @@
+{% extends "customer/customer_base.html" %}
+
+{% block title %}Notification Settings{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-bell"></i> Notification Settings</h4>
+                </div>
+                <div class="card-body">
+                    <form id="notificationForm">
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5>📱 SMS Notifications</h5>
+                                <p class="text-muted">Receive SMS updates about your orders</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="sms_order_placed" checked>
+                                    <label class="form-check-label" for="sms_order_placed">
+                                        Order Placed Confirmation
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="sms_order_accepted" checked>
+                                    <label class="form-check-label" for="sms_order_accepted">
+                                        Order Accepted
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="sms_order_preparing" checked>
+                                    <label class="form-check-label" for="sms_order_preparing">
+                                        Order Being Prepared
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="sms_order_ready" checked>
+                                    <label class="form-check-label" for="sms_order_ready">
+                                        Order Ready
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="sms_order_delivery" checked>
+                                    <label class="form-check-label" for="sms_order_delivery">
+                                        Out for Delivery
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="sms_order_completed" checked>
+                                    <label class="form-check-label" for="sms_order_completed">
+                                        Order Completed
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5>💬 WhatsApp Notifications</h5>
+                                <p class="text-muted">Receive WhatsApp updates about your orders</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="whatsapp_order_placed" checked>
+                                    <label class="form-check-label" for="whatsapp_order_placed">
+                                        Order Placed Confirmation
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="whatsapp_order_accepted" checked>
+                                    <label class="form-check-label" for="whatsapp_order_accepted">
+                                        Order Accepted
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="whatsapp_order_preparing" checked>
+                                    <label class="form-check-label" for="whatsapp_order_preparing">
+                                        Order Being Prepared
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="whatsapp_order_ready" checked>
+                                    <label class="form-check-label" for="whatsapp_order_ready">
+                                        Order Ready
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="whatsapp_order_delivery" checked>
+                                    <label class="form-check-label" for="whatsapp_order_delivery">
+                                        Out for Delivery
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="whatsapp_order_completed" checked>
+                                    <label class="form-check-label" for="whatsapp_order_completed">
+                                        Order Completed
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5>🔔 Other Notifications</h5>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="promotional_sms" checked>
+                                    <label class="form-check-label" for="promotional_sms">
+                                        Promotional SMS
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="promotional_whatsapp" checked>
+                                    <label class="form-check-label" for="promotional_whatsapp">
+                                        Promotional WhatsApp
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>Note:</strong> Critical order updates (like order acceptance/rejection) will always be sent regardless of these settings to ensure you don't miss important information.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Settings
+                                </button>
+                                <button type="button" class="btn btn-secondary ms-2" id="testNotifications">
+                                    <i class="fas fa-paper-plane"></i> Send Test Notification
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('notificationForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    
+    checkboxes.forEach(checkbox => {
+        formData.append(checkbox.id, checkbox.checked);
+    });
+    
+    fetch('/api/customer/notification-settings', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Notification settings saved successfully!');
+        } else {
+            alert('Failed to save settings: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while saving settings.');
+    });
+});
+
+document.getElementById('testNotifications').addEventListener('click', function() {
+    fetch('/api/customer/test-notification', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Test notifications sent! Check your SMS and WhatsApp.');
+        } else {
+            alert('Failed to send test notifications: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while sending test notifications.');
+    });
+});
+</script>
+{% endblock %}

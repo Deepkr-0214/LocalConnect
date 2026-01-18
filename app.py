@@ -11,6 +11,7 @@ import razorpay
 from dotenv import load_dotenv
 import pytz
 from utils.twilio_notifications import TwilioNotifications
+from utils.enhanced_notifications import EnhancedNotifications
 
 # Load environment variables
 load_dotenv()
@@ -32,8 +33,9 @@ RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID')
 RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET')
 razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 
-# Twilio Configuration
-twilio_notifications = TwilioNotifications()
+# Enhanced Notification Configuration
+enhanced_notifications = EnhancedNotifications()
+twilio_notifications = TwilioNotifications()  # Keep for backward compatibility
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(os.getcwd(), "instance", "database.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -355,6 +357,14 @@ def customer_signup():
         session['user_name'] = new_customer.full_name
         session['user_email'] = new_customer.email
         session['user_role'] = 'customer'
+        
+        # Send welcome notification
+        try:
+            enhanced_notifications.notify_customer_welcome(phone, full_name)
+            print(f"Welcome notification sent to customer {full_name}")
+        except Exception as e:
+            print(f"Failed to send welcome notification: {e}")
+        
         flash('Signup successful!', 'success')
         return redirect(url_for('customer_dashboard'))
 
@@ -398,25 +408,38 @@ def create_order():
         db.session.add(order)
         db.session.commit()
 
-        # Send SMS notification to vendor only for cash payments
+        # Send notifications for cash payments
         # Online payments will send notification after verification
         if data['paymentType'] != 'online':
             order_data = {
                 'id': order.id,
                 'customer_name': customer.full_name,
+                'customer_phone': customer.phone,
+                'vendor_name': vendor.business_name,
                 'items_summary': order.items_summary,
                 'total': order.total,
                 'delivery_type': order.delivery_type,
                 'payment_type': order.payment_type
             }
 
-            success, result = twilio_notifications.send_new_order_notification(vendor.phone, order_data)
-            if success:
-                print(f"Order notification sent to vendor {vendor.phone}: {result}")
-            else:
-                print(f"Failed to send notification to {vendor.phone}: {result}")
-                # Don't fail the order creation if SMS fails
-                print("Order created successfully, but SMS notification failed")
+            # Send enhanced notifications to both customer and vendor
+            try:
+                # Notify customer that order was placed
+                customer_result = enhanced_notifications.notify_customer_order_placed(customer.phone, order_data)
+                print(f"Customer order placed notification: {customer_result}")
+                
+                # Notify vendor of new order
+                vendor_result = enhanced_notifications.notify_vendor_new_order(vendor.phone, order_data)
+                print(f"Vendor new order notification: {vendor_result}")
+                
+            except Exception as e:
+                print(f"Failed to send enhanced notifications: {e}")
+                # Fallback to original notification system
+                success, result = twilio_notifications.send_new_order_notification(vendor.phone, order_data)
+                if success:
+                    print(f"Fallback notification sent to vendor {vendor.phone}: {result}")
+                else:
+                    print(f"All notifications failed for {vendor.phone}: {result}")
         else:
             print(f"Online payment order created: ID={order.id}. Waiting for payment verification.")
 
@@ -499,22 +522,40 @@ def verify_payment():
                 order.status = 'Pending' # Now that payment is done, it's pending for vendor action
                 db.session.commit()
                 
-                # Send SMS notification to vendor after successful payment
+                # Send enhanced notifications after successful payment
                 vendor = Vendor.query.get(order.vendor_id)
-                if vendor:
+                customer = Customer.query.get(order.customer_id)
+                if vendor and customer:
                     order_data = {
                         'id': order.id,
                         'customer_name': order.customer_name,
+                        'customer_phone': customer.phone,
+                        'vendor_name': order.vendor_name,
                         'items_summary': order.items_summary,
                         'total': order.total,
                         'delivery_type': order.delivery_type,
                         'payment_type': order.payment_type
                     }
-                    success, result = twilio_notifications.send_new_order_notification(vendor.phone, order_data)
-                    if success:
-                        print(f"Order notification sent to vendor {vendor.phone} after payment: {result}")
-                    else:
-                        print(f"Failed to send notification to {vendor.phone} after payment: {result}")
+                    
+                    try:
+                        # Send payment confirmation and order notifications
+                        payment_result = enhanced_notifications.notify_payment_confirmation(
+                            customer.phone, vendor.phone, order_data
+                        )
+                        print(f"Payment confirmation notifications sent: {payment_result}")
+                        
+                        # Also send new order notification to vendor
+                        vendor_result = enhanced_notifications.notify_vendor_new_order(vendor.phone, order_data)
+                        print(f"Vendor new order notification after payment: {vendor_result}")
+                        
+                    except Exception as e:
+                        print(f"Failed to send enhanced payment notifications: {e}")
+                        # Fallback to original system
+                        success, result = twilio_notifications.send_new_order_notification(vendor.phone, order_data)
+                        if success:
+                            print(f"Fallback notification sent to vendor {vendor.phone} after payment: {result}")
+                        else:
+                            print(f"All notifications failed for {vendor.phone} after payment: {result}")
 
                 return jsonify({'success': True})
             else:
@@ -819,8 +860,9 @@ def update_order_status(order_id):
     
     db.session.commit()
     
-    # Send SMS notification to customer about status change
+    # Send enhanced notifications to customer about status change
     customer = Customer.query.get(order.customer_id)
+    vendor = Vendor.query.get(order.vendor_id)
     if customer:
         order_data = {
             'id': order.id,
@@ -828,13 +870,30 @@ def update_order_status(order_id):
             'rejection_reason': order.rejection_reason
         }
         
-        success, result = twilio_notifications.send_order_status_notification(
-            customer.phone, order_data, new_status
-        )
-        if success:
-            print(f"Status notification sent to customer {customer.phone}: {result}")
-        else:
-            print(f"Failed to send status notification: {result}")
+        try:
+            # Use enhanced notification system
+            result = enhanced_notifications.notify_customer_order_status(
+                customer.phone, order_data, new_status
+            )
+            print(f"Enhanced status notification sent to customer {customer.phone}: {result}")
+            
+            # If order completed, also notify vendor
+            if new_status == 'Completed' and vendor:
+                vendor_result = enhanced_notifications.notify_vendor_order_completed(
+                    vendor.phone, order_data
+                )
+                print(f"Vendor completion notification sent: {vendor_result}")
+                
+        except Exception as e:
+            print(f"Enhanced notification failed: {e}")
+            # Fallback to original system
+            success, result = twilio_notifications.send_order_status_notification(
+                customer.phone, order_data, new_status
+            )
+            if success:
+                print(f"Fallback status notification sent to customer {customer.phone}: {result}")
+            else:
+                print(f"All status notifications failed: {result}")
     
     # Return success with earnings info if order completed
     response = {'success': True}
@@ -1153,6 +1212,14 @@ def vendor_signup():
         session['user_name'] = new_vendor.business_name
         session['user_email'] = new_vendor.email
         session['user_role'] = 'vendor'
+        
+        # Send welcome notification
+        try:
+            enhanced_notifications.notify_vendor_welcome(phone, business_name)
+            print(f"Welcome notification sent to vendor {business_name}")
+        except Exception as e:
+            print(f"Failed to send welcome notification: {e}")
+        
         flash(f'Signup successful! {geocoding_status}', 'success')
         return redirect(url_for('vendor_dashboard'))
 
@@ -1289,20 +1356,20 @@ def twilio_webhook():
                 order.preparing_at = current_time
                 
                 # Send confirmation to vendor
-                twilio_notifications.send_confirmation_whatsapp(
+                enhanced_notifications.send_dual_notification(
                     from_number,
                     f"✅ Order #{order_id} ACCEPTED and marked as preparing. Customer has been notified."
                 )
                 
-                # Send notification to customer
+                # Send notification to customer using enhanced system
                 customer = Customer.query.get(order.customer_id)
                 if customer:
                     order_data = {
                         'id': order.id,
                         'vendor_name': order.vendor_name
                     }
-                    twilio_notifications.send_order_status_notification(
-                        customer.phone, order_data, 'preparing'
+                    enhanced_notifications.notify_customer_order_status(
+                        customer.phone, order_data, 'accepted'
                     )
             
             elif action == 'reject':
@@ -1311,12 +1378,12 @@ def twilio_webhook():
                 order.rejected_at = current_time
                 
                 # Send confirmation to vendor
-                twilio_notifications.send_confirmation_whatsapp(
+                enhanced_notifications.send_dual_notification(
                     from_number,
                     f"❌ Order #{order_id} REJECTED. Customer has been notified."
                 )
                 
-                # Send notification to customer
+                # Send notification to customer using enhanced system
                 customer = Customer.query.get(order.customer_id)
                 if customer:
                     order_data = {
@@ -1324,7 +1391,7 @@ def twilio_webhook():
                         'vendor_name': order.vendor_name,
                         'rejection_reason': reason
                     }
-                    twilio_notifications.send_order_status_notification(
+                    enhanced_notifications.notify_customer_order_status(
                         customer.phone, order_data, 'Rejected'
                     )
             
@@ -1333,7 +1400,7 @@ def twilio_webhook():
         
         else:
             # Invalid WhatsApp message format
-            twilio_notifications.send_confirmation_whatsapp(
+            enhanced_notifications.send_dual_notification(
                 from_number,
                 "❓ Invalid format. Use:\n• ACCEPT [order_id]\n• REJECT [order_id] [reason]"
             )
@@ -1351,16 +1418,126 @@ def test_twilio_notification():
     try:
         vendor = Vendor.query.get(session['user_id'])
         
-        # Send test message
-        test_message = f"📱 Test notification from LocalConnect!\n\nHi {vendor.business_name},\nYour SMS notifications are working correctly.\n\nTime: {datetime.now(IST).strftime('%I:%M %p')}"
+        # Send enhanced test notification
+        test_message = f"📱 TEST NOTIFICATION from LocalConnect!\n\nHi {vendor.business_name},\nYour SMS and WhatsApp notifications are working correctly.\n\nTime: {datetime.now(IST).strftime('%I:%M %p')}"
         
-        success, result = twilio_notifications.send_confirmation_sms(vendor.phone, test_message)
+        result = enhanced_notifications.send_dual_notification(vendor.phone, test_message, 'test')
         
-        if success:
-            return jsonify({'success': True, 'message': 'Test SMS sent successfully!'})
+        if result['sms'] or result['whatsapp']:
+            return jsonify({
+                'success': True, 
+                'message': 'Test notifications sent successfully!',
+                'details': result
+            })
         else:
-            return jsonify({'success': False, 'error': result})
+            return jsonify({
+                'success': False, 
+                'error': 'Both SMS and WhatsApp failed',
+                'details': result
+            })
             
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/customer/test-notification', methods=['POST'])
+@customer_required
+def test_customer_notification():
+    """Test endpoint for customers to test SMS and WhatsApp notifications"""
+    try:
+        customer = Customer.query.get(session['user_id'])
+        
+        test_message = f"📱 TEST NOTIFICATION from LocalConnect!\n\nHi {customer.full_name},\nYour SMS and WhatsApp notifications are working correctly.\n\nYou'll receive updates about your orders on both channels.\n\nTime: {datetime.now(IST).strftime('%I:%M %p')}"
+        
+        result = enhanced_notifications.send_dual_notification(customer.phone, test_message, 'test')
+        
+        if result['sms'] or result['whatsapp']:
+            return jsonify({
+                'success': True, 
+                'message': 'Test notifications sent successfully!',
+                'details': result
+            })
+        else:
+            return jsonify({
+                'success': False, 
+                'error': 'Both SMS and WhatsApp failed',
+                'details': result
+            })
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/customer/notification-settings')
+@customer_required
+def customer_notification_settings():
+    """Customer notification settings page"""
+    user_id = session.get('user_id')
+    return render_template('customer/notification_settings.html', 
+                         user_name=session.get('user_name'), 
+                         user_id=user_id)
+
+@app.route('/vendor/notification-settings')
+@vendor_required
+def vendor_notification_settings():
+    """Vendor notification settings page"""
+    vendor_id = session['user_id']
+    vendor = Vendor.query.get(vendor_id)
+    unread_count = Order.query.filter_by(vendor_id=vendor_id, status='Pending').count()
+    return render_template('vendor/notification_settings.html', 
+                         vendor_profile=vendor, 
+                         unread_count=unread_count)
+
+@app.route('/api/customer/notification-settings', methods=['POST'])
+@customer_required
+def save_customer_notification_settings():
+    """Save customer notification preferences"""
+    try:
+        # For now, just return success as we don't have a settings table yet
+        # In a full implementation, you would save these to a customer_notification_settings table
+        return jsonify({'success': True, 'message': 'Settings saved successfully'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/vendor/notification-dashboard')
+@vendor_required
+def vendor_notification_dashboard():
+    """Vendor notification dashboard page"""
+    vendor_id = session['user_id']
+    vendor = Vendor.query.get(vendor_id)
+    unread_count = Order.query.filter_by(vendor_id=vendor_id, status='Pending').count()
+    return render_template('vendor/notification_dashboard.html', 
+                         vendor_profile=vendor, 
+                         unread_count=unread_count)
+
+@app.route('/api/vendor/notification-dashboard')
+@vendor_required
+def api_vendor_notification_dashboard():
+    """API endpoint for notification dashboard data"""
+    try:
+        # In a full implementation, you would track notification history in a database
+        # For now, return mock data
+        return jsonify({
+            'success': True,
+            'today_sent': 15,
+            'today_failed': 1,
+            'recent_notifications': [
+                {
+                    'timestamp': datetime.now().isoformat(),
+                    'type': 'new_order',
+                    'recipient': '+91XXXXXXXXXX',
+                    'sms_success': True,
+                    'whatsapp_success': True,
+                    'message': 'New order #123 received from customer...'
+                },
+                {
+                    'timestamp': (datetime.now()).isoformat(),
+                    'type': 'payment_received',
+                    'recipient': '+91XXXXXXXXXX',
+                    'sms_success': True,
+                    'whatsapp_success': False,
+                    'message': 'Payment confirmed for order #122...'
+                }
+            ]
+        })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 

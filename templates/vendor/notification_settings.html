@@ -1,0 +1,223 @@
+{% extends "vendor/base.html" %}
+
+{% block title %}Notification Settings{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-bell"></i> Vendor Notification Settings</h4>
+                </div>
+                <div class="card-body">
+                    <form id="vendorNotificationForm">
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5>📱 SMS Notifications</h5>
+                                <p class="text-muted">Receive SMS alerts for your business</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="sms_new_order" checked>
+                                    <label class="form-check-label" for="sms_new_order">
+                                        <strong>New Order Alerts</strong>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="sms_payment_received" checked>
+                                    <label class="form-check-label" for="sms_payment_received">
+                                        Payment Confirmations
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="sms_order_completed" checked>
+                                    <label class="form-check-label" for="sms_order_completed">
+                                        Order Completions
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="sms_daily_summary" checked>
+                                    <label class="form-check-label" for="sms_daily_summary">
+                                        Daily Sales Summary
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5>💬 WhatsApp Notifications</h5>
+                                <p class="text-muted">Receive WhatsApp alerts and manage orders via WhatsApp</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="whatsapp_new_order" checked>
+                                    <label class="form-check-label" for="whatsapp_new_order">
+                                        <strong>New Order Alerts</strong>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="whatsapp_order_management" checked>
+                                    <label class="form-check-label" for="whatsapp_order_management">
+                                        <strong>WhatsApp Order Management</strong>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="whatsapp_payment_received" checked>
+                                    <label class="form-check-label" for="whatsapp_payment_received">
+                                        Payment Confirmations
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="whatsapp_order_completed" checked>
+                                    <label class="form-check-label" for="whatsapp_order_completed">
+                                        Order Completions
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5>📊 Business Notifications</h5>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="weekly_report" checked>
+                                    <label class="form-check-label" for="weekly_report">
+                                        Weekly Sales Report
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="new_review_alerts" checked>
+                                    <label class="form-check-label" for="new_review_alerts">
+                                        New Review Alerts
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="alert alert-success">
+                                    <i class="fas fa-lightbulb"></i>
+                                    <strong>WhatsApp Order Management:</strong> Reply to order notifications with "ACCEPT [order_id]" or "REJECT [order_id] [reason]" to manage orders directly from WhatsApp!
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>Note:</strong> Critical business notifications (like new orders and payments) are highly recommended to keep enabled for optimal business operations.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Settings
+                                </button>
+                                <button type="button" class="btn btn-secondary ms-2" id="testVendorNotifications">
+                                    <i class="fas fa-paper-plane"></i> Send Test Notification
+                                </button>
+                                <button type="button" class="btn btn-info ms-2" id="viewNotificationHistory">
+                                    <i class="fas fa-history"></i> View History
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('vendorNotificationForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    
+    checkboxes.forEach(checkbox => {
+        formData.append(checkbox.id, checkbox.checked);
+    });
+    
+    fetch('/api/vendor/notification-settings', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Notification settings saved successfully!');
+        } else {
+            alert('Failed to save settings: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while saving settings.');
+    });
+});
+
+document.getElementById('testVendorNotifications').addEventListener('click', function() {
+    fetch('/api/vendor/test-notification', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Test notifications sent! Check your SMS and WhatsApp.');
+        } else {
+            alert('Failed to send test notifications: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while sending test notifications.');
+    });
+});
+
+document.getElementById('viewNotificationHistory').addEventListener('click', function() {
+    window.location.href = '/vendor/notification-history';
+});
+</script>
+{% endblock %}
