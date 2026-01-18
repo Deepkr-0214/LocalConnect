@@ -745,7 +745,75 @@
                     if (paymentType === 'cash') {
                         finalizeOrder(paymentType, deliveryType, total);
                     } else {
-                        // Online payment logic here
+                        // Create Razorpay order
+                        fetch('/api/payment/create', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ order_id: orderId })
+                        })
+                        .then(res => res.json())
+                        .then(paymentData => {
+                            if (paymentData.error) {
+                                window.processingPayment = false;
+                                alert('Error initiating payment: ' + paymentData.error);
+                                return;
+                            }
+
+                            const options = {
+                                "key": paymentData.razorpay_key_id,
+                                "amount": paymentData.amount,
+                                "currency": "INR",
+                                "name": "LocalConnect",
+                                "description": "Payment for " + vendorName,
+                                "order_id": paymentData.razorpay_order_id,
+                                "handler": function (response) {
+                                    // Verify payment
+                                    fetch('/api/payment/verify', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            order_id: orderId,
+                                            razorpay_order_id: response.razorpay_order_id,
+                                            razorpay_payment_id: response.razorpay_payment_id,
+                                            razorpay_signature: response.razorpay_signature
+                                        })
+                                    })
+                                    .then(res => res.json())
+                                    .then(verifyData => {
+                                        window.processingPayment = false;
+                                        if (verifyData.success) {
+                                            finalizeOrder(paymentType, deliveryType, total);
+                                        } else {
+                                            alert('Payment verification failed: ' + (verifyData.error || 'Unknown error'));
+                                        }
+                                    })
+                                    .catch(err => {
+                                        window.processingPayment = false;
+                                        alert('Error verifying payment: ' + err.message);
+                                    });
+                                },
+                                "prefill": {
+                                    "name": paymentData.customer_name,
+                                    "email": paymentData.customer_email,
+                                    "contact": paymentData.customer_phone
+                                },
+                                "theme": {
+                                    "color": "#27ae60"
+                                },
+                                "modal": {
+                                    "ondismiss": function() {
+                                        window.processingPayment = false;
+                                        console.log('Payment modal closed');
+                                    }
+                                }
+                            };
+                            const rzp1 = new Razorpay(options);
+                            rzp1.open();
+                        })
+                        .catch(error => {
+                            window.processingPayment = false;
+                            alert('Order created, but payment initiation failed.');
+                        });
                     }
                 } else {
                     alert('Error creating order: ' + (data.error || 'Unknown error'));

@@ -398,23 +398,27 @@ def create_order():
         db.session.add(order)
         db.session.commit()
 
-        # Send SMS notification to vendor
-        order_data = {
-            'id': order.id,
-            'customer_name': customer.full_name,
-            'items_summary': order.items_summary,
-            'total': order.total,
-            'delivery_type': order.delivery_type,
-            'payment_type': order.payment_type
-        }
+        # Send SMS notification to vendor only for cash payments
+        # Online payments will send notification after verification
+        if data['paymentType'] != 'online':
+            order_data = {
+                'id': order.id,
+                'customer_name': customer.full_name,
+                'items_summary': order.items_summary,
+                'total': order.total,
+                'delivery_type': order.delivery_type,
+                'payment_type': order.payment_type
+            }
 
-        success, result = twilio_notifications.send_new_order_notification(vendor.phone, order_data)
-        if success:
-            print(f"Order notification sent to vendor {vendor.phone}: {result}")
+            success, result = twilio_notifications.send_new_order_notification(vendor.phone, order_data)
+            if success:
+                print(f"Order notification sent to vendor {vendor.phone}: {result}")
+            else:
+                print(f"Failed to send notification to {vendor.phone}: {result}")
+                # Don't fail the order creation if SMS fails
+                print("Order created successfully, but SMS notification failed")
         else:
-            print(f"Failed to send notification to {vendor.phone}: {result}")
-            # Don't fail the order creation if SMS fails
-            print("Order created successfully, but SMS notification failed")
+            print(f"Online payment order created: ID={order.id}. Waiting for payment verification.")
 
         print(f"Order created: ID={order.id}, Customer={customer.full_name}, Vendor={vendor.business_name}")
         return jsonify({'success': True, 'order_id': order.id})
@@ -494,6 +498,24 @@ def verify_payment():
                 order.razorpay_signature = razorpay_signature
                 order.status = 'Pending' # Now that payment is done, it's pending for vendor action
                 db.session.commit()
+                
+                # Send SMS notification to vendor after successful payment
+                vendor = Vendor.query.get(order.vendor_id)
+                if vendor:
+                    order_data = {
+                        'id': order.id,
+                        'customer_name': order.customer_name,
+                        'items_summary': order.items_summary,
+                        'total': order.total,
+                        'delivery_type': order.delivery_type,
+                        'payment_type': order.payment_type
+                    }
+                    success, result = twilio_notifications.send_new_order_notification(vendor.phone, order_data)
+                    if success:
+                        print(f"Order notification sent to vendor {vendor.phone} after payment: {result}")
+                    else:
+                        print(f"Failed to send notification to {vendor.phone} after payment: {result}")
+
                 return jsonify({'success': True})
             else:
                 return jsonify({'error': 'Order not found'}), 404
