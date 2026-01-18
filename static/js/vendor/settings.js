@@ -227,6 +227,16 @@ function handleFormSubmit(event) {
     const form = event.target;
     const formData = new FormData(form);
     
+    // Parse shop location coordinates if provided
+    const shopLocation = document.getElementById('shop_location').value;
+    if (shopLocation && shopLocation.includes(',')) {
+        const [lat, lng] = shopLocation.split(',').map(coord => parseFloat(coord.trim()));
+        if (!isNaN(lat) && !isNaN(lng)) {
+            formData.append('latitude', lat);
+            formData.append('longitude', lng);
+        }
+    }
+    
     fetch(form.action, {
         method: 'POST',
         body: formData
@@ -445,6 +455,48 @@ function deleteVendorAccount() {
         console.error('Error:', error);
         alert('Network error. Please try again.');
     });
+}
+
+// Get vendor current location
+function getVendorCurrentLocation() {
+    const locationField = document.getElementById('shop_location');
+    if (!locationField) {
+        alert('Location field not found');
+        return;
+    }
+    
+    if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser.');
+        return;
+    }
+    
+    locationField.value = 'Getting location...';
+    showToast('Getting your current location...');
+    
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            locationField.value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            showToast('Location coordinates updated successfully!');
+        },
+        (error) => {
+            locationField.value = '';
+            let errorMessage = 'Unable to get location';
+            if (error.code === 1) errorMessage = 'Location permission denied';
+            else if (error.code === 2) errorMessage = 'Location unavailable';
+            else if (error.code === 3) errorMessage = 'Location request timeout';
+            
+            alert(errorMessage);
+            showToast(errorMessage);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000
+        }
+    );
 }
 
 // Add CSS for toast animation

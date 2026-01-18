@@ -77,6 +77,16 @@
                 </div>
                 
                 <div class="form-group">
+                    <label for="shop_location">Shop Location (GPS)</label>
+                    <input type="text" id="shop_location" name="shop_location" placeholder="Click 'Get Location' to fetch GPS coordinates" readonly 
+                           value="{% if vendor_profile and vendor_profile.latitude and vendor_profile.longitude %}{{ vendor_profile.latitude }}, {{ vendor_profile.longitude }}{% endif %}">
+                    <button type="button" class="btn-secondary" onclick="getVendorCurrentLocation()" style="margin-top: 8px;">
+                        <i class="fa-solid fa-location-crosshairs"></i> Get Current Location
+                    </button>
+                    <small style="color: #6b7280; font-size: 0.85rem; margin-top: 4px; display: block;">This location is used for distance calculation and map display</small>
+                </div>
+                
+                <div class="form-group">
                     <label for="phone">Phone</label>
                     <input type="tel" id="phone" name="phone" value="{{ vendor_profile.phone if vendor_profile else '' }}" required>
                 </div>

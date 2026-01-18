@@ -22,12 +22,30 @@ load_dotenv()
 # Set Indian timezone
 IST = pytz.timezone('Asia/Kolkata')
 
-# Configure application logging for geocoding
-logging.basicConfig(level=logging.INFO)
+# Suppress verbose logging during startup
+logging.basicConfig(
+    level=logging.ERROR,
+    format='%(message)s'
+)
+# Suppress all framework loggers
+logging.getLogger('geocoding_enhanced').setLevel(logging.ERROR)
+logging.getLogger('vendor_location_autofix').setLevel(logging.ERROR)
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
+logging.getLogger('flask').setLevel(logging.ERROR)
 app_logger = logging.getLogger(__name__)
+app_logger.setLevel(logging.ERROR)
 
-# Initialize enhanced geocoding service
-geocode_service = GeocodeServiceEnhanced()
+# Initialize enhanced geocoding service (silently)
+import sys
+old_stdout = sys.stdout
+old_stderr = sys.stderr
+try:
+    sys.stdout = open(os.devnull, 'w')
+    sys.stderr = open(os.devnull, 'w')
+    geocode_service = GeocodeServiceEnhanced()
+finally:
+    sys.stdout = old_stdout
+    sys.stderr = old_stderr
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here-change-in-production'
@@ -71,26 +89,27 @@ with app.app_context():
             for column_name, column_type in columns_to_add:
                 if column_name not in existing_columns:
                     conn.execute(db.text(f'ALTER TABLE "order" ADD COLUMN {column_name} {column_type}'))
-                    print(f"Added column {column_name} to Order table")
             
             conn.commit()
     except Exception as e:
-        print(f"Database migration info: {e}")
+        pass  # Silently fail if columns already exist
     
     db.create_all()
-    print("Database initialized successfully")
     
-    # Auto-fix all vendors with missing coordinates
-    print("\n" + "="*70)
-    print("Starting automatic vendor location fix...")
-    print("="*70)
+    # Auto-fix all vendors with missing coordinates (silently in background)
     try:
-        auto_fix_on_startup(app, db, Vendor, GeocodeServiceEnhanced)
+        # Suppress all output during auto-fix
+        old_stdout = sys.stdout
+        old_stderr = sys.stderr
+        sys.stdout = open(os.devnull, 'w')
+        sys.stderr = open(os.devnull, 'w')
+        try:
+            auto_fix_on_startup(app, db, Vendor, GeocodeServiceEnhanced)
+        finally:
+            sys.stdout = old_stdout
+            sys.stderr = old_stderr
     except Exception as e:
-        print(f"Warning: Auto-fix encountered an error: {e}")
-        import traceback
-        traceback.print_exc()
-    print("="*70 + "\n")
+        pass  # Silently handle any errors
 
 @app.before_request
 def check_session_validity():
@@ -262,6 +281,7 @@ def customer_orders():
     orders_query = Order.query.filter_by(customer_id=user_id).order_by(Order.created_at.desc()).all()
     orders = [{
         'id': o.id,
+        'vendor_id': o.vendor_id,
         'vendor_name': o.vendor_name,
         'items': o.items,
         'delivery_type': o.delivery_type,
@@ -1330,6 +1350,19 @@ def vendor_settings():
         else:
             location_message = None
         
+        # Handle manual GPS coordinates from shop location field
+        if 'latitude' in request.form and 'longitude' in request.form:
+            try:
+                manual_lat = float(request.form.get('latitude'))
+                manual_lng = float(request.form.get('longitude'))
+                if -90 <= manual_lat <= 90 and -180 <= manual_lng <= 180:
+                    vendor.latitude = manual_lat
+                    vendor.longitude = manual_lng
+                    location_message = 'GPS location updated successfully!'
+                    app_logger.info(f"Manual GPS coordinates set: ({manual_lat:.6f}, {manual_lng:.6f})")
+            except (ValueError, TypeError):
+                pass
+        
         db.session.commit()
         
         # Update session
@@ -1910,9 +1943,10 @@ def delete_vendor_account():
         return jsonify({'success': False, 'error': str(e)}), 500
             
 if __name__ == '__main__':
-    print("\n" + "="*50)
-    print("🚀 LocalConnect Server Starting...")
-    print("📍 Access your app at: http://127.0.0.1:5000")
-    print("🏪 Vendor page example: http://127.0.0.1:5000/customer/vendor/7")
-    print("="*50 + "\n")
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    # Suppress Flask development server logging
+    import logging
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR)
+    
+    print("\n✅ Server starting at http://127.0.0.1:5000\n")
+    app.run(debug=True, host='127.0.0.1', port=5000, use_reloader=True, use_debugger=False)

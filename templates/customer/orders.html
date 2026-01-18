@@ -282,102 +282,131 @@
                     <div id="orderMap" style="width:100%;height:400px;border-radius:10px;margin:20px 0;"></div>
                     <div style="background:#f8f9fa;padding:15px;border-radius:10px;">
                         <p><strong>Vendor:</strong> ${order.vendor}</p>
-                        <p><strong>Address:</strong> Sector 15, Near Central Mall</p>
-                        <p><strong>Phone:</strong> +91 98765 43210</p>
+                        <p id="vendorAddress"><strong>Address:</strong> Loading...</p>
+                        <p id="vendorPhone"><strong>Phone:</strong> Loading...</p>
                         <p id="routeInfo" style="margin-top:10px;color:#27ae60;">Calculating route...</p>
                     </div>
                 </div>
             `;
             
             setTimeout(() => {
-                if (navigator.geolocation) {
-                    let userMarker, map, routeLayer, arrowLayer;
-                    const vendorLat = 28.6139;
-                    const vendorLng = 77.2090;
-                    
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            const userLat = position.coords.latitude;
-                            const userLng = position.coords.longitude;
+                // Get vendor location using the same method as vendor shop page
+                fetch(`/api/vendor/${getVendorIdFromOrder(order)}/location`)
+                    .then(res => res.json())
+                    .then(vendorData => {
+                        if (vendorData.latitude && vendorData.longitude) {
+                            // Update vendor info
+                            document.getElementById('vendorAddress').innerHTML = `<strong>Address:</strong> ${vendorData.address || 'Not available'}`;
+                            document.getElementById('vendorPhone').innerHTML = `<strong>Phone:</strong> ${vendorData.phone || 'Not available'}`;
                             
-                            map = L.map('orderMap').setView([userLat, userLng], 15);
-                            
-                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                attribution: '© OpenStreetMap'
-                            }).addTo(map);
-                            
-                            userMarker = L.circleMarker([userLat, userLng], {
-                                radius: 8,
-                                fillColor: '#4285F4',
-                                fillOpacity: 1,
-                                color: '#ffffff',
-                                weight: 3
-                            }).addTo(map).bindPopup('Your Location');
-                            
-                            const vendorIcon = L.icon({
-                                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-                                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-                                iconSize: [25, 41],
-                                iconAnchor: [12, 41]
-                            });
-                            
-                            L.marker([vendorLat, vendorLng], {icon: vendorIcon}).addTo(map)
-                                .bindPopup(order.vendor);
-                            
-                            function updateRoute(lat, lng) {
-                                fetch(`https://router.project-osrm.org/route/v1/driving/${lng},${lat};${vendorLng},${vendorLat}?overview=full&geometries=geojson`)
-                                    .then(res => res.json())
-                                    .then(data => {
-                                        if (data.routes && data.routes.length > 0) {
-                                            if (routeLayer) map.removeLayer(routeLayer);
-                                            if (arrowLayer) map.removeLayer(arrowLayer);
-                                            
-                                            const route = data.routes[0];
-                                            const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
-                                            
-                                            routeLayer = L.polyline(coords, {
-                                                color: '#4285F4',
-                                                weight: 5,
-                                                opacity: 0.8
-                                            }).addTo(map);
-                                            
-                                            arrowLayer = L.polylineDecorator(routeLayer, {
-                                                patterns: [
-                                                    {offset: '5%', repeat: 50, symbol: L.Symbol.arrowHead({
-                                                        pixelSize: 15,
-                                                        polygon: false,
-                                                        pathOptions: {stroke: true, color: '#4285F4', weight: 3, opacity: 0.9}
-                                                    })}
-                                                ]
-                                            }).addTo(map);
-                                            
-                                            const distance = (route.distance / 1000).toFixed(1);
-                                            const duration = Math.ceil(route.duration / 60);
-                                            document.getElementById('routeInfo').innerHTML = `<i class="fa-solid fa-route"></i> Distance: ${distance} km | ETA: ${duration} mins`;
-                                        }
-                                    });
-                            }
-                            
-                            updateRoute(userLat, userLng);
-                            
-                            navigator.geolocation.watchPosition(
-                                (pos) => {
-                                    const newLat = pos.coords.latitude;
-                                    const newLng = pos.coords.longitude;
-                                    userMarker.setLatLng([newLat, newLng]);
-                                    map.panTo([newLat, newLng]);
-                                    updateRoute(newLat, newLng);
-                                },
-                                (error) => console.log('Tracking error:', error),
-                                {enableHighAccuracy: true, maximumAge: 0, timeout: 5000}
-                            );
-                        },
-                        () => {
-                            document.getElementById('routeInfo').textContent = 'Location permission denied.';
+                            // Initialize map with vendor coordinates
+                            initOrderMap(vendorData.latitude, vendorData.longitude, vendorData);
+                        } else {
+                            document.getElementById('routeInfo').textContent = 'Vendor location not available.';
                         }
-                    );
-                }
+                    })
+                    .catch(() => {
+                        document.getElementById('routeInfo').textContent = 'Error loading vendor location.';
+                    });
             }, 100);
+        }
+        
+        function getVendorIdFromOrder(order) {
+            // Find vendor ID by matching vendor name from the orders data
+            const orderData = {{ orders | tojson | safe }};
+            const matchingOrder = orderData.find(o => o.id === order.id);
+            return matchingOrder ? matchingOrder.vendor_id : null;
+        }
+        
+        function initOrderMap(vendorLat, vendorLng, vendorData) {
+            if (navigator.geolocation) {
+                let userMarker, map, routeLayer, arrowLayer;
+                
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLat = position.coords.latitude;
+                        const userLng = position.coords.longitude;
+                        
+                        map = L.map('orderMap').setView([userLat, userLng], 15);
+                        
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '© OpenStreetMap'
+                        }).addTo(map);
+                        
+                        userMarker = L.circleMarker([userLat, userLng], {
+                            radius: 8,
+                            fillColor: '#4285F4',
+                            fillOpacity: 1,
+                            color: '#ffffff',
+                            weight: 3
+                        }).addTo(map).bindPopup('Your Location');
+                        
+                        const vendorIcon = L.icon({
+                            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                            iconSize: [25, 41],
+                            iconAnchor: [12, 41]
+                        });
+                        
+                        L.marker([vendorLat, vendorLng], {icon: vendorIcon}).addTo(map)
+                            .bindPopup(vendorData.name || 'Restaurant Location');
+                        
+                        function updateRoute(lat, lng) {
+                            fetch(`https://router.project-osrm.org/route/v1/driving/${lng},${lat};${vendorLng},${vendorLat}?overview=full&geometries=geojson`)
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.routes && data.routes.length > 0) {
+                                        if (routeLayer) map.removeLayer(routeLayer);
+                                        if (arrowLayer) map.removeLayer(arrowLayer);
+                                        
+                                        const route = data.routes[0];
+                                        const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+                                        
+                                        routeLayer = L.polyline(coords, {
+                                            color: '#4285F4',
+                                            weight: 5,
+                                            opacity: 0.8
+                                        }).addTo(map);
+                                        
+                                        arrowLayer = L.polylineDecorator(routeLayer, {
+                                            patterns: [
+                                                {offset: '5%', repeat: 50, symbol: L.Symbol.arrowHead({
+                                                    pixelSize: 15,
+                                                    polygon: false,
+                                                    pathOptions: {stroke: true, color: '#4285F4', weight: 3, opacity: 0.9}
+                                                })}
+                                            ]
+                                        }).addTo(map);
+                                        
+                                        const distance = (route.distance / 1000).toFixed(1);
+                                        const duration = Math.ceil(route.duration / 60);
+                                        document.getElementById('routeInfo').innerHTML = `<i class="fa-solid fa-route"></i> Distance: ${distance} km | ETA: ${duration} mins`;
+                                    }
+                                })
+                                .catch(() => {
+                                    document.getElementById('routeInfo').textContent = 'Route calculation failed.';
+                                });
+                        }
+                        
+                        updateRoute(userLat, userLng);
+                        
+                        navigator.geolocation.watchPosition(
+                            (pos) => {
+                                const newLat = pos.coords.latitude;
+                                const newLng = pos.coords.longitude;
+                                userMarker.setLatLng([newLat, newLng]);
+                                map.panTo([newLat, newLng]);
+                                updateRoute(newLat, newLng);
+                            },
+                            (error) => console.log('Tracking error:', error),
+                            {enableHighAccuracy: true, maximumAge: 0, timeout: 5000}
+                        );
+                    },
+                    () => {
+                        document.getElementById('routeInfo').textContent = 'Location permission denied.';
+                    }
+                );
+            }
         }
 
         function trackOrder(orderId) {
