@@ -17,6 +17,11 @@ class Customer(db.Model):
     pincode = db.Column(db.String(10))
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
+    # New location fields
+    home_latitude = db.Column(db.Float)
+    home_longitude = db.Column(db.Float)
+    current_latitude = db.Column(db.Float)
+    current_longitude = db.Column(db.Float)
     orders = db.relationship('Order', backref='customer', lazy=True)
 
     def set_password(self, password):
@@ -86,6 +91,12 @@ class Order(db.Model):
     order_type = db.Column(db.String(20))
     customer_suggestion = db.Column(db.Text)
     rejection_reason = db.Column(db.Text)
+    delivery_location_type = db.Column(db.String(20))  # 'home' or 'current'
+    # Location coordinates for order
+    vendor_latitude = db.Column(db.Float)
+    vendor_longitude = db.Column(db.Float)
+    customer_delivery_latitude = db.Column(db.Float)
+    customer_delivery_longitude = db.Column(db.Float)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Razorpay Details

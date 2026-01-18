@@ -74,41 +74,21 @@ with app.app_context():
     # Check if columns exist before adding them
     try:
         with db.engine.connect() as conn:
-            # Check existing columns in order table
+            # Check if columns exist first
             result = conn.execute(db.text("PRAGMA table_info('order')"))
-            existing_order_columns = [row[1] for row in result.fetchall()]
+            existing_columns = [row[1] for row in result.fetchall()]
             
-            order_columns_to_add = [
+            columns_to_add = [
                 ('preparing_at', 'DATETIME'),
                 ('out_for_delivery_at', 'DATETIME'),
                 ('ready_at', 'DATETIME'),
                 ('completed_at', 'DATETIME'),
-                ('rejected_at', 'DATETIME'),
-                ('delivery_location_type', 'VARCHAR(20)'),
-                ('vendor_latitude', 'FLOAT'),
-                ('vendor_longitude', 'FLOAT'),
-                ('customer_delivery_latitude', 'FLOAT'),
-                ('customer_delivery_longitude', 'FLOAT')
+                ('rejected_at', 'DATETIME')
             ]
             
-            for column_name, column_type in order_columns_to_add:
-                if column_name not in existing_order_columns:
+            for column_name, column_type in columns_to_add:
+                if column_name not in existing_columns:
                     conn.execute(db.text(f'ALTER TABLE "order" ADD COLUMN {column_name} {column_type}'))
-            
-            # Check existing columns in customer table
-            result = conn.execute(db.text("PRAGMA table_info('customer')"))
-            existing_customer_columns = [row[1] for row in result.fetchall()]
-            
-            customer_columns_to_add = [
-                ('home_latitude', 'FLOAT'),
-                ('home_longitude', 'FLOAT'),
-                ('current_latitude', 'FLOAT'),
-                ('current_longitude', 'FLOAT')
-            ]
-            
-            for column_name, column_type in customer_columns_to_add:
-                if column_name not in existing_customer_columns:
-                    conn.execute(db.text(f'ALTER TABLE customer ADD COLUMN {column_name} {column_type}'))
             
             conn.commit()
     except Exception as e:
@@ -305,7 +285,6 @@ def customer_orders():
         'vendor_name': o.vendor_name,
         'items': o.items,
         'delivery_type': o.delivery_type,
-        'delivery_location_type': o.delivery_location_type,
         'payment_type': o.payment_type,
         'total': o.total,
         'status': o.status,
@@ -462,23 +441,6 @@ def create_order():
             print(f"Warning: Customer {customer.full_name} has invalid phone number: {customer.phone}")
             return jsonify({'error': 'Customer phone number is not configured properly'}), 500
 
-        # Determine customer delivery coordinates based on location type
-        customer_delivery_lat = None
-        customer_delivery_lon = None
-        
-        if data['deliveryType'] == 'delivery':
-            location_type = data.get('locationType')
-            if location_type == 'home':
-                customer_delivery_lat = customer.home_latitude or customer.latitude
-                customer_delivery_lon = customer.home_longitude or customer.longitude
-            elif location_type == 'current':
-                customer_delivery_lat = customer.current_latitude
-                customer_delivery_lon = customer.current_longitude
-            else:
-                # Default to home location if no type specified
-                customer_delivery_lat = customer.home_latitude or customer.latitude
-                customer_delivery_lon = customer.home_longitude or customer.longitude
-
         order = Order(
             customer_id=session['user_id'],
             vendor_id=vendor.id,
@@ -490,11 +452,6 @@ def create_order():
             order_type=data['deliveryType'],
             total=data['total'],
             customer_suggestion=data.get('customerSuggestion', ''),
-            delivery_location_type=data.get('locationType') if data['deliveryType'] == 'delivery' else None,
-            vendor_latitude=vendor.latitude,
-            vendor_longitude=vendor.longitude,
-            customer_delivery_latitude=customer_delivery_lat,
-            customer_delivery_longitude=customer_delivery_lon,
             status='Pending' if data['paymentType'] != 'online' else 'Payment Pending',
             created_at=datetime.now(IST)
         )
@@ -773,35 +730,58 @@ def update_profile():
         return jsonify({'success': True})
     return jsonify({'error': 'Customer not found'}), 404
 
-@app.route('/api/customer/set-home-location', methods=['POST'])
-@customer_required
-def set_home_location():
-    data = request.json
-    customer = Customer.query.get(session['user_id'])
-    if customer:
-        customer.home_latitude = data.get('home_latitude')
-        customer.home_longitude = data.get('home_longitude')
-        db.session.commit()
-        return jsonify({'success': True})
-    return jsonify({'error': 'Customer not found'}), 404
-
-@app.route('/api/customer/update-current-location', methods=['POST'])
-@customer_required
-def update_current_location():
-    data = request.json
-    customer = Customer.query.get(session['user_id'])
-    if customer:
-        customer.current_latitude = data.get('current_latitude')
-        customer.current_longitude = data.get('current_longitude')
-        db.session.commit()
-        return jsonify({'success': True})
-    return jsonify({'error': 'Customer not found'}), 404
-
 @app.route('/api/customer/profile', methods=['POST'])
 @customer_required
 def update_customer_profile():
     """Alternative endpoint for customer profile updates"""
     return update_profile()
+
+@app.route('/api/vendor/earnings', methods=['GET'])
+@vendor_required
+def api_vendor_earnings():
+    """API endpoint to get vendor earnings data in JSON format for debugging."""
+    from datetime import date
+    from sqlalchemy import func
+    from utils.order_filters import OrderFilters
+    
+    vendor_id = session['user_id']
+    
+    # Calculate earnings using DB aggregation
+    total_earnings = OrderFilters.calculate_total_earnings(Order, db, vendor_id)
+    today_earnings = OrderFilters.calculate_today_earnings(Order, db, vendor_id)
+    week_earnings = OrderFilters.calculate_week_earnings(Order, db, vendor_id)
+    month_earnings = OrderFilters.calculate_month_earnings(Order, db, vendor_id)
+    
+    # Get order counts for verification
+    completed_orders = OrderFilters.get_completed_orders_count(Order, vendor_id)
+    all_orders = Order.query.filter_by(vendor_id=vendor_id).count()
+    
+    # Manual verification query
+    manual_total = db.session.query(func.sum(Order.total)).filter(
+        Order.vendor_id == vendor_id,
+        Order.status == 'Completed'
+    ).scalar() or 0.0
+    
+    response_data = {
+        'vendor_id': vendor_id,
+        'total_earnings': float(total_earnings),
+        'today_earnings': float(today_earnings),
+        'week_earnings': float(week_earnings),
+        'month_earnings': float(month_earnings),
+        'completed_orders': completed_orders,
+        'all_orders': all_orders,
+        'manual_verification': float(manual_total),
+        'calculation_match': abs(float(total_earnings) - float(manual_total)) < 0.01,
+        'timestamp': date.today().isoformat()
+    }
+    
+    # Add no-cache headers
+    response = jsonify(response_data)
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    
+    return response
 
 @app.route('/logout')
 def logout():
@@ -887,7 +867,7 @@ def vendor_dashboard():
 @app.route('/vendor/delivery-map')
 @vendor_required
 def vendor_delivery_map():
-    """Display delivery map for vendor with takeaway orders"""
+    """Display delivery map for vendor"""
     vendor_id = session['user_id']
     vendor = Vendor.query.get(vendor_id)
     return render_template('vendor/delivery_map.html', vendor_profile=vendor)
@@ -1795,25 +1775,23 @@ def get_current_vendor():
 @app.route('/api/vendor/deliveries/active')
 @vendor_required
 def get_active_deliveries():
-    """API endpoint to get active takeaway orders for the vendor"""
+    """API endpoint to get active deliveries for the vendor"""
     vendor_id = session['user_id']
     
-    # Get takeaway orders that are active (pending, preparing, ready)
-    takeaway_orders = Order.query.filter(
+    # Get orders that are out for delivery
+    deliveries = Order.query.filter(
         Order.vendor_id == vendor_id,
-        Order.delivery_type == 'takeaway',
-        Order.status.in_(['Pending', 'preparing', 'ready'])
+        Order.status.in_(['out_for_delivery', 'ready'])
     ).order_by(Order.created_at.desc()).all()
     
-    order_list = []
-    for order in takeaway_orders:
-        # Use stored coordinates from order
-        customer_lat = order.customer_delivery_latitude
-        customer_lon = order.customer_delivery_longitude
-        vendor_lat = order.vendor_latitude
-        vendor_lon = order.vendor_longitude
+    delivery_list = []
+    for order in deliveries:
+        # Try to get customer coordinates from their profile
+        customer = Customer.query.get(order.customer_id)
+        customer_lat = customer.latitude if customer and hasattr(customer, 'latitude') else None
+        customer_lon = customer.longitude if customer and hasattr(customer, 'longitude') else None
         
-        order_list.append({
+        delivery_list.append({
             'id': order.id,
             'customer_name': order.customer_name,
             'customer_phone': order.customer_phone,
@@ -1823,12 +1801,10 @@ def get_active_deliveries():
             'delivery_type': order.delivery_type,
             'customer_latitude': customer_lat,
             'customer_longitude': customer_lon,
-            'vendor_latitude': vendor_lat,
-            'vendor_longitude': vendor_lon,
             'created_at': order.created_at.isoformat()
         })
     
-    return jsonify(order_list)
+    return jsonify(delivery_list)
 
 @app.route('/api/vendor/<int:vendor_id>/location')
 def get_vendor_location(vendor_id):

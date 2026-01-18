@@ -174,6 +174,30 @@
                     <div class="info-value">{{ customer.pincode if customer and customer.pincode else 'Not provided' }}</div>
                 </div>
                 <div class="info-row">
+                    <div class="info-label">Home Location</div>
+                    <div class="info-value">
+                        {% if customer and customer.home_latitude and customer.home_longitude %}
+                            <span>📍 {{ "%.6f, %.6f"|format(customer.home_latitude, customer.home_longitude) }}</span>
+                            <button onclick="viewLocationOnMap({{ customer.home_latitude }}, {{ customer.home_longitude }})" style="margin-left:10px;padding:5px 10px;background:#3498db;color:white;border:none;border-radius:5px;cursor:pointer;">View on Map</button>
+                        {% else %}
+                            <span>Not set</span>
+                            <button onclick="setHomeLocation()" style="margin-left:10px;padding:5px 10px;background:#27ae60;color:white;border:none;border-radius:5px;cursor:pointer;">Set Home Location</button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Current Location</div>
+                    <div class="info-value">
+                        {% if customer and customer.current_latitude and customer.current_longitude %}
+                            <span>📍 {{ "%.6f, %.6f"|format(customer.current_latitude, customer.current_longitude) }}</span>
+                            <button onclick="viewLocationOnMap({{ customer.current_latitude }}, {{ customer.current_longitude }})" style="margin-left:10px;padding:5px 10px;background:#3498db;color:white;border:none;border-radius:5px;cursor:pointer;">View on Map</button>
+                        {% else %}
+                            <span>Not set</span>
+                        {% endif %}
+                        <button onclick="updateCurrentLocation()" style="margin-left:10px;padding:5px 10px;background:#e67e22;color:white;border:none;border-radius:5px;cursor:pointer;">Update Current</button>
+                    </div>
+                </div>
+                <div class="info-row">
                     <div class="info-label">Member Since</div>
                     <div class="info-value">{{ customer.id if customer else 'N/A' }}</div>
                 </div>
@@ -567,6 +591,93 @@
                 console.error('Error:', error);
                 alert('Network error. Please try again.');
             });
+        }
+        
+        function setHomeLocation() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                return;
+            }
+            
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    fetch('/api/customer/set-home-location', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            home_latitude: lat,
+                            home_longitude: lng
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Home location set successfully!');
+                            location.reload();
+                        } else {
+                            alert('Error setting home location: ' + (data.error || 'Unknown error'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Network error. Please try again.');
+                    });
+                },
+                (error) => {
+                    alert(error.code === 1 ? 'Location permission denied' : 'Unable to get location');
+                }
+            );
+        }
+        
+        function updateCurrentLocation() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                return;
+            }
+            
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    fetch('/api/customer/update-current-location', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            current_latitude: lat,
+                            current_longitude: lng
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Current location updated successfully!');
+                            location.reload();
+                        } else {
+                            alert('Error updating current location: ' + (data.error || 'Unknown error'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Network error. Please try again.');
+                    });
+                },
+                (error) => {
+                    alert(error.code === 1 ? 'Location permission denied' : 'Unable to get location');
+                }
+            );
+        }
+        
+        function viewLocationOnMap(lat, lng) {
+            const mapUrl = `https://www.google.com/maps?q=${lat},${lng}&z=15`;
+            window.open(mapUrl, '_blank');
         }
     </script>
 </body>

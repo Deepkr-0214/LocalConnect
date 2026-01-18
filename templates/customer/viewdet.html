@@ -681,6 +681,40 @@
         }
 
         function selectDelivery(type, subtotal) {
+            if (type === 'delivery') {
+                // Show location choice for home delivery
+                showLocationChoice(subtotal);
+            } else {
+                // Proceed with takeaway (no location choice needed)
+                window.selectedLocationType = null;
+                proceedWithDeliveryType(type, subtotal);
+            }
+        }
+        
+        function showLocationChoice(subtotal) {
+            document.getElementById('cart-items-list').innerHTML = `
+                <div class="order-step"><h3>Choose Delivery Location</h3>
+                    <div class="delivery-options">
+                        <div class="delivery-option" onclick="selectLocation('home', ${subtotal})">
+                            <div class="option-icon">🏠</div>
+                            <div class="option-details"><h4>Home Location</h4><p>Deliver to your saved home address</p></div>
+                        </div>
+                        <div class="delivery-option" onclick="selectLocation('current', ${subtotal})">
+                            <div class="option-icon">📍</div>
+                            <div class="option-details"><h4>Current Location</h4><p>Deliver to your current GPS location</p></div>
+                        </div>
+                    </div>
+                </div>`;
+            document.getElementById('modal-total').innerHTML = `Subtotal: ₹${subtotal}`;
+        }
+        
+        function selectLocation(locationType, subtotal) {
+            // Store selected location type for order processing
+            window.selectedLocationType = locationType;
+            proceedWithDeliveryType('delivery', subtotal);
+        }
+        
+        function proceedWithDeliveryType(type, subtotal) {
             const deliveryFee = type === 'delivery' ? 30 : 0;
             const total = subtotal + deliveryFee;
             
@@ -729,7 +763,8 @@
                 deliveryType: deliveryType,
                 paymentType: paymentType,
                 total: total,
-                customerSuggestion: customerSuggestion
+                customerSuggestion: customerSuggestion,
+                locationType: window.selectedLocationType || null
             };
 
             fetch('/api/orders', {
