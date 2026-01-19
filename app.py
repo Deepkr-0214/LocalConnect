@@ -456,6 +456,32 @@ def create_order():
             print(f"Warning: Customer {customer.full_name} has invalid phone number: {customer.phone}")
             return jsonify({'error': 'Customer phone number is not configured properly'}), 500
 
+        # Validate location type for delivery orders
+        location_type = data.get('locationType')
+        if data['deliveryType'] == 'delivery' and not location_type:
+             # Default to home if not specified (backward compatibility)
+             location_type = 'home'
+
+        # Get active coordinates based on location choice
+        customer_delivery_lat = None
+        customer_delivery_lon = None
+        
+        if data['deliveryType'] == 'delivery':
+            if location_type == 'current':
+                customer_delivery_lat = customer.current_latitude
+                customer_delivery_lon = customer.current_longitude
+                # Fallback to home/profile if current not set
+                if not customer_delivery_lat or not customer_delivery_lon:
+                    customer_delivery_lat = customer.latitude
+                    customer_delivery_lon = customer.longitude
+            else: # home
+                customer_delivery_lat = customer.home_latitude
+                customer_delivery_lon = customer.home_longitude
+                # Fallback to profile address if home not specifically set
+                if not customer_delivery_lat or not customer_delivery_lon:
+                    customer_delivery_lat = customer.latitude
+                    customer_delivery_lon = customer.longitude
+
         order = Order(
             customer_id=session['user_id'],
             vendor_id=vendor.id,
@@ -468,7 +494,13 @@ def create_order():
             total=data['total'],
             customer_suggestion=data.get('customerSuggestion', ''),
             status='Pending' if data['paymentType'] != 'online' else 'Payment Pending',
-            created_at=datetime.now(IST)
+            created_at=datetime.now(IST),
+            # Save location snapshot
+            delivery_location_type=location_type,
+            vendor_latitude=vendor.latitude,
+            vendor_longitude=vendor.longitude,
+            customer_delivery_latitude=customer_delivery_lat,
+            customer_delivery_longitude=customer_delivery_lon
         )
         order.set_items(data['items'])
         db.session.add(order)
@@ -731,11 +763,141 @@ def update_profile():
         return jsonify({'success': True})
     return jsonify({'error': 'Customer not found'}), 404
 
+@app.route('/api/customer/set-home-location', methods=['POST'])
+@customer_required
+def set_home_location():
+    data = request.json
+    customer = Customer.query.get(session['user_id'])
+    if customer:
+        customer.home_latitude = data.get('home_latitude')
+        customer.home_longitude = data.get('home_longitude')
+        db.session.commit()
+        return jsonify({'success': True})
+    return jsonify({'error': 'Customer not found'}), 404
+
+@app.route('/api/customer/update-current-location', methods=['POST'])
+@customer_required
+def update_current_location():
+    data = request.json
+    customer = Customer.query.get(session['user_id'])
+    if customer:
+        customer.current_latitude = data.get('current_latitude')
+        customer.current_longitude = data.get('current_longitude')
+        db.session.commit()
+        return jsonify({'success': True})
+    return jsonify({'error': 'Customer not found'}), 404
+
 @app.route('/api/customer/profile', methods=['POST'])
 @customer_required
 def update_customer_profile():
     """Alternative endpoint for customer profile updates"""
     return update_profile()
+
+# Utility function to convert amount to words
+def amount_to_words(amount):
+    """Convert a numeric amount to Indian number words"""
+    ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine']
+    teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen']
+    tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety']
+    
+    def convert_below_hundred(n):
+        if n < 10:
+            return ones[n]
+        elif n < 20:
+            return teens[n - 10]
+        else:
+            return tens[n // 10] + (' ' + ones[n % 10] if n % 10 != 0 else '')
+    
+    def convert_below_thousand(n):
+        if n < 100:
+            return convert_below_hundred(n)
+        else:
+            return ones[n // 100] + ' Hundred' + (' ' + convert_below_hundred(n % 100) if n % 100 != 0 else '')
+    
+    # Split into rupees and paise
+    rupees = int(amount)
+    paise = int(round((amount - rupees) * 100))
+    
+    result = ''
+    
+    if rupees == 0:
+        result = 'Zero Rupees'
+    else:
+        # Handle crores
+        if rupees >= 10000000:
+            crores = rupees // 10000000
+            result += convert_below_thousand(crores) + ' Crore '
+            rupees %= 10000000
+        
+        # Handle lakhs
+        if rupees >= 100000:
+            lakhs = rupees // 100000
+            result += convert_below_thousand(lakhs) + ' Lakh '
+            rupees %= 100000
+        
+        # Handle thousands
+        if rupees >= 1000:
+            thousands = rupees // 1000
+            result += convert_below_thousand(thousands) + ' Thousand '
+            rupees %= 1000
+        
+        # Handle remaining hundreds, tens, ones
+        if rupees > 0:
+            result += convert_below_thousand(rupees) + ' '
+        
+        result += 'Rupees'
+    
+    # Add paise if present
+    if paise > 0:
+        result += ' and ' + convert_below_hundred(paise) + ' Paise'
+    
+    return result.strip() + ' Only'
+
+@app.route('/invoice/<int:order_id>')
+@customer_required
+def invoice(order_id):
+    """Generate invoice for completed orders"""
+    user_id = session.get('user_id')
+    
+    # Fetch order and validate it belongs to the customer
+    order = Order.query.filter_by(id=order_id, customer_id=user_id).first()
+    
+    if not order:
+        flash('Order not found', 'error')
+        return redirect(url_for('customer_orders'))
+    
+    # Only allow invoices for completed orders
+    if order.status != 'Completed':
+        flash('Invoice is only available for completed orders', 'warning')
+        return redirect(url_for('customer_orders'))
+    
+    # Fetch vendor and customer details
+    vendor = Vendor.query.get(order.vendor_id)
+    customer = Customer.query.get(user_id)
+    
+    if not vendor or not customer:
+        flash('Unable to generate invoice', 'error')
+        return redirect(url_for('customer_orders'))
+    
+    # Parse order items
+    items = order.get_items()
+    
+    # Convert amount to words
+    amount_words = amount_to_words(order.total)
+    
+    # Prepare invoice data
+    invoice_data = {
+        'order': order,
+        'vendor': vendor,
+        'customer': customer,
+        'items': items,
+        'amount_words': amount_words,
+        'item_count': len(items),
+        'invoice_date': datetime.now(IST)
+    }
+    
+    return render_template('customer/invoice.html', **invoice_data)
+
 
 @app.route('/api/vendor/earnings', methods=['GET'])
 @vendor_required
@@ -1889,21 +2051,36 @@ def get_current_vendor():
 @app.route('/api/vendor/deliveries/active')
 @vendor_required
 def get_active_deliveries():
-    """API endpoint to get active deliveries for the vendor"""
+    """API endpoint to get active home delivery orders for the vendor"""
     vendor_id = session['user_id']
     
-    # Get orders that are out for delivery
+    # Get active home delivery orders
     deliveries = Order.query.filter(
         Order.vendor_id == vendor_id,
-        Order.status.in_(['out_for_delivery', 'ready'])
+        Order.delivery_type == 'delivery',
+        Order.status.in_(['out_for_delivery', 'preparing', 'ready'])
     ).order_by(Order.created_at.desc()).all()
     
     delivery_list = []
     for order in deliveries:
-        # Try to get customer coordinates from their profile
-        customer = Customer.query.get(order.customer_id)
-        customer_lat = customer.latitude if customer and hasattr(customer, 'latitude') else None
-        customer_lon = customer.longitude if customer and hasattr(customer, 'longitude') else None
+        # Use order-specific coordinates as requested
+        # Fallback to profile coordinates if order coordinates are missing (legacy data)
+        customer_lat = order.customer_delivery_latitude
+        customer_lon = order.customer_delivery_longitude
+        
+        vendor_lat = order.vendor_latitude
+        vendor_lon = order.vendor_longitude
+        
+        if not customer_lat or not customer_lon:
+            customer = Customer.query.get(order.customer_id)
+            customer_lat = customer.latitude if customer and hasattr(customer, 'latitude') else None
+            customer_lon = customer.longitude if customer and hasattr(customer, 'longitude') else None
+
+        # If vendor coords missing in order, get from vendor profile
+        if not vendor_lat or not vendor_lon:
+            vendor = Vendor.query.get(vendor_id)
+            vendor_lat = vendor.latitude if vendor else None
+            vendor_lon = vendor.longitude if vendor else None
         
         delivery_list.append({
             'id': order.id,
@@ -1915,6 +2092,9 @@ def get_active_deliveries():
             'delivery_type': order.delivery_type,
             'customer_latitude': customer_lat,
             'customer_longitude': customer_lon,
+            'vendor_latitude': vendor_lat,
+            'vendor_longitude': vendor_lon,
+            'delivery_location_type': order.delivery_location_type,
             'created_at': order.created_at.isoformat()
         })
     

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,55 +9,246 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        .profile-container { max-width: 800px; margin: 40px auto; padding: 20px; }
-        .profile-card { background: white; border-radius: 15px; padding: 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-        .profile-header { text-align: center; margin-bottom: 40px; }
-        .profile-avatar { width: 100px; height: 100px; background: #27ae60; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-size: 40px; font-weight: 700; }
-        .profile-info { margin: 30px 0; }
-        .info-row { display: flex; padding: 15px 0; border-bottom: 1px solid #f0f0f0; }
-        .info-row:last-child { border-bottom: none; }
-        .info-label { font-weight: 600; color: #7f8c8d; width: 150px; }
-        .info-value { color: #2c3e50; flex: 1; }
-        .profile-actions { display: flex; gap: 15px; margin-top: 30px; }
-        .btn-action { flex: 1; padding: 15px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
-        .btn-edit { background: #27ae60; color: white; }
-        .btn-edit:hover { background: #219150; transform: translateY(-2px); }
-        .btn-complete { background: #f0f0f0; color: #2c3e50; }
-        .btn-complete:hover { background: #e0e0e0; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
-        .modal.active { display: flex; align-items: center; justify-content: center; }
-        .modal-content { background: white; border-radius: 15px; padding: 40px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .close-modal { background: none; border: none; font-size: 24px; cursor: pointer; color: #7f8c8d; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-weight: 600; color: #2c3e50; margin-bottom: 8px; }
-        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
-        .form-group textarea { min-height: 80px; resize: vertical; }
-        .location-btn { margin-top: 8px; padding: 10px 15px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; }
-        .location-btn:hover { background: #219150; }
-        .submit-btn { width: 100%; padding: 15px; background: #27ae60; color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; margin-top: 20px; }
-        .submit-btn:hover { background: #219150; }
-        .camera-btn { margin-top: 8px; padding: 10px 15px; background: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; margin-left: 10px; }
-        .camera-btn:hover { background: #2980b9; }
-        #cameraPreview { display: none; margin-top: 10px; }
-        #cameraPreview video { width: 100%; max-width: 300px; border-radius: 10px; }
-        .camera-controls { margin-top: 10px; display: flex; gap: 10px; }
+        .profile-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            background: #27ae60;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 40px;
+            font-weight: 700;
+        }
+
+        .profile-info {
+            margin: 30px 0;
+        }
+
+        .info-row {
+            display: flex;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #7f8c8d;
+            width: 150px;
+        }
+
+        .info-value {
+            color: #2c3e50;
+            flex: 1;
+        }
+
+        .profile-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-edit {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: #219150;
+            transform: translateY(-2px);
+        }
+
+        .btn-complete {
+            background: #f0f0f0;
+            color: #2c3e50;
+        }
+
+        .btn-complete:hover {
+            background: #e0e0e0;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .location-btn {
+            margin-top: 8px;
+            padding: 10px 15px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .location-btn:hover {
+            background: #219150;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .submit-btn:hover {
+            background: #219150;
+        }
+
+        .camera-btn {
+            margin-top: 8px;
+            padding: 10px 15px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .camera-btn:hover {
+            background: #2980b9;
+        }
+
+        #cameraPreview {
+            display: none;
+            margin-top: 10px;
+        }
+
+        #cameraPreview video {
+            width: 100%;
+            max-width: 300px;
+            border-radius: 10px;
+        }
+
+        .camera-controls {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
     </style>
 </head>
+
 <body>
     <header class="navbar">
         <div class="nav-container">
             <div class="logo" onclick="window.location.href='/customer/dashboard'">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
                     <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
                     <circle cx="12" cy="10" r="3"></circle>
                 </svg>
                 <span>LocalConnect</span>
             </div>
-            
+
             <div class="search-wrapper" id="searchWrapper">
                 <input type="text" id="searchInput" placeholder="Search...">
-                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
@@ -65,7 +257,8 @@
             <div class="user-profile">
                 <span class="welcome-text">Welcome, {{ user_name or 'Guest' }}</span>
                 <div class="avatar" id="profileIcon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
                         <circle cx="12" cy="7" r="4"></circle>
                     </svg>
@@ -163,7 +356,8 @@
                 </div>
                 <div class="info-row">
                     <div class="info-label">Address</div>
-                    <div class="info-value">{{ customer.address if customer and customer.address else 'Not provided' }}</div>
+                    <div class="info-value">{{ customer.address if customer and customer.address else 'Not provided' }}
+                    </div>
                 </div>
                 <div class="info-row">
                     <div class="info-label">City</div>
@@ -171,34 +365,38 @@
                 </div>
                 <div class="info-row">
                     <div class="info-label">State</div>
-                    <div class="info-value">{{ customer.state if customer and customer.state else 'Not provided' }}</div>
+                    <div class="info-value">{{ customer.state if customer and customer.state else 'Not provided' }}
+                    </div>
                 </div>
                 <div class="info-row">
                     <div class="info-label">PIN Code</div>
-                    <div class="info-value">{{ customer.pincode if customer and customer.pincode else 'Not provided' }}</div>
+                    <div class="info-value">{{ customer.pincode if customer and customer.pincode else 'Not provided' }}
+                    </div>
                 </div>
                 <div class="info-row">
                     <div class="info-label">Home Location</div>
                     <div class="info-value">
                         {% if customer and customer.home_latitude and customer.home_longitude %}
-                            <span>📍 {{ "%.6f, %.6f"|format(customer.home_latitude, customer.home_longitude) }}</span>
-                            <button onclick="viewLocationOnMap({{ customer.home_latitude }}, {{ customer.home_longitude }})" style="margin-left:10px;padding:5px 10px;background:#3498db;color:white;border:none;border-radius:5px;cursor:pointer;">View on Map</button>
+                        <span>📍 {{ "%.6f, %.6f"|format(customer.home_latitude, customer.home_longitude) }}</span>
                         {% else %}
-                            <span>Not set</span>
-                            <button onclick="setHomeLocation()" style="margin-left:10px;padding:5px 10px;background:#27ae60;color:white;border:none;border-radius:5px;cursor:pointer;">Set Home Location</button>
+                        <span>Not set</span>
                         {% endif %}
+                        <button onclick="setHomeLocation()"
+                            style="margin-left:10px;padding:5px 10px;background:#27ae60;color:white;border:none;border-radius:5px;cursor:pointer;">{{
+                            'Update' if customer and customer.home_latitude else 'Set' }} Home Location</button>
                     </div>
                 </div>
                 <div class="info-row">
                     <div class="info-label">Current Location</div>
                     <div class="info-value">
                         {% if customer and customer.current_latitude and customer.current_longitude %}
-                            <span>📍 {{ "%.6f, %.6f"|format(customer.current_latitude, customer.current_longitude) }}</span>
-                            <button onclick="viewLocationOnMap({{ customer.current_latitude }}, {{ customer.current_longitude }})" style="margin-left:10px;padding:5px 10px;background:#3498db;color:white;border:none;border-radius:5px;cursor:pointer;">View on Map</button>
+                        <span>📍 {{ "%.6f, %.6f"|format(customer.current_latitude, customer.current_longitude) }}</span>
                         {% else %}
-                            <span>Not set</span>
+                        <span>Not set</span>
                         {% endif %}
-                        <button onclick="updateCurrentLocation()" style="margin-left:10px;padding:5px 10px;background:#e67e22;color:white;border:none;border-radius:5px;cursor:pointer;">Update Current</button>
+                        <button onclick="updateCurrentLocation()"
+                            style="margin-left:10px;padding:5px 10px;background:#e67e22;color:white;border:none;border-radius:5px;cursor:pointer;">Update
+                            Current</button>
                     </div>
                 </div>
                 <div class="info-row">
@@ -227,41 +425,41 @@
         function viewProfile() {
             window.location.href = '/customer/profile';
         }
-        
+
         function myOrders() {
             window.location.href = '/customer/orders';
         }
-        
+
         function changePassword() {
             window.location.href = '/customer/change-password';
         }
-        
+
         function logout() {
             // Clear any local storage or session storage
-            if (typeof(Storage) !== "undefined") {
+            if (typeof (Storage) !== "undefined") {
                 localStorage.clear();
                 sessionStorage.clear();
             }
-            
+
             // Redirect to logout endpoint
             window.location.href = '/logout';
         }
-        
+
         const userId = '{{ user_id }}';
-        
+
         // Clear ALL localStorage if different user logs in
         const lastUserId = localStorage.getItem('lastUserId');
         if (lastUserId && lastUserId !== userId) {
             localStorage.clear();
         }
         localStorage.setItem('lastUserId', userId);
-        
+
         const profileImageKey = `user_${userId}_profileImage`;
         const userAddressKey = `user_${userId}_userAddress`;
         const userLocationKey = `user_${userId}_userLocation`;
         const completeProfileKey = `user_${userId}_completeProfile`;
         let editMode = false;
-        
+
         // Load and display saved profile image on page load
         window.addEventListener('DOMContentLoaded', () => {
             const savedImage = localStorage.getItem(profileImageKey);
@@ -275,12 +473,12 @@
                 avatar.textContent = '{{ customer.full_name[0].upper() if customer else "U" }}';
             }
         });
-        
+
         function toggleEditMode() {
             editMode = !editMode;
             const profileInfo = document.querySelector('.profile-info');
             const btn = document.querySelector('.btn-edit');
-            
+
             if (editMode) {
                 btn.innerHTML = '<i class="fa-solid fa-save"></i> Save Changes';
                 btn.onclick = saveProfile;
@@ -346,19 +544,19 @@
                 location.reload();
             }
         }
-        
+
         function previewImage(event) {
             const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     document.getElementById('imagePreview').style.display = 'block';
                     document.getElementById('preview').src = e.target.result;
                 };
                 reader.readAsDataURL(file);
             }
         }
-        
+
         function saveProfile() {
             const fullName = document.getElementById('fullName').value;
             const email = document.getElementById('email').value;
@@ -368,7 +566,7 @@
             const state = document.getElementById('state').value;
             const pincode = document.getElementById('pincode').value;
             const imageFile = document.getElementById('profileImage').files[0];
-            
+
             // Prepare data for backend
             const profileData = {
                 full_name: fullName,
@@ -379,7 +577,7 @@
                 state: state,
                 pincode: pincode
             };
-            
+
             // Send to backend
             fetch('/api/customer/profile', {
                 method: 'POST',
@@ -388,54 +586,54 @@
                 },
                 body: JSON.stringify(profileData)
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Save image to localStorage if provided
-                    if (capturedImageData) {
-                        localStorage.setItem(profileImageKey, capturedImageData);
-                    } else if (imageFile) {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            localStorage.setItem(profileImageKey, e.target.result);
-                        };
-                        reader.readAsDataURL(imageFile);
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Save image to localStorage if provided
+                        if (capturedImageData) {
+                            localStorage.setItem(profileImageKey, capturedImageData);
+                        } else if (imageFile) {
+                            const reader = new FileReader();
+                            reader.onload = function (e) {
+                                localStorage.setItem(profileImageKey, e.target.result);
+                            };
+                            reader.readAsDataURL(imageFile);
+                        }
+
+                        if (address) {
+                            localStorage.setItem(userAddressKey, address);
+                        }
+
+                        alert('Profile updated successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error updating profile: ' + (data.error || 'Unknown error'));
                     }
-                    
-                    if (address) {
-                        localStorage.setItem(userAddressKey, address);
-                    }
-                    
-                    alert('Profile updated successfully!');
-                    location.reload();
-                } else {
-                    alert('Error updating profile: ' + (data.error || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Network error. Please try again.');
-            });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Network error. Please try again.');
+                });
         }
-        
+
         function getCurrentLocation() {
             const addressField = document.getElementById('deliveryAddress') || document.getElementById('address');
             if (!addressField) {
                 alert('Address field not found');
                 return;
             }
-            
+
             if (!navigator.geolocation) {
                 alert('Geolocation is not supported by your browser.');
                 return;
             }
-            
+
             addressField.value = 'Getting location...';
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
-                    
+
                     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
                         .then(res => res.json())
                         .then(data => {
@@ -444,18 +642,18 @@
                                 const street = addr.road || addr.suburb || addr.neighbourhood || '';
                                 const area = addr.city || addr.town || addr.village || '';
                                 addressField.value = street ? `${street}, ${area}` : data.display_name;
-                                
+
                                 const cityField = document.getElementById('city');
                                 const stateField = document.getElementById('state');
                                 const pincodeField = document.getElementById('pincode');
-                                
+
                                 if (cityField) cityField.value = addr.city || addr.town || addr.village || '';
                                 if (stateField) stateField.value = addr.state || '';
                                 if (pincodeField) pincodeField.value = addr.postcode || '';
                             } else {
                                 addressField.value = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
                             }
-                            localStorage.setItem(userLocationKey, JSON.stringify({lat, lng}));
+                            localStorage.setItem(userLocationKey, JSON.stringify({ lat, lng }));
                         })
                         .catch(() => {
                             addressField.value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
@@ -468,7 +666,7 @@
                 }
             );
         }
-        
+
         function completeProfile() {
             document.getElementById('completeProfileModal').classList.add('active');
             const savedData = JSON.parse(localStorage.getItem(completeProfileKey) || '{}');
@@ -479,11 +677,11 @@
             if (savedData.altPhone) document.getElementById('altPhone').value = savedData.altPhone;
             if (savedData.deliveryTime) document.getElementById('deliveryTime').value = savedData.deliveryTime;
         }
-        
+
         function closeCompleteModal() {
             document.getElementById('completeProfileModal').classList.remove('active');
         }
-        
+
         function submitCompleteProfile(e) {
             e.preventDefault();
             const profileData = {
@@ -492,7 +690,7 @@
                 state: document.getElementById('state').value,
                 pincode: document.getElementById('pincode').value
             };
-            
+
             // Send to backend
             fetch('/api/customer/profile', {
                 method: 'POST',
@@ -501,38 +699,38 @@
                 },
                 body: JSON.stringify(profileData)
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Also save to localStorage for immediate use
-                    const completeData = {
-                        ...profileData,
-                        altPhone: document.getElementById('altPhone').value,
-                        deliveryTime: document.getElementById('deliveryTime').value,
-                        completedAt: new Date().toISOString()
-                    };
-                    localStorage.setItem(completeProfileKey, JSON.stringify(completeData));
-                    
-                    alert('Profile completed successfully! You can now enjoy full delivery services.');
-                    closeCompleteModal();
-                    location.reload();
-                } else {
-                    alert('Error updating profile: ' + (data.error || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Network error. Please try again.');
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Also save to localStorage for immediate use
+                        const completeData = {
+                            ...profileData,
+                            altPhone: document.getElementById('altPhone').value,
+                            deliveryTime: document.getElementById('deliveryTime').value,
+                            completedAt: new Date().toISOString()
+                        };
+                        localStorage.setItem(completeProfileKey, JSON.stringify(completeData));
+
+                        alert('Profile completed successfully! You can now enjoy full delivery services.');
+                        closeCompleteModal();
+                        location.reload();
+                    } else {
+                        alert('Error updating profile: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Network error. Please try again.');
+                });
         }
-        
+
         let cameraStream = null;
         let capturedImageData = null;
-        
+
         function openCamera() {
             const preview = document.getElementById('cameraPreview');
             const video = document.getElementById('cameraVideo');
-            
+
             navigator.mediaDevices.getUserMedia({ video: true })
                 .then(stream => {
                     cameraStream = stream;
@@ -541,7 +739,7 @@
                 })
                 .catch(() => alert('Unable to access camera. Please check permissions.'));
         }
-        
+
         function closeCamera() {
             if (cameraStream) {
                 cameraStream.getTracks().forEach(track => track.stop());
@@ -549,69 +747,69 @@
             }
             document.getElementById('cameraPreview').style.display = 'none';
         }
-        
+
         function capturePhoto() {
             const video = document.getElementById('cameraVideo');
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
-            
+
             capturedImageData = canvas.toDataURL('image/jpeg');
             document.getElementById('preview').src = capturedImageData;
             document.getElementById('imagePreview').style.display = 'block';
             closeCamera();
         }
-        
+
         function deleteAccount() {
             if (!confirm('Are you sure you want to permanently delete your account? This action cannot be undone!')) {
                 return;
             }
-            
+
             if (!confirm('This will delete all your orders, reviews, and personal data. Type "DELETE" to confirm:')) {
                 return;
             }
-            
+
             const userInput = prompt('Type "DELETE" to confirm account deletion:');
             if (userInput !== 'DELETE') {
                 alert('Confirmation failed. Account deletion cancelled.');
                 return;
             }
-            
+
             fetch('/customer/delete-account', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 }
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Account deleted successfully. You will be redirected to the home page.');
-                    localStorage.clear();
-                    sessionStorage.clear();
-                    window.location.href = data.redirect;
-                } else {
-                    alert('Error deleting account: ' + (data.error || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Network error. Please try again.');
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Account deleted successfully. You will be redirected to the home page.');
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        window.location.href = data.redirect;
+                    } else {
+                        alert('Error deleting account: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Network error. Please try again.');
+                });
         }
-        
+
         function setHomeLocation() {
             if (!navigator.geolocation) {
                 alert('Geolocation is not supported by your browser.');
                 return;
             }
-            
+
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
-                    
+
                     fetch('/api/customer/set-home-location', {
                         method: 'POST',
                         headers: {
@@ -622,37 +820,37 @@
                             home_longitude: lng
                         })
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert('Home location set successfully!');
-                            location.reload();
-                        } else {
-                            alert('Error setting home location: ' + (data.error || 'Unknown error'));
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Network error. Please try again.');
-                    });
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert('Home location set successfully!');
+                                location.reload();
+                            } else {
+                                alert('Error setting home location: ' + (data.error || 'Unknown error'));
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Network error. Please try again.');
+                        });
                 },
                 (error) => {
                     alert(error.code === 1 ? 'Location permission denied' : 'Unable to get location');
                 }
             );
         }
-        
+
         function updateCurrentLocation() {
             if (!navigator.geolocation) {
                 alert('Geolocation is not supported by your browser.');
                 return;
             }
-            
+
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
-                    
+
                     fetch('/api/customer/update-current-location', {
                         method: 'POST',
                         headers: {
@@ -663,30 +861,28 @@
                             current_longitude: lng
                         })
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert('Current location updated successfully!');
-                            location.reload();
-                        } else {
-                            alert('Error updating current location: ' + (data.error || 'Unknown error'));
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Network error. Please try again.');
-                    });
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert('Current location updated successfully!');
+                                location.reload();
+                            } else {
+                                alert('Error updating current location: ' + (data.error || 'Unknown error'));
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Network error. Please try again.');
+                        });
                 },
                 (error) => {
                     alert(error.code === 1 ? 'Location permission denied' : 'Unable to get location');
                 }
             );
         }
-        
-        function viewLocationOnMap(lat, lng) {
-            const mapUrl = `https://www.google.com/maps?q=${lat},${lng}&z=15`;
-            window.open(mapUrl, '_blank');
-        }
+
+
     </script>
 </body>
+
 </html>

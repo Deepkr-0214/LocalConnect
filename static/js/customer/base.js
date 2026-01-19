@@ -33,7 +33,7 @@ class LocalConnectBase {
 
         // Profile dropdown functionality
         this.setupProfileDropdown();
-        
+
         // Search toggle functionality
         this.setupSearchToggle();
     }
@@ -46,7 +46,7 @@ class LocalConnectBase {
     // Generate star rating HTML
     generateStars(rating, size = 12) {
         let stars = "";
-        for(let i = 0; i < 5; i++) {
+        for (let i = 0; i < 5; i++) {
             const color = i < rating ? "#f1c40f" : "#e0e0e0";
             stars += `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}" stroke="${color}">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
@@ -58,10 +58,10 @@ class LocalConnectBase {
     // Setup search functionality
     setupSearch(items, renderCallback, filterCallback) {
         if (!this.searchInput) return;
-        
+
         this.searchInput.addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
-            const filtered = items.filter(filterCallback ? filterCallback(term) : 
+            const filtered = items.filter(filterCallback ? filterCallback(term) :
                 item => item.name.toLowerCase().includes(term));
             renderCallback(filtered);
         });
@@ -84,7 +84,7 @@ class LocalConnectBase {
                 // Remove active class from all tabs and content
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                
+
                 // Add active class to clicked tab and corresponding content
                 tab.classList.add('active');
                 const target = tab.getAttribute('data-target');
@@ -103,7 +103,7 @@ class LocalConnectBase {
                 // Remove active class from all filter buttons
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                
+
                 const target = btn.getAttribute('data-target');
                 const container = document.getElementById('mainContainer');
 
@@ -135,22 +135,22 @@ class LocalConnectBase {
                 e.stopPropagation();
                 this.profileDropdown.classList.toggle('active');
             });
-            
+
             document.addEventListener('click', () => {
                 this.profileDropdown.classList.remove('active');
             });
         }
     }
-    
+
     // Setup search toggle
     setupSearchToggle() {
         const searchWrapper = document.getElementById('searchWrapper');
         const searchIcon = document.querySelector('.search-icon');
         const searchInput = document.getElementById('searchInput');
-        
+
         if (searchWrapper && searchIcon && searchInput) {
             searchWrapper.classList.add('collapsed');
-            
+
             searchIcon.addEventListener('click', (e) => {
                 e.stopPropagation();
                 searchWrapper.classList.toggle('collapsed');
@@ -158,7 +158,7 @@ class LocalConnectBase {
                     searchInput.focus();
                 }
             });
-            
+
             document.addEventListener('click', (e) => {
                 if (!searchWrapper.contains(e.target)) {
                     searchWrapper.classList.add('collapsed');
@@ -190,11 +190,11 @@ function myOrders() {
 }
 function logout() {
     // Clear any local storage or session storage
-    if (typeof(Storage) !== "undefined") {
+    if (typeof (Storage) !== "undefined") {
         localStorage.clear();
         sessionStorage.clear();
     }
-    
+
     // Redirect to logout endpoint
     window.location.href = '/logout';
 }

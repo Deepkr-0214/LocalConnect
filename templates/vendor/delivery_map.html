@@ -1,12 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delivery Map | LocalConnect</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/vendor/styles.css') }}">
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.min.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -14,38 +19,39 @@
             padding: 0;
             background: #f5f5f5;
         }
-        
+
         .delivery-container {
             width: 100%;
             height: 100vh;
             display: flex;
             flex-direction: column;
         }
-        
+
         .delivery-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .delivery-header h1 {
             font-size: 24px;
             font-weight: 600;
             margin: 0;
         }
-        
+
         .header-controls {
             display: flex;
             gap: 10px;
             align-items: center;
         }
-        
-        .filter-btn, .back-btn {
-            background: rgba(255,255,255,0.2);
+
+        .filter-btn,
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
             border: 2px solid white;
             color: white;
             padding: 10px 15px;
@@ -54,31 +60,32 @@
             font-size: 14px;
             transition: all 0.3s ease;
         }
-        
-        .filter-btn:hover, .back-btn:hover {
-            background: rgba(255,255,255,0.3);
+
+        .filter-btn:hover,
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
-        
+
         .map-content {
             display: flex;
             flex: 1;
             overflow: hidden;
         }
-        
+
         #deliveryMap {
             flex: 1;
             position: relative;
             z-index: 1;
         }
-        
+
         .delivery-list {
             width: 350px;
             background: white;
             border-left: 1px solid #ddd;
             overflow-y: auto;
-            box-shadow: -2px 0 5px rgba(0,0,0,0.05);
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.05);
         }
-        
+
         .delivery-list-header {
             background: #f0f0f0;
             padding: 15px;
@@ -86,42 +93,42 @@
             font-weight: 600;
             color: #333;
         }
-        
+
         .delivery-item {
             padding: 15px;
             border-bottom: 1px solid #eee;
             cursor: pointer;
             transition: background 0.2s ease;
         }
-        
+
         .delivery-item:hover {
             background: #f9f9f9;
         }
-        
+
         .delivery-item.active {
             background: #e8eaf6;
             border-left: 4px solid #667eea;
         }
-        
+
         .order-id {
             font-weight: 600;
             color: #333;
             margin-bottom: 5px;
         }
-        
+
         .order-details {
             font-size: 13px;
             color: #666;
             margin: 3px 0;
         }
-        
+
         .distance-info {
             font-size: 12px;
             color: #2196F3;
             font-weight: 600;
             margin-top: 5px;
         }
-        
+
         .status-badge {
             display: inline-block;
             padding: 3px 8px;
@@ -130,29 +137,29 @@
             font-weight: 600;
             margin-top: 5px;
         }
-        
+
         .status-pending {
             background: #fff3cd;
             color: #856404;
         }
-        
+
         .status-preparing {
             background: #cce5ff;
             color: #004085;
         }
-        
+
         .status-ready {
             background: #d4edda;
             color: #155724;
         }
-        
+
         .no-deliveries {
             padding: 20px;
             text-align: center;
             color: #999;
             font-size: 14px;
         }
-        
+
         .loading {
             display: flex;
             align-items: center;
@@ -161,34 +168,53 @@
             font-size: 16px;
             color: #666;
         }
-        
+
+        /* Route Info Overlay on Map */
+        .route-info-overlay {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            display: none;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
         @media (max-width: 768px) {
             .delivery-list {
                 width: 280px;
             }
-            
+
             .delivery-header h1 {
                 font-size: 18px;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="delivery-container">
         <div class="delivery-header">
-            <h1>🛵 Active Takeaway Orders</h1>
+            <h1>🛵 Active Home Delivery Orders</h1>
             <div class="header-controls">
                 <button class="filter-btn" onclick="filterDeliveries()">Filter</button>
                 <button class="back-btn" onclick="window.location.href='/vendor/orders'">← Orders</button>
             </div>
         </div>
-        
+
         <div class="map-content">
-            <div id="deliveryMap"></div>
+            <div id="deliveryMap">
+                <div id="routeInfoOverlay" class="route-info-overlay">Select an order to view route</div>
+            </div>
             <div class="delivery-list">
                 <div class="delivery-list-header">Active Orders</div>
                 <div id="deliveryListContent">
-                    <div class="loading">Loading takeaway orders...</div>
+                    <div class="loading">Loading home delivery orders...</div>
                 </div>
             </div>
         </div>
@@ -196,167 +222,46 @@
 
     <script>
         let map;
-        let vendorMarker;
-        let deliveryMarkers = {};
-        let routeLines = {};
-        let currentVendorId = null;
+        let routeLayer, arrowLayer, vendorMarker, customerMarker;
         let ordersData = [];
-        
+
         const INDIA_CENTER = [20.5937, 78.9629];
-        const INITIAL_ZOOM = 13;
-        
-        // Calculate distance between two coordinates (Haversine formula)
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; // Earth's radius in kilometers
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                    Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
-        }
-        
+        const INITIAL_ZOOM = 5;
+
         async function initDeliveryMap() {
-            try {
-                // Get vendor ID from session/route
-                const response = await fetch('/api/vendor/current', {
-                    method: 'GET',
-                    credentials: 'same-origin'
-                });
-                
-                if (!response.ok) {
-                    window.location.href = '/signin';
-                    return;
-                }
-                
-                const vendor = await response.json();
-                currentVendorId = vendor.id;
-                
-                // Initialize map
-                map = L.map('deliveryMap').setView(INDIA_CENTER, INITIAL_ZOOM);
-                
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors',
-                    maxZoom: 19
-                }).addTo(map);
-                
-                // Add vendor location as shop marker
-                if (vendor.latitude && vendor.longitude) {
-                    const vendorIcon = L.divIcon({
-                        html: `<div style="background: #667eea; color: white; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); font-size: 24px;">🏪</div>`,
-                        iconSize: [45, 45],
-                        className: 'vendor-marker'
-                    });
-                    
-                    vendorMarker = L.marker([vendor.latitude, vendor.longitude], {icon: vendorIcon})
-                        .addTo(map)
-                        .bindPopup(`<strong>${vendor.business_name}</strong><br>Your Shop Location`);
-                    
-                    map.setView([vendor.latitude, vendor.longitude], 14);
-                }
-                
-                // Load active takeaway orders
-                await loadActiveDeliveries();
-                
-            } catch (error) {
-                console.error('Error initializing delivery map:', error);
-                document.getElementById('deliveryListContent').innerHTML = `
-                    <div class="no-deliveries">Error loading orders: ${error.message}</div>
-                `;
-            }
+            // Initialize map centered on India (or default)
+            map = L.map('deliveryMap').setView(INDIA_CENTER, INITIAL_ZOOM);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            await loadActiveDeliveries();
         }
-        
+
         async function loadActiveDeliveries() {
             try {
                 const response = await fetch('/api/vendor/deliveries/active', {
                     credentials: 'same-origin'
                 });
-                
-                if (!response.ok) throw new Error('Failed to load takeaway orders');
-                
+
+                if (!response.ok) throw new Error('Failed to load orders');
+
                 const deliveries = await response.json();
                 ordersData = deliveries;
-                
+
                 if (deliveries.length === 0) {
                     document.getElementById('deliveryListContent').innerHTML = `
-                        <div class="no-deliveries">No active takeaway orders at the moment</div>
+                        <div class="no-deliveries">No active home delivery orders found</div>
                     `;
                     return;
                 }
-                
-                // Clear existing markers and routes
-                Object.values(deliveryMarkers).forEach(marker => map.removeLayer(marker));
-                Object.values(routeLines).forEach(line => map.removeLayer(line));
-                deliveryMarkers = {};
-                routeLines = {};
-                
-                // Add markers and routes for each takeaway order
-                let bounds = null;
-                deliveries.forEach((order, index) => {
-                    if (order.customer_latitude && order.customer_longitude && 
-                        order.vendor_latitude && order.vendor_longitude) {
-                        
-                        // Calculate distance
-                        const distance = calculateDistance(
-                            order.vendor_latitude, order.vendor_longitude,
-                            order.customer_latitude, order.customer_longitude
-                        );
-                        order.distance = distance;
-                        
-                        // Customer marker
-                        const icon = L.divIcon({
-                            html: `<div style="background: #ff6b6b; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); font-size: 16px; font-weight: bold;">${index + 1}</div>`,
-                            iconSize: [40, 40]
-                        });
-                        
-                        const marker = L.marker([order.customer_latitude, order.customer_longitude], {icon: icon})
-                            .addTo(map)
-                            .bindPopup(`
-                                <strong>Order #${order.id}</strong><br>
-                                Customer: ${order.customer_name}<br>
-                                Items: ${order.items_summary}<br>
-                                Total: ₹${order.total}<br>
-                                Distance: ${distance.toFixed(2)} km
-                            `)
-                            .on('click', () => selectDelivery(order.id));
-                        
-                        deliveryMarkers[order.id] = marker;
-                        
-                        // Draw route line from vendor to customer
-                        const routeLine = L.polyline([
-                            [order.vendor_latitude, order.vendor_longitude],
-                            [order.customer_latitude, order.customer_longitude]
-                        ], {
-                            color: '#2196F3',
-                            weight: 3,
-                            opacity: 0.7,
-                            dashArray: '5, 10'
-                        }).addTo(map);
-                        
-                        routeLines[order.id] = routeLine;
-                        
-                        // Extend bounds
-                        if (!bounds) {
-                            bounds = L.latLngBounds([
-                                [order.vendor_latitude, order.vendor_longitude],
-                                [order.customer_latitude, order.customer_longitude]
-                            ]);
-                        } else {
-                            bounds.extend([order.customer_latitude, order.customer_longitude]);
-                            bounds.extend([order.vendor_latitude, order.vendor_longitude]);
-                        }
-                    }
-                });
-                
-                // Fit map to all markers if available
-                if (bounds) {
-                    map.fitBounds(bounds, {padding: [50, 50]});
-                }
-                
-                // Update delivery list
+
                 updateDeliveryList(deliveries);
-                
+
+                // If there are orders, maybe auto-select the first one?
+                // Or let the user choose.
+
             } catch (error) {
                 console.error('Error loading deliveries:', error);
                 document.getElementById('deliveryListContent').innerHTML = `
@@ -364,63 +269,133 @@
                 `;
             }
         }
-        
+
         function updateDeliveryList(deliveries) {
             let html = '';
-            
-            deliveries.forEach((order, index) => {
+
+            deliveries.forEach((order) => {
                 const statusClass = `status-${order.status.toLowerCase().replace(/ /g, '')}`;
-                const distanceText = order.distance ? `📍 ${order.distance.toFixed(2)} km away` : '📍 Distance calculating...';
-                
+                const locationType = order.delivery_location_type === 'home' ? '🏠 Home' : '📍 Current';
+
                 html += `
                     <div class="delivery-item" onclick="selectDelivery(${order.id})" id="item-${order.id}">
                         <div class="order-id">#${order.id}</div>
                         <div class="order-details">👤 ${order.customer_name}</div>
                         <div class="order-details">📦 ${order.items_summary}</div>
                         <div class="order-details">💰 ₹${order.total}</div>
-                        <div class="distance-info">${distanceText}</div>
+                        <div class="distance-info">${locationType} Location</div>
                         <span class="status-badge ${statusClass}">${order.status}</span>
                     </div>
                 `;
             });
-            
+
             document.getElementById('deliveryListContent').innerHTML = html;
         }
-        
+
         function selectDelivery(orderId) {
             // Update active state in list
             document.querySelectorAll('.delivery-item').forEach(item => item.classList.remove('active'));
             document.getElementById(`item-${orderId}`).classList.add('active');
-            
-            // Highlight marker and route
-            if (deliveryMarkers[orderId]) {
-                deliveryMarkers[orderId].openPopup();
-                
-                // Highlight the route
-                Object.values(routeLines).forEach(line => {
-                    line.setStyle({color: '#2196F3', weight: 3, opacity: 0.7});
+
+            const order = ordersData.find(o => o.id === orderId);
+            if (!order) return;
+
+            // Clear existing map layers
+            if (routeLayer) map.removeLayer(routeLayer);
+            if (arrowLayer) map.removeLayer(arrowLayer);
+            if (vendorMarker) map.removeLayer(vendorMarker);
+            if (customerMarker) map.removeLayer(customerMarker);
+
+            document.getElementById('routeInfoOverlay').style.display = 'block';
+            document.getElementById('routeInfoOverlay').textContent = 'Calculating route...';
+
+            if (order.vendor_latitude && order.vendor_longitude &&
+                order.customer_latitude && order.customer_longitude) {
+
+                const vendorLat = order.vendor_latitude;
+                const vendorLng = order.vendor_longitude;
+                const customerLat = order.customer_latitude;
+                const customerLng = order.customer_longitude;
+
+                // Vendor Marker (Shop Icon)
+                const vendorIcon = L.divIcon({
+                    html: `<div style="background: #667eea; color: white; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); font-size: 24px;">🏪</div>`,
+                    iconSize: [45, 45],
+                    className: 'vendor-marker'
                 });
-                
-                if (routeLines[orderId]) {
-                    routeLines[orderId].setStyle({color: '#ff6b6b', weight: 5, opacity: 1});
-                }
-                
-                // Center map on the route
-                const order = ordersData.find(o => o.id === orderId);
-                if (order && order.vendor_latitude && order.customer_latitude) {
-                    const bounds = L.latLngBounds([
-                        [order.vendor_latitude, order.vendor_longitude],
-                        [order.customer_latitude, order.customer_longitude]
-                    ]);
-                    map.fitBounds(bounds, {padding: [50, 50]});
-                }
+
+                vendorMarker = L.marker([vendorLat, vendorLng], { icon: vendorIcon })
+                    .addTo(map)
+                    .bindPopup('<b>Store Location</b>');
+
+                // Customer Marker (User Icon / Pin)
+                const customerIcon = L.divIcon({
+                    html: `<div style="background: #ff6b6b; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); font-size: 20px;">👤</div>`,
+                    iconSize: [40, 40],
+                    className: 'customer-marker'
+                });
+
+                customerMarker = L.marker([customerLat, customerLng], { icon: customerIcon })
+                    .addTo(map)
+                    .bindPopup(`<b>${order.customer_name}</b><br>Order #${order.id}`);
+
+                // Fit bounds to show both
+                const bounds = L.latLngBounds(
+                    [vendorLat, vendorLng],
+                    [customerLat, customerLng]
+                );
+                map.fitBounds(bounds, { padding: [100, 100] });
+
+                // Fetch Route from OSRM
+                fetch(`https://router.project-osrm.org/route/v1/driving/${vendorLng},${vendorLat};${customerLng},${customerLat}?overview=full&geometries=geojson`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.routes && data.routes.length > 0) {
+                            const route = data.routes[0];
+                            const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+
+                            // Draw Route Line
+                            routeLayer = L.polyline(coords, {
+                                color: '#4285F4',
+                                weight: 5,
+                                opacity: 0.8
+                            }).addTo(map);
+
+                            // Draw Arrows
+                            arrowLayer = L.polylineDecorator(routeLayer, {
+                                patterns: [
+                                    {
+                                        offset: '5%', repeat: 100, symbol: L.Symbol.arrowHead({
+                                            pixelSize: 15,
+                                            polygon: false,
+                                            pathOptions: { stroke: true, color: '#4285F4', weight: 3, opacity: 0.9 }
+                                        })
+                                    }
+                                ]
+                            }).addTo(map);
+
+                            const distance = (route.distance / 1000).toFixed(1);
+                            const duration = Math.ceil(route.duration / 60);
+                            document.getElementById('routeInfoOverlay').innerHTML = `Distance: ${distance} km | ETA: ${duration} mins`;
+                        } else {
+                            document.getElementById('routeInfoOverlay').textContent = 'Route not found';
+                        }
+                    })
+                    .catch(e => {
+                        console.error('Routing error:', e);
+                        document.getElementById('routeInfoOverlay').textContent = 'Route calculation failed';
+                        // Still show straight line?
+                    });
+
+            } else {
+                document.getElementById('routeInfoOverlay').textContent = 'Location data missing for this order';
             }
         }
-        
+
         function filterDeliveries() {
             const filter = prompt('Filter by status (pending/preparing/ready) or leave blank for all:');
             if (filter === null) return;
-            
+
             if (filter.trim() === '') {
                 loadActiveDeliveries();
             } else {
@@ -429,17 +404,19 @@
                     document.getElementById('deliveryListContent').innerHTML = `
                         <div class="no-deliveries">No orders found for status: ${filter}</div>
                     `;
+                    // Clear map if list empty?
                 } else {
                     updateDeliveryList(filtered);
                 }
             }
         }
-        
+
         // Initialize when page loads
         window.addEventListener('load', initDeliveryMap);
-        
+
         // Auto-refresh every 30 seconds
         setInterval(loadActiveDeliveries, 30000);
     </script>
 </body>
+
 </html>

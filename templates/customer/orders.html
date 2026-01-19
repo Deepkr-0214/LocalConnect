@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,22 +10,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.min.js"></script>
 </head>
+
 <body>
     <header class="navbar">
         <div class="nav-container">
             <div class="logo">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
                     <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
                     <circle cx="12" cy="10" r="3"></circle>
                 </svg>
                 <span>LocalConnect</span>
             </div>
-            
+
             <div class="search-wrapper" id="searchWrapper">
                 <input type="text" id="searchInput" placeholder="Search orders...">
-                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
@@ -33,7 +38,8 @@
             <div class="user-profile">
                 <span class="welcome-text">Welcome, {{ user_name or 'Guest' }}</span>
                 <div class="avatar" id="profileIcon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
                         <circle cx="12" cy="7" r="4"></circle>
                     </svg>
@@ -61,46 +67,59 @@
     </header>
     <main class="content-wrapper">
         <div class="orders-container">
-            <h2 class="page-title enhanced-title">My Orders <span class="orders-count">{{ orders_query|length if orders_query else 0 }}</span></h2>
+            <h2 class="page-title enhanced-title">My Orders <span class="orders-count">{{ orders_query|length if
+                    orders_query else 0 }}</span></h2>
             <div class="orders-list" id="orders-list">
                 {% if orders_query %}
-                    {% for order in orders_query %}
-                    <div class="order-card enhanced-order-card" onclick="showOrderDetails({{ order.id }})">
-                        <div class="order-status-indicator {{ 'delivered' if order.status == 'Completed' else order.status }}"></div>
-                        <div class="order-header">
-                            <div class="order-info">
-                                <h4><span class="order-number">#{{ order.id }}</span></h4>
-                                <p class="vendor-name"><i class="fa-solid fa-store"></i> {{ order.vendor_name }}</p>
-                            </div>
-                            <div class="order-status">
-                                <span class="status-badge enhanced-status {{ 'delivered' if order.status == 'Completed' else order.status }}">{{ 'Delivered' if order.status == 'Completed' else order.status.replace('_', ' ').title() }}</span>
-                                <span class="order-total enhanced-total"><i class="fa-solid fa-indian-rupee-sign"></i>{{ order.total }}</span>
-                            </div>
+                {% for order in orders_query %}
+                <div class="order-card enhanced-order-card" onclick="showOrderDetails({{ order.id }})">
+                    <div
+                        class="order-status-indicator {{ 'delivered' if order.status == 'Completed' else order.status }}">
+                    </div>
+                    <div class="order-header">
+                        <div class="order-info">
+                            <h4><span class="order-number">#{{ order.id }}</span></h4>
+                            <p class="vendor-name"><i class="fa-solid fa-store"></i> {{ order.vendor_name }}</p>
                         </div>
-                        <div class="order-items enhanced-items">
-                            <p><i class="fa-solid fa-utensils"></i> {% for item in order.get_items() %}{{ item.name }} x{{ item.qty }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
-                        </div>
-                        <div class="order-meta enhanced-meta">
-                            <span class="order-type">{{ '🚚 Delivery' if order.delivery_type == 'delivery' else '🏪 Takeaway' }}{% if order.delivery_type == 'delivery' and order.delivery_location_type %} ({{ 'Home' if order.delivery_location_type == 'home' else 'Current Location' }}){% endif %}</span>
-                            <span class="order-date" data-timestamp="{{ order.created_at.timestamp() }}">{{ order.created_at.strftime('%b %d, %Y %I:%M %p') }} | {{ order.created_at.strftime('%H:%M') }}</span>
+                        <div class="order-status">
+                            <span
+                                class="status-badge enhanced-status {{ 'delivered' if order.status == 'Completed' else order.status }}">{{
+                                'Delivered' if order.status == 'Completed' else order.status.replace('_', ' ').title()
+                                }}</span>
+                            <span class="order-total enhanced-total"><i class="fa-solid fa-indian-rupee-sign"></i>{{
+                                order.total }}</span>
                         </div>
                     </div>
-                    {% endfor %}
+                    <div class="order-items enhanced-items">
+                        <p><i class="fa-solid fa-utensils"></i> {% for item in order.get_items() %}{{ item.name }} x{{
+                            item.qty }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
+                    </div>
+                    <div class="order-meta enhanced-meta">
+                        <span class="order-type">{{ '🚚 Delivery' if order.delivery_type == 'delivery' else '🏪
+                            Takeaway' }}{% if order.delivery_type == 'delivery' and order.delivery_location_type %} ({{
+                            'Home' if order.delivery_location_type == 'home' else 'Current Location' }}){% endif
+                            %}</span>
+                        <span class="order-date" data-timestamp="{{ order.created_at.timestamp() }}">{{
+                            order.created_at.strftime('%b %d, %Y %I:%M %p') }} | {{ order.created_at.strftime('%H:%M')
+                            }}</span>
+                    </div>
+                </div>
+                {% endfor %}
                 {% else %}
-                    <div class="empty-orders-state">
-                        <div class="empty-icon-container">
-                            <i class="fa-solid fa-shopping-bag empty-icon"></i>
-                            <div class="empty-icon-bg"></div>
-                        </div>
-                        <h3 class="empty-title">No orders yet</h3>
-                        <p class="empty-description">Your delicious orders will appear here after you place them.</p>
-                        <button class="explore-btn" onclick="window.location.href='/customer/dashboard'">
-                            <i class="fa-solid fa-compass"></i> Explore Restaurants
-                        </button>
+                <div class="empty-orders-state">
+                    <div class="empty-icon-container">
+                        <i class="fa-solid fa-shopping-bag empty-icon"></i>
+                        <div class="empty-icon-bg"></div>
                     </div>
+                    <h3 class="empty-title">No orders yet</h3>
+                    <p class="empty-description">Your delicious orders will appear here after you place them.</p>
+                    <button class="explore-btn" onclick="window.location.href='/customer/dashboard'">
+                        <i class="fa-solid fa-compass"></i> Explore Restaurants
+                    </button>
+                </div>
                 {% endif %}
             </div>
-            
+
             <!-- Order Details Section -->
             <div class="order-details hidden" id="order-details">
                 <div class="details-header">
@@ -118,26 +137,26 @@
         function viewProfile() {
             window.location.href = '/customer/profile';
         }
-        
+
         function myOrders() {
             window.location.href = '/customer/orders';
         }
-        
+
         function changePassword() {
             window.location.href = '/customer/change-password';
         }
-        
+
         function logout() {
             // Clear any local storage or session storage
-            if (typeof(Storage) !== "undefined") {
+            if (typeof (Storage) !== "undefined") {
                 localStorage.clear();
                 sessionStorage.clear();
             }
-            
+
             // Redirect to logout endpoint
             window.location.href = '/logout';
         }
-        
+
         // Real-time time updates
         function updateRelativeTimes() {
             document.querySelectorAll('[data-timestamp]').forEach(element => {
@@ -145,7 +164,7 @@
                 const orderDate = new Date(timestamp * 1000);
                 const now = new Date();
                 const diff = (now.getTime() - orderDate.getTime()) / 1000;
-                
+
                 let relativeText;
                 if (diff < 60) {
                     relativeText = 'Just now';
@@ -161,19 +180,19 @@
                 } else {
                     relativeText = orderDate.toLocaleDateString('en-IN');
                 }
-                
-                const time24 = orderDate.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit', hour12: false});
-                const time12 = orderDate.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', hour12: true}).replace(/AM|PM/, match => match.charAt(0) + '.M');
-                
+
+                const time24 = orderDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+                const time12 = orderDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).replace(/AM|PM/, match => match.charAt(0) + '.M');
+
                 element.textContent = `${relativeText} | ${time24}(${time12})`;
                 element.title = orderDate.toLocaleString('en-IN');
             });
         }
-        
+
         // Update times immediately and every 30 seconds
         updateRelativeTimes();
         setInterval(updateRelativeTimes, 30000);
-        
+
         // Update current time display
         function updateCurrentTime() {
             const timeElements = document.querySelectorAll('.current-time');
@@ -181,10 +200,10 @@
                 el.textContent = new Date().toLocaleTimeString();
             });
         }
-        
+
         updateCurrentTime();
         setInterval(updateCurrentTime, 1000);
-        
+
         const ordersData = {{ orders | tojson | safe }};
         const orders = ordersData.map(o => ({
             id: o.id,
@@ -215,7 +234,7 @@
 
             const canReview = order.status === 'Completed';
             const hasReview = order.reviewRating;
-            
+
             document.getElementById('details-content').innerHTML = `
                 <div class="order-summary">
                     <h4>${order.vendor}</h4>
@@ -242,7 +261,7 @@
                                 <i class="fa-solid fa-edit"></i> Edit
                             </button>
                         </div>
-                        <div style="color:#f1c40f;margin-bottom:10px;">${'★'.repeat(order.reviewRating)}${'☆'.repeat(5-order.reviewRating)}</div>
+                        <div style="color:#f1c40f;margin-bottom:10px;">${'★'.repeat(order.reviewRating)}${'☆'.repeat(5 - order.reviewRating)}</div>
                         <p style="margin:0;color:#2c3e50;">${order.reviewComment}</p>
                     </div>
                 ` : canReview ? `
@@ -271,6 +290,12 @@
                         </button>
                     ` : ''}
                 </div>
+                
+                ${order.status === 'Completed' ? `
+                    <button class="action-btn" onclick="downloadInvoice(${order.id})" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;width:100%;margin-top:15px;border:none;padding:12px;border-radius:8px;font-weight:600;cursor:pointer;box-shadow:0 4px 10px rgba(102, 126, 234, 0.3);transition:transform 0.2s ease, box-shadow 0.2s ease;">
+                        <i class="fa-solid fa-file-invoice"></i> Download Invoice
+                    </button>
+                ` : ''}
                 <p style="text-align:center;color:#7f8c8d;margin-top:15px;">Payment: ${order.paymentType === 'online' ? 'Online' : 'Cash on ' + (order.deliveryType === 'delivery' ? 'Delivery' : 'Pickup')}</p>
             `;
         }
@@ -297,7 +322,7 @@
                     </div>
                 </div>
             `;
-            
+
             setTimeout(() => {
                 // Get vendor location using the same method as vendor shop page
                 fetch(`/api/vendor/${getVendorIdFromOrder(order)}/location`)
@@ -307,7 +332,7 @@
                             // Update vendor info
                             document.getElementById('vendorAddress').innerHTML = `<strong>Address:</strong> ${vendorData.address || 'Not available'}`;
                             document.getElementById('vendorPhone').innerHTML = `<strong>Phone:</strong> ${vendorData.phone || 'Not available'}`;
-                            
+
                             // Initialize map with vendor coordinates
                             initOrderMap(vendorData.latitude, vendorData.longitude, vendorData);
                         } else {
@@ -319,29 +344,30 @@
                     });
             }, 100);
         }
-        
+
         function getVendorIdFromOrder(order) {
             // Find vendor ID by matching vendor name from the orders data
-            const orderData = {{ orders | tojson | safe }};
-            const matchingOrder = orderData.find(o => o.id === order.id);
-            return matchingOrder ? matchingOrder.vendor_id : null;
+            const orderData = {{ orders | tojson | safe
+        }};
+        const matchingOrder = orderData.find(o => o.id === order.id);
+        return matchingOrder ? matchingOrder.vendor_id : null;
         }
-        
+
         function initOrderMap(vendorLat, vendorLng, vendorData) {
             if (navigator.geolocation) {
                 let userMarker, map, routeLayer, arrowLayer;
-                
+
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         const userLat = position.coords.latitude;
                         const userLng = position.coords.longitude;
-                        
+
                         map = L.map('orderMap').setView([userLat, userLng], 15);
-                        
+
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                             attribution: '© OpenStreetMap'
                         }).addTo(map);
-                        
+
                         userMarker = L.circleMarker([userLat, userLng], {
                             radius: 8,
                             fillColor: '#4285F4',
@@ -349,17 +375,17 @@
                             color: '#ffffff',
                             weight: 3
                         }).addTo(map).bindPopup('Your Location');
-                        
+
                         const vendorIcon = L.icon({
                             iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
                             shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
                             iconSize: [25, 41],
                             iconAnchor: [12, 41]
                         });
-                        
-                        L.marker([vendorLat, vendorLng], {icon: vendorIcon}).addTo(map)
+
+                        L.marker([vendorLat, vendorLng], { icon: vendorIcon }).addTo(map)
                             .bindPopup(vendorData.name || 'Restaurant Location');
-                        
+
                         function updateRoute(lat, lng) {
                             fetch(`https://router.project-osrm.org/route/v1/driving/${lng},${lat};${vendorLng},${vendorLat}?overview=full&geometries=geojson`)
                                 .then(res => res.json())
@@ -367,26 +393,28 @@
                                     if (data.routes && data.routes.length > 0) {
                                         if (routeLayer) map.removeLayer(routeLayer);
                                         if (arrowLayer) map.removeLayer(arrowLayer);
-                                        
+
                                         const route = data.routes[0];
                                         const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
-                                        
+
                                         routeLayer = L.polyline(coords, {
                                             color: '#4285F4',
                                             weight: 5,
                                             opacity: 0.8
                                         }).addTo(map);
-                                        
+
                                         arrowLayer = L.polylineDecorator(routeLayer, {
                                             patterns: [
-                                                {offset: '5%', repeat: 50, symbol: L.Symbol.arrowHead({
-                                                    pixelSize: 15,
-                                                    polygon: false,
-                                                    pathOptions: {stroke: true, color: '#4285F4', weight: 3, opacity: 0.9}
-                                                })}
+                                                {
+                                                    offset: '5%', repeat: 50, symbol: L.Symbol.arrowHead({
+                                                        pixelSize: 15,
+                                                        polygon: false,
+                                                        pathOptions: { stroke: true, color: '#4285F4', weight: 3, opacity: 0.9 }
+                                                    })
+                                                }
                                             ]
                                         }).addTo(map);
-                                        
+
                                         const distance = (route.distance / 1000).toFixed(1);
                                         const duration = Math.ceil(route.duration / 60);
                                         document.getElementById('routeInfo').innerHTML = `<i class="fa-solid fa-route"></i> Distance: ${distance} km | ETA: ${duration} mins`;
@@ -396,9 +424,9 @@
                                     document.getElementById('routeInfo').textContent = 'Route calculation failed.';
                                 });
                         }
-                        
+
                         updateRoute(userLat, userLng);
-                        
+
                         navigator.geolocation.watchPosition(
                             (pos) => {
                                 const newLat = pos.coords.latitude;
@@ -408,7 +436,7 @@
                                 updateRoute(newLat, newLng);
                             },
                             (error) => console.log('Tracking error:', error),
-                            {enableHighAccuracy: true, maximumAge: 0, timeout: 5000}
+                            { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
                         );
                     },
                     () => {
@@ -420,7 +448,7 @@
 
         function trackOrder(orderId) {
             const order = orders.find(o => o.id === orderId);
-            
+
             if (order.status === 'cancelled') {
                 document.getElementById('details-content').innerHTML = `
                     <div class="tracking-section">
@@ -437,42 +465,42 @@
                 `;
                 return;
             }
-            
+
             // Dynamic tracking steps based on current order status
             const steps = [
-                { 
-                    status: 'Order Placed', 
-                    completed: true, 
+                {
+                    status: 'Order Placed',
+                    completed: true,
                     time: formatOrderTime(new Date(order.date)),
                     current: order.status === 'Pending'
                 },
-                { 
-                    status: 'Preparing', 
-                    completed: ['preparing', 'out_for_delivery', 'ready', 'Completed'].includes(order.status), 
-                    time: order.preparing_at ? formatOrderTime(new Date(order.preparing_at)) : 
-                          ['preparing', 'out_for_delivery', 'ready', 'Completed'].includes(order.status) ? 'Completed' : 'Waiting',
+                {
+                    status: 'Preparing',
+                    completed: ['preparing', 'out_for_delivery', 'ready', 'Completed'].includes(order.status),
+                    time: order.preparing_at ? formatOrderTime(new Date(order.preparing_at)) :
+                        ['preparing', 'out_for_delivery', 'ready', 'Completed'].includes(order.status) ? 'Completed' : 'Waiting',
                     current: order.status === 'preparing'
                 },
-                { 
-                    status: order.deliveryType === 'delivery' ? 'Out for Delivery' : 'Ready for Pickup', 
-                    completed: ['out_for_delivery', 'ready', 'Completed'].includes(order.status), 
-                    time: (order.out_for_delivery_at || order.ready_at) ? formatOrderTime(new Date(order.out_for_delivery_at || order.ready_at)) : 
-                          ['out_for_delivery', 'ready', 'Completed'].includes(order.status) ? 'Completed' : 'Pending',
+                {
+                    status: order.deliveryType === 'delivery' ? 'Out for Delivery' : 'Ready for Pickup',
+                    completed: ['out_for_delivery', 'ready', 'Completed'].includes(order.status),
+                    time: (order.out_for_delivery_at || order.ready_at) ? formatOrderTime(new Date(order.out_for_delivery_at || order.ready_at)) :
+                        ['out_for_delivery', 'ready', 'Completed'].includes(order.status) ? 'Completed' : 'Pending',
                     current: order.status === 'out_for_delivery' || order.status === 'ready'
                 },
-                { 
-                    status: 'Delivered', 
-                    completed: order.status === 'Completed', 
-                    time: order.completed_at ? formatOrderTime(new Date(order.completed_at)) : 
-                          order.status === 'Completed' ? 'Completed' : 'Pending',
+                {
+                    status: 'Delivered',
+                    completed: order.status === 'Completed',
+                    time: order.completed_at ? formatOrderTime(new Date(order.completed_at)) :
+                        order.status === 'Completed' ? 'Completed' : 'Pending',
                     current: false
                 }
             ];
-            
+
             function formatOrderTime(date) {
                 const now = new Date();
                 const diff = (now.getTime() - date.getTime()) / 1000;
-                
+
                 let relativeText;
                 if (diff < 60) {
                     relativeText = 'Just now';
@@ -485,13 +513,13 @@
                 } else {
                     relativeText = date.toLocaleDateString('en-IN');
                 }
-                
-                const time24 = date.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit', hour12: false});
-                const time12 = date.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', hour12: true}).replace(/AM|PM/, match => match.charAt(0) + '.M');
-                
+
+                const time24 = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+                const time12 = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).replace(/AM|PM/, match => match.charAt(0) + '.M');
+
                 return `${relativeText} | ${time24}(${time12})`;
             }
-            
+
             document.getElementById('details-content').innerHTML = `
                 <div class="tracking-section">
                     <div class="tracking-header">
@@ -528,7 +556,7 @@
 
         function cancelOrder(orderId) {
             if (!confirm('Are you sure you want to cancel this order?')) return;
-            
+
             fetch(`/api/orders/${orderId}/cancel`, { method: 'POST' })
                 .then(res => res.json())
                 .then(data => {
@@ -541,29 +569,29 @@
 
         function markOrderReceived(orderId) {
             if (!confirm('Confirm that you have received your order?')) return;
-            
-            fetch(`/api/orders/${orderId}/received`, { 
+
+            fetch(`/api/orders/${orderId}/received`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'}
+                headers: { 'Content-Type': 'application/json' }
             })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    // Show delivery success banner for customer
-                    showDeliveryBanner();
-                    
-                    // Reload page after banner
-                    setTimeout(() => {
-                        location.reload();
-                    }, 2000);
-                }
-            })
-            .catch(() => {});
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show delivery success banner for customer
+                        showDeliveryBanner();
+
+                        // Reload page after banner
+                        setTimeout(() => {
+                            location.reload();
+                        }, 2000);
+                    }
+                })
+                .catch(() => { });
         }
-        
+
         function deleteOrder(orderId) {
             if (!confirm('Are you sure you want to delete this order? This cannot be undone.')) return;
-            
+
             fetch(`/api/orders/${orderId}`, { method: 'DELETE' })
                 .then(res => res.json())
                 .then(data => {
@@ -571,9 +599,9 @@
                         location.reload();
                     }
                 })
-                .catch(() => {});
+                .catch(() => { });
         }
-        
+
         function showDeliveryBanner() {
             const overlay = document.createElement('div');
             overlay.style.cssText = `
@@ -581,7 +609,7 @@
                 background: rgba(0, 0, 0, 0.5); z-index: 9998;
                 display: flex; align-items: center; justify-content: center;
             `;
-            
+
             const banner = document.createElement('div');
             banner.style.cssText = `
                 background: #f0f9f0; padding: 40px; border-radius: 16px;
@@ -589,7 +617,7 @@
                 text-align: center; position: relative; min-width: 300px;
                 border: 3px solid #4CAF50; animation: popIn 0.3s ease-out;
             `;
-            
+
             banner.innerHTML = `
                 <button onclick="this.closest('div').remove()" style="
                     position: absolute; top: 15px; right: 15px; background: none;
@@ -603,7 +631,7 @@
                     Thank you for using LocalConnect!
                 </div>
             `;
-            
+
             // Add animation
             if (!document.getElementById('popupStyles')) {
                 const style = document.createElement('style');
@@ -616,16 +644,16 @@
                 `;
                 document.head.appendChild(style);
             }
-            
+
             overlay.appendChild(banner);
             document.body.appendChild(overlay);
-            
+
             // Auto close after 20 seconds
             setTimeout(() => {
                 if (overlay.parentElement) overlay.remove();
             }, 20000);
         }
-        
+
         function showDeliveryBanner() {
             const overlay = document.createElement('div');
             overlay.style.cssText = `
@@ -633,7 +661,7 @@
                 background: rgba(0, 0, 0, 0.5); z-index: 9998;
                 display: flex; align-items: center; justify-content: center;
             `;
-            
+
             const banner = document.createElement('div');
             banner.style.cssText = `
                 background: #f0f9f0; padding: 40px; border-radius: 16px;
@@ -641,7 +669,7 @@
                 text-align: center; position: relative; min-width: 300px;
                 border: 3px solid #4CAF50; animation: popIn 0.3s ease-out;
             `;
-            
+
             banner.innerHTML = `
                 <button onclick="this.closest('div').remove()" style="
                     position: absolute; top: 15px; right: 15px; background: none;
@@ -655,7 +683,7 @@
                     Thank you for using LocalConnect!
                 </div>
             `;
-            
+
             // Add animation
             if (!document.getElementById('popupStyles')) {
                 const style = document.createElement('style');
@@ -668,10 +696,10 @@
                 `;
                 document.head.appendChild(style);
             }
-            
+
             overlay.appendChild(banner);
             document.body.appendChild(overlay);
-            
+
             // Auto close after 20 seconds
             setTimeout(() => {
                 if (overlay.parentElement) overlay.remove();
@@ -729,6 +757,11 @@
             `;
         }
 
+        function downloadInvoice(orderId) {
+            // Open invoice in new tab for PDF download
+            window.open(`/invoice/${orderId}`, '_blank');
+        }
+
         function setRating(rating) {
             currentRating = rating;
             const stars = document.querySelectorAll('#starRating span');
@@ -742,19 +775,20 @@
             if (!currentRating) { alert('Please select a rating'); return; }
             const comment = document.getElementById('reviewComment').value.trim();
             if (!comment) { alert('Please write a comment'); return; }
-            
+
             fetch(`/api/orders/${orderId}/review`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ rating: currentRating, comment: comment })
             })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.href = '/customer/orders';
-                }
-            });
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = '/customer/orders';
+                    }
+                });
         }
     </script>
 </body>
+
 </html>

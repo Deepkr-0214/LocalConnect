@@ -1,0 +1,418 @@
+/* Invoice Stylesheet - Professional Design with Print Optimization */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: #2c3e50;
+}
+
+.invoice-container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Header Section */
+.invoice-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.company-info h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.tagline {
+    font-size: 14px;
+    opacity: 0.9;
+    font-weight: 400;
+}
+
+.invoice-info {
+    text-align: right;
+}
+
+.invoice-info h2 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.invoice-number {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.invoice-date {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+/* Summary Cards */
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 30px 40px;
+    background: #f8f9fa;
+}
+
+.summary-card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.card-icon {
+    font-size: 28px;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+}
+
+.card-label {
+    font-size: 12px;
+    color: #7f8c8d;
+    margin-bottom: 5px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.card-value {
+    font-size: 16px;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+/* Party Details */
+.party-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 30px 40px;
+}
+
+.party-card {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+}
+
+.party-card h3 {
+    font-size: 16px;
+    color: #667eea;
+    margin-bottom: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.party-info p {
+    margin-bottom: 8px;
+    color: #555;
+    line-height: 1.6;
+}
+
+.party-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 12px !important;
+}
+
+/* Items Section */
+.items-section {
+    padding: 30px 40px;
+}
+
+.items-section h3 {
+    font-size: 20px;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.items-table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.items-table th {
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+}
+
+.items-table th:last-child,
+.items-table td:last-child {
+    text-align: right;
+}
+
+.items-table tbody tr {
+    border-bottom: 1px solid #ecf0f1;
+    transition: background 0.2s ease;
+}
+
+.items-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.items-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.items-table td {
+    padding: 15px;
+    color: #555;
+}
+
+.item-name {
+    font-weight: 600;
+    color: #2c3e50;
+    display: block;
+}
+
+.item-subname {
+    font-size: 13px;
+    color: #7f8c8d;
+    display: block;
+    margin-top: 3px;
+}
+
+/* Total Section */
+.total-section {
+    padding: 30px 40px;
+    background: #f8f9fa;
+}
+
+.total-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 30px;
+    border-radius: 10px;
+    color: white;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.total-label {
+    font-size: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.total-amount {
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.amount-words p:first-child {
+    font-size: 13px;
+    opacity: 0.9;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.words-text {
+    font-size: 16px;
+    font-weight: 600;
+    font-style: italic;
+}
+
+/* Footer */
+.invoice-footer {
+    padding: 30px 40px;
+    background: white;
+    text-align: center;
+}
+
+.footer-note p {
+    color: #7f8c8d;
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+
+.footer-note strong {
+    color: #2c3e50;
+}
+
+/* Print Button */
+.print-button-container {
+    padding: 30px 40px;
+    text-align: center;
+    background: white;
+}
+
+.print-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.print-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.print-btn span {
+    margin-right: 8px;
+    font-size: 18px;
+}
+
+/* Print Styles - Optimize for PDF */
+@media print {
+    body {
+        background: white;
+        padding: 0;
+    }
+
+    .invoice-container {
+        box-shadow: none;
+        border-radius: 0;
+        max-width: 100%;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    /* Preserve colors in print */
+    * {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        color-adjust: exact;
+    }
+
+    .invoice-header,
+    .total-card,
+    .items-table thead,
+    .card-icon {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* Ensure single page */
+    .invoice-container {
+        page-break-inside: avoid;
+    }
+
+    .summary-cards,
+    .party-details,
+    .items-section,
+    .total-section {
+        page-break-inside: avoid;
+    }
+
+    /* Adjust padding for print */
+    .invoice-header,
+    .summary-cards,
+    .party-details,
+    .items-section,
+    .total-section,
+    .invoice-footer {
+        padding: 20px;
+    }
+
+    .summary-card:hover,
+    .items-table tbody tr:hover {
+        transform: none;
+        background: none;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .invoice-header {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .invoice-info {
+        text-align: left;
+    }
+
+    .summary-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .party-details {
+        grid-template-columns: 1fr;
+    }
+
+    .items-table {
+        font-size: 14px;
+    }
+
+    .items-table th,
+    .items-table td {
+        padding: 10px;
+    }
+}
