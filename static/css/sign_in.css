@@ -103,9 +103,22 @@ input[type="text"], input[type="password"] {
 }
 
 .form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 25px;
     font-size: 14px;
     color: var(--text-dark);
+}
+
+.forgot-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.forgot-link:hover {
+    text-decoration: underline;
 }
 
 /* Button Row Styling */

@@ -61,9 +61,8 @@ RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID')
 RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET')
 razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 
-# Enhanced Notification Configuration
-enhanced_notifications = EnhancedNotifications()
-twilio_notifications = TwilioNotifications()  # Keep for backward compatibility
+# Initialize enhanced notification system
+notifier = EnhancedNotifications()
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(os.getcwd(), "instance", "database.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -117,7 +116,7 @@ def check_session_validity():
     # Skip session check for static files, login, signup, and public routes
     if (request.endpoint and 
         (request.endpoint.startswith('static') or 
-         request.endpoint in ['sign_in', 'customer_signup', 'vendor_signup', 'home', 'signup_success'] or
+         request.endpoint in ['sign_in', 'customer_signup', 'vendor_signup', 'home', 'signup_success', 'forgot_password', 'reset_password', 'contact'] or
          request.endpoint.startswith('api.') or
          request.endpoint.startswith('get_vendor'))):
         return
@@ -149,7 +148,11 @@ def customer_required(f):
             return redirect(url_for('sign_in'))
         
         print(f"DEBUG: Customer access granted for {customer.full_name}")
-        return f(*args, **kwargs)
+        response = app.make_response(f(*args, **kwargs))
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
     return decorated_function
 
 def vendor_required(f):
@@ -158,8 +161,16 @@ def vendor_required(f):
         if 'user_id' not in session or session.get('user_role') != 'vendor':
             flash('Access denied. Vendor login required.', 'error')
             return redirect(url_for('sign_in'))
-        return f(*args, **kwargs)
+        response = app.make_response(f(*args, **kwargs))
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
     return decorated_function
+
+@app.route('/contact')
+def contact():
+    return render_template('contact.html')
 
 @app.route('/')
 def home():
@@ -411,7 +422,11 @@ def customer_signup():
         
         # Send welcome notification
         try:
-            enhanced_notifications.notify_customer_welcome(phone, full_name)
+            notifier.notify_customer_order_placed(phone, {
+                'id': 'WELCOME',
+                'vendor_name': 'LocalConnect',
+                'total': '0'
+            })
             print(f"Welcome notification sent to customer {full_name}")
         except Exception as e:
             print(f"Failed to send welcome notification: {e}")
@@ -476,21 +491,15 @@ def create_order():
             # Send enhanced notifications to both customer and vendor
             try:
                 # Notify customer that order was placed
-                customer_result = enhanced_notifications.notify_customer_order_placed(customer.phone, order_data)
+                customer_result = notifier.notify_customer_order_placed(customer.phone, order_data)
                 print(f"Customer order placed notification: {customer_result}")
                 
                 # Notify vendor of new order
-                vendor_result = enhanced_notifications.notify_vendor_new_order(vendor.phone, order_data)
+                vendor_result = notifier.notify_vendor_new_order(vendor.phone, order_data)
                 print(f"Vendor new order notification: {vendor_result}")
                 
             except Exception as e:
                 print(f"Failed to send enhanced notifications: {e}")
-                # Fallback to original notification system
-                success, result = twilio_notifications.send_new_order_notification(vendor.phone, order_data)
-                if success:
-                    print(f"Fallback notification sent to vendor {vendor.phone}: {result}")
-                else:
-                    print(f"All notifications failed for {vendor.phone}: {result}")
         else:
             print(f"Online payment order created: ID={order.id}. Waiting for payment verification.")
 
@@ -590,23 +599,15 @@ def verify_payment():
                     
                     try:
                         # Send payment confirmation and order notifications
-                        payment_result = enhanced_notifications.notify_payment_confirmation(
-                            customer.phone, vendor.phone, order_data
-                        )
-                        print(f"Payment confirmation notifications sent: {payment_result}")
+                        customer_result = notifier.notify_customer_order_placed(customer.phone, order_data)
+                        print(f"Payment confirmation notifications sent: {customer_result}")
                         
                         # Also send new order notification to vendor
-                        vendor_result = enhanced_notifications.notify_vendor_new_order(vendor.phone, order_data)
+                        vendor_result = notifier.notify_vendor_new_order(vendor.phone, order_data)
                         print(f"Vendor new order notification after payment: {vendor_result}")
                         
                     except Exception as e:
                         print(f"Failed to send enhanced payment notifications: {e}")
-                        # Fallback to original system
-                        success, result = twilio_notifications.send_new_order_notification(vendor.phone, order_data)
-                        if success:
-                            print(f"Fallback notification sent to vendor {vendor.phone} after payment: {result}")
-                        else:
-                            print(f"All notifications failed for {vendor.phone} after payment: {result}")
 
                 return jsonify({'success': True})
             else:
@@ -783,6 +784,95 @@ def api_vendor_earnings():
     
     return response
 
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form['email']
+        
+        # Check if user exists
+        customer = Customer.query.filter_by(email=email).first()
+        vendor = Vendor.query.filter_by(email=email).first()
+        
+        if customer or vendor:
+            # Generate reset token (simple timestamp for demo)
+            import time
+            reset_token = str(int(time.time()))
+            
+            # Print reset link to terminal instead of sending email
+            reset_link = f"http://127.0.0.1:5000/reset-password/{reset_token}?email={email}"
+            print(f"\n=== PASSWORD RESET LINK ===")
+            print(f"Email: {email}")
+            print(f"Reset Link: {reset_link}")
+            print(f"==============================\n")
+            
+            flash('Password reset link has been printed to terminal!', 'success')
+        else:
+            flash('Email not found in our records.', 'error')
+        
+        return redirect(url_for('forgot_password'))
+    
+    return render_template('forgot_password.html')
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    email = request.args.get('email')
+    
+    if request.method == 'POST':
+        new_password = request.form['password']
+        confirm_password = request.form['confirm_password']
+        
+        if new_password != confirm_password:
+            flash('Passwords do not match!', 'error')
+            return redirect(url_for('reset_password', token=token, email=email))
+        
+        # Update password
+        customer = Customer.query.filter_by(email=email).first()
+        vendor = Vendor.query.filter_by(email=email).first()
+        
+        if customer:
+            customer.set_password(new_password)
+            db.session.commit()
+            flash('Password updated successfully!', 'success')
+        elif vendor:
+            vendor.set_password(new_password)
+            db.session.commit()
+            flash('Password updated successfully!', 'success')
+        else:
+            flash('Invalid reset link!', 'error')
+        
+        return redirect(url_for('sign_in'))
+    
+    return render_template('reset_password.html', token=token, email=email)
+
+@app.route('/customer/change-password', methods=['GET', 'POST'])
+@customer_required
+def change_password():
+    if request.method == 'POST':
+        current_password = request.form['current_password']
+        new_password = request.form['new_password']
+        confirm_password = request.form['confirm_password']
+        
+        # Get current customer
+        customer = Customer.query.get(session['user_id'])
+        
+        # Check if current password is correct
+        if not customer.check_password(current_password):
+            flash('Current password is incorrect!', 'error')
+            return redirect(url_for('change_password'))
+        
+        # Check if new passwords match
+        if new_password != confirm_password:
+            flash('New passwords do not match!', 'error')
+            return redirect(url_for('change_password'))
+        
+        # Update password
+        customer.set_password(new_password)
+        db.session.commit()
+        
+        flash('Password changed successfully!', 'success')
+        return redirect(url_for('customer_profile'))
+    
+    return render_template('customer/change_password.html')
 @app.route('/logout')
 def logout():
     # Clear all session data
@@ -923,28 +1013,20 @@ def update_order_status(order_id):
         
         try:
             # Use enhanced notification system
-            result = enhanced_notifications.notify_customer_order_status(
+            result = notifier.notify_customer_order_status(
                 customer.phone, order_data, new_status
             )
             print(f"Enhanced status notification sent to customer {customer.phone}: {result}")
             
             # If order completed, also notify vendor
             if new_status == 'Completed' and vendor:
-                vendor_result = enhanced_notifications.notify_vendor_order_completed(
+                vendor_result = notifier.notify_vendor_order_completed(
                     vendor.phone, order_data
                 )
                 print(f"Vendor completion notification sent: {vendor_result}")
                 
         except Exception as e:
             print(f"Enhanced notification failed: {e}")
-            # Fallback to original system
-            success, result = twilio_notifications.send_order_status_notification(
-                customer.phone, order_data, new_status
-            )
-            if success:
-                print(f"Fallback status notification sent to customer {customer.phone}: {result}")
-            else:
-                print(f"All status notifications failed: {result}")
     
     # Return success with earnings info if order completed
     response = {'success': True}
@@ -1290,6 +1372,38 @@ def vendor_signup():
         return redirect(url_for('vendor_dashboard'))
 
     return render_template('vendor/sign_up.html')
+
+@app.route('/vendor/change-password', methods=['GET', 'POST'])
+@vendor_required
+def vendor_change_password():
+    if request.method == 'POST':
+        current_password = request.form['current_password']
+        new_password = request.form['new_password']
+        confirm_password = request.form['confirm_password']
+        
+        # Get current vendor
+        vendor = Vendor.query.get(session['user_id'])
+        
+        # Check if current password is correct
+        if not vendor.check_password(current_password):
+            flash('Current password is incorrect!', 'error')
+            return redirect(url_for('vendor_change_password'))
+        
+        # Check if new passwords match
+        if new_password != confirm_password:
+            flash('New passwords do not match!', 'error')
+            return redirect(url_for('vendor_change_password'))
+        
+        # Update password
+        vendor.set_password(new_password)
+        db.session.commit()
+        
+        flash('Password changed successfully!', 'success')
+        return redirect(url_for('vendor_settings'))
+    
+    vendor = Vendor.query.get(session['user_id'])
+    unread_count = Order.query.filter_by(vendor_id=session['user_id'], status='Pending').count()
+    return render_template('vendor/change_password.html', vendor_profile=vendor, unread_count=unread_count)
 
 @app.route('/vendor/settings', methods=['GET', 'POST'])
 @vendor_required
@@ -1950,3 +2064,147 @@ if __name__ == '__main__':
     
     print("\n✅ Server starting at http://127.0.0.1:5000\n")
     app.run(debug=True, host='127.0.0.1', port=5000, use_reloader=True, use_debugger=False)
+@app.route('/api/vendor/notifications')
+@vendor_required
+def get_vendor_notifications():
+    """Get unread notifications for vendor"""
+    vendor_id = session['user_id']
+    notifications = VendorNotification.query.filter_by(
+        vendor_id=vendor_id, 
+        is_read=False
+    ).order_by(VendorNotification.created_at.desc()).limit(10).all()
+    
+    return jsonify({
+        'notifications': [n.to_dict() for n in notifications],
+        'unread_count': len(notifications)
+    })
+
+@app.route('/api/vendor/notifications/<int:notification_id>/read', methods=['POST'])
+@vendor_required
+def mark_notification_read(notification_id):
+    """Mark notification as read"""
+    notification = VendorNotification.query.filter_by(
+        id=notification_id, 
+        vendor_id=session['user_id']
+    ).first()
+    
+    if notification:
+        notification.is_read = True
+        db.session.commit()
+        return jsonify({'success': True})
+    
+    return jsonify({'error': 'Notification not found'}), 404
+
+@app.route('/api/vendor/notifications/mark-all-read', methods=['POST'])
+@vendor_required
+def mark_all_notifications_read():
+    """Mark all notifications as read"""
+    VendorNotification.query.filter_by(
+        vendor_id=session['user_id'], 
+        is_read=False
+    ).update({'is_read': True})
+    db.session.commit()
+    
+    return jsonify({'success': True})
+@app.route('/api/vendor/recent-orders')
+@vendor_required
+def get_recent_orders_notifications():
+    """Get recent orders for notifications"""
+    vendor_id = session['user_id']
+    
+    # Get recent orders (last 24 hours)
+    from datetime import datetime, timedelta
+    yesterday = datetime.now(IST) - timedelta(hours=24)
+    
+    recent_orders = Order.query.filter(
+        Order.vendor_id == vendor_id,
+        Order.created_at >= yesterday
+    ).order_by(Order.created_at.desc()).limit(5).all()
+    
+    # Get pending count
+    pending_count = Order.query.filter_by(vendor_id=vendor_id, status='Pending').count()
+    
+    orders_data = []
+    for order in recent_orders:
+        # Calculate time ago
+        now = datetime.now(IST)
+        diff = now - order.created_at
+        
+        if diff.days > 0:
+            time_ago = f"{diff.days}d ago"
+        elif diff.seconds > 3600:
+            time_ago = f"{diff.seconds // 3600}h ago"
+        elif diff.seconds > 60:
+            time_ago = f"{diff.seconds // 60}m ago"
+        else:
+            time_ago = "Just now"
+        
+        orders_data.append({
+            'id': order.id,
+            'customer_name': order.customer_name,
+            'status': order.status,
+            'total': order.total,
+            'time_ago': time_ago
+        })
+    
+    return jsonify({
+        'orders': orders_data,
+        'pending_count': pending_count
+    })
+
+# Update the recent orders API to include first item name
+@app.route('/api/vendor/recent-orders-updated')
+@vendor_required
+def get_recent_orders_notifications_updated():
+    """Get recent orders for notifications with item names"""
+    vendor_id = session['user_id']
+    
+    # Get recent orders (last 24 hours)
+    from datetime import datetime, timedelta
+    yesterday = datetime.now(IST) - timedelta(hours=24)
+    
+    recent_orders = Order.query.filter(
+        Order.vendor_id == vendor_id,
+        Order.created_at >= yesterday
+    ).order_by(Order.created_at.desc()).limit(5).all()
+    
+    # Get pending count
+    pending_count = Order.query.filter_by(vendor_id=vendor_id, status='Pending').count()
+    
+    orders_data = []
+    for order in recent_orders:
+        # Calculate time ago
+        now = datetime.now(IST)
+        diff = now - order.created_at
+        
+        if diff.days > 0:
+            time_ago = f"{diff.days}d ago"
+        elif diff.seconds > 3600:
+            time_ago = f"{diff.seconds // 3600}h ago"
+        elif diff.seconds > 60:
+            time_ago = f"{diff.seconds // 60}m ago"
+        else:
+            time_ago = "Just now"
+        
+        # Get first item name from order items
+        first_item_name = "Order"
+        try:
+            items = json.loads(order.items) if order.items else []
+            if items and len(items) > 0:
+                first_item_name = items[0].get('name', 'Order')
+        except:
+            first_item_name = "Order"
+        
+        orders_data.append({
+            'id': order.id,
+            'customer_name': order.customer_name,
+            'status': order.status,
+            'total': order.total,
+            'time_ago': time_ago,
+            'first_item_name': first_item_name
+        })
+    
+    return jsonify({
+        'orders': orders_data,
+        'pending_count': pending_count
+    })

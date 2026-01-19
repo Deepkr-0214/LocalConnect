@@ -1,0 +1,313 @@
+<!-- Notification Bell with Real-time Updates -->
+<div class="notification-dropdown">
+    <button class="notification-bell" id="notificationBell" onclick="toggleNotifications()">
+        <i class="fa-solid fa-bell"></i>
+        <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+    </button>
+    
+    <div class="notification-panel" id="notificationPanel" style="display: none;">
+        <div class="notification-header">
+            <h4>Notifications</h4>
+            <button class="mark-all-read" onclick="markAllAsRead()" id="markAllBtn" style="display: none;">
+                Mark all as read
+            </button>
+        </div>
+        
+        <div class="notification-list" id="notificationList">
+            <div class="loading-notifications">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Loading notifications...
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.notification-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.notification-bell {
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 18px;
+    cursor: pointer;
+    position: relative;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+.notification-bell:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.notification-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #e74c3c;
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.notification-panel {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 350px;
+    max-height: 400px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.notification-header {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.notification-header h4 {
+    margin: 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.mark-all-read {
+    background: none;
+    border: none;
+    color: #3498db;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background 0.3s;
+}
+
+.mark-all-read:hover {
+    background: #f0f8ff;
+}
+
+.notification-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.notification-item {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.3s;
+    position: relative;
+}
+
+.notification-item:hover {
+    background: #f8f9fa;
+}
+
+.notification-item.unread {
+    background: #f0f8ff;
+    border-left: 3px solid #3498db;
+}
+
+.notification-item.unread::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    width: 8px;
+    height: 8px;
+    background: #3498db;
+    border-radius: 50%;
+    transform: translateY(-50%);
+}
+
+.notification-title {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.notification-message {
+    color: #666;
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.notification-time {
+    color: #999;
+    font-size: 11px;
+}
+
+.loading-notifications {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+}
+
+.no-notifications {
+    padding: 30px;
+    text-align: center;
+    color: #999;
+}
+
+.no-notifications i {
+    font-size: 24px;
+    margin-bottom: 10px;
+    display: block;
+}
+</style>
+
+<script>
+let notificationPanel = null;
+let notificationUpdateInterval = null;
+
+function toggleNotifications() {
+    const panel = document.getElementById('notificationPanel');
+    const isVisible = panel.style.display !== 'none';
+    
+    if (isVisible) {
+        panel.style.display = 'none';
+        clearInterval(notificationUpdateInterval);
+    } else {
+        panel.style.display = 'block';
+        loadNotifications();
+        // Update notifications every 30 seconds when panel is open
+        notificationUpdateInterval = setInterval(loadNotifications, 30000);
+    }
+}
+
+function loadNotifications() {
+    fetch('/api/vendor/notifications')
+        .then(response => response.json())
+        .then(data => {
+            updateNotificationBadge(data.unread_count);
+            displayNotifications(data.notifications);
+        })
+        .catch(error => {
+            console.error('Error loading notifications:', error);
+        });
+}
+
+function updateNotificationBadge(count) {
+    const badge = document.getElementById('notificationBadge');
+    const markAllBtn = document.getElementById('markAllBtn');
+    
+    if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.style.display = 'flex';
+        markAllBtn.style.display = 'block';
+    } else {
+        badge.style.display = 'none';
+        markAllBtn.style.display = 'none';
+    }
+}
+
+function displayNotifications(notifications) {
+    const list = document.getElementById('notificationList');
+    
+    if (notifications.length === 0) {
+        list.innerHTML = `
+            <div class="no-notifications">
+                <i class="fa-solid fa-bell-slash"></i>
+                <div>No new notifications</div>
+            </div>
+        `;
+        return;
+    }
+    
+    list.innerHTML = notifications.map(notification => `
+        <div class="notification-item ${!notification.is_read ? 'unread' : ''}" 
+             onclick="markAsRead(${notification.id}, ${notification.order_id || 'null'})">
+            <div class="notification-title">${notification.title}</div>
+            <div class="notification-message">${notification.message}</div>
+            <div class="notification-time">${notification.time_ago}</div>
+        </div>
+    `).join('');
+}
+
+function markAsRead(notificationId, orderId) {
+    fetch(`/api/vendor/notifications/${notificationId}/read`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove unread styling
+            const item = event.currentTarget;
+            item.classList.remove('unread');
+            
+            // Update badge count
+            const badge = document.getElementById('notificationBadge');
+            const currentCount = parseInt(badge.textContent) || 0;
+            updateNotificationBadge(Math.max(0, currentCount - 1));
+            
+            // Navigate to order if applicable
+            if (orderId) {
+                window.location.href = '/vendor/orders';
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error marking notification as read:', error);
+    });
+}
+
+function markAllAsRead() {
+    fetch('/api/vendor/notifications/mark-all-read', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove all unread styling
+            document.querySelectorAll('.notification-item.unread').forEach(item => {
+                item.classList.remove('unread');
+            });
+            
+            // Update badge
+            updateNotificationBadge(0);
+        }
+    })
+    .catch(error => {
+        console.error('Error marking all notifications as read:', error);
+    });
+}
+
+// Load notifications on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadNotifications();
+    
+    // Update badge every 60 seconds
+    setInterval(loadNotifications, 60000);
+});
+
+// Close notification panel when clicking outside
+document.addEventListener('click', function(event) {
+    const dropdown = document.querySelector('.notification-dropdown');
+    if (!dropdown.contains(event.target)) {
+        const panel = document.getElementById('notificationPanel');
+        if (panel.style.display !== 'none') {
+            panel.style.display = 'none';
+            clearInterval(notificationUpdateInterval);
+        }
+    }
+});
+</script>

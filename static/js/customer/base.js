@@ -177,6 +177,10 @@ function viewProfile() {
     window.location.href = '/customer/profile';
 }
 
+function changePassword() {
+    window.location.href = '/customer/change-password';
+}
+
 function editProfile() {
     alert('✏️ Edit Profile\n\nProfile editing feature will be available soon!\nYou will be able to update your personal information, preferences, and settings.');
 }

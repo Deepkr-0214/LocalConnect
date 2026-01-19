@@ -43,6 +43,10 @@
                         <i class="fa-solid fa-user"></i>
                         <span>View Profile</span>
                     </div>
+                    <div class="dropdown-item" onclick="changePassword()">
+                        <i class="fa-solid fa-key"></i>
+                        <span>Change Password</span>
+                    </div>
                     <div class="dropdown-item" onclick="myOrders()">
                         <i class="fa-solid fa-shopping-bag"></i>
                         <span>My Orders</span>
@@ -117,6 +121,10 @@
         
         function myOrders() {
             window.location.href = '/customer/orders';
+        }
+        
+        function changePassword() {
+            window.location.href = '/customer/change-password';
         }
         
         function logout() {

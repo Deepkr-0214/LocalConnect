@@ -9,13 +9,17 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-
     <div class="bg-grid"></div>
+    <div class="floating-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
 
     <header class="navbar">
         <div class="container nav-content">
-            <div class="logo" style="color:#27ae60">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <div class="logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
                     <circle cx="12" cy="10" r="3"></circle>
                 </svg>
@@ -23,23 +27,25 @@
             </div>
             <nav class="nav-links">
                 <a href="#" class="active">Home</a>
-                <a href="#">About</a>
-                <a href="#">Services</a>
-                <a href="#">Contact</a>
+                <a href="#features">Features</a>
+                <a href="#about">About</a>
+                <a href="/contact">Contact</a>
             </nav>
             <div class="nav-actions">
                 <button class="btn-signin" onclick="window.location.href='/signin'">Sign In</button>
             </div>
-            <div class="hamburger" id="hamburger">
-                <i data-lucide="menu"></i>
+            <div class="hamburger" onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
             </div>
         </div>
         <div class="mobile-menu" id="mobileMenu">
             <nav class="mobile-nav-links">
                 <a href="#" class="active">Home</a>
-                <a href="#">About</a>
-                <a href="#">Services</a>
-                <a href="#">Contact</a>
+                <a href="#features">Features</a>
+                <a href="#about">About</a>
+                <a href="/contact">Contact</a>
             </nav>
             <div class="mobile-nav-actions">
                 <button class="btn-signin" onclick="window.location.href='/signin'">Sign In</button>
@@ -49,6 +55,9 @@
 
     <main class="hero-section">
         <div class="container hero-container">
+            <div class="hero-badge">
+                <span>🚀 Connecting Communities Since 2024</span>
+            </div>
             
             <h1 class="hero-title">
                 Discover & Support<br>
@@ -61,24 +70,36 @@
             </p>
 
             <div class="role-cards">
-                <div class="card" onclick="window.location.href='/customer/signup'">
+                <div class="card customer-card" onclick="window.location.href='/customer/signup'">
                     <div class="card-icon customer-icon">
-                        <i data-lucide="user-check"></i>
+                        <i data-lucide="shopping-bag"></i>
                     </div>
                     <h2>I'm a <span class="neon-text">Customer</span></h2>
                     <p>Explore local services, discover hidden gems, and support your community</p>
-                    <button class="btn-card-action">Explore Now <i data-lucide="arrow-right"></i></button>
+                    <div class="card-features">
+                        <span>✓ Browse local vendors</span>
+                        <span>✓ Real-time tracking</span>
+                        <span>✓ Secure payments</span>
+                    </div>
+                    <button class="btn-card-action">Start Shopping <i data-lucide="arrow-right"></i></button>
                 </div>
 
-                <div class="card-divider">or</div>
+                <div class="card-divider">
+                    <span>or</span>
+                </div>
 
-                <div class="card" onclick="window.location.href='/vendor/signup'">
+                <div class="card vendor-card" onclick="window.location.href='/vendor/signup'">
                     <div class="card-icon vendor-icon">
                         <i data-lucide="store"></i>
                     </div>
                     <h2>I'm a <span class="neon-text">Vendor</span></h2>
                     <p>Reach more customers, grow your business, and become a local favorite</p>
-                    <button class="btn-card-action">Get Started <i data-lucide="arrow-right"></i></button>
+                    <div class="card-features">
+                        <span>✓ Manage orders</span>
+                        <span>✓ Track earnings</span>
+                        <span>✓ Customer reviews</span>
+                    </div>
+                    <button class="btn-card-action">Join Now <i data-lucide="arrow-right"></i></button>
                 </div>
             </div>
 
@@ -96,23 +117,90 @@
                     <div class="stat-desc">Neighborhoods</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-num">4.9</div>
+                    <div class="stat-num">4.9★</div>
                     <div class="stat-desc">Average Rating</div>
                 </div>
             </div>
         </div>
     </main>
 
-    <div class="chat-button" id="chatBtn">
+    <section class="features-section" id="features">
+        <div class="container">
+            <h2 class="section-title">Why Choose LocalConnect?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-lucide="map-pin"></i>
+                    </div>
+                    <h3>Local Discovery</h3>
+                    <p>Find amazing businesses right in your neighborhood</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-lucide="shield-check"></i>
+                    </div>
+                    <h3>Trusted & Secure</h3>
+                    <p>Verified vendors and secure payment processing</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-lucide="zap"></i>
+                    </div>
+                    <h3>Real-time Updates</h3>
+                    <p>Live order tracking and instant notifications</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="chat-button" onclick="alert('Chat feature coming soon!')">
         <div class="chat-pulse"></div>
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
-            <path d="M12 2a10 10 0 0 0-10 10c0 2.5.9 4.8 2.4 6.6l-.4 3.4 3.4-.4c1.8 1.5 4.1 2.4 6.6 2.4a10 10 0 0 0 10-10A10 10 0 0 0 12 2zm-3 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm6 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"></path>
-        </svg>
+        <i data-lucide="message-circle"></i>
     </div>
 
     <script>
         lucide.createIcons();
+        
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            const hamburger = document.querySelector('.hamburger');
+            
+            mobileMenu.classList.toggle('active');
+            hamburger.classList.toggle('active');
+        }
+        
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const hamburger = document.querySelector('.hamburger');
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (!hamburger.contains(event.target) && !mobileMenu.contains(event.target)) {
+                mobileMenu.classList.remove('active');
+                hamburger.classList.remove('active');
+            }
+        });
+        
+        // Add scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+        
+        document.querySelectorAll('.feature-card, .stat-item').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'all 0.6s ease';
+            observer.observe(el);
+        });
     </script>
-    <script src="static/js/main.js"></script>
 </body>
 </html>
