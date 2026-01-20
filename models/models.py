@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, date
 import json
 
 db = SQLAlchemy()
@@ -87,6 +87,8 @@ class Order(db.Model):
     delivery_type = db.Column(db.String(20), nullable=False)
     payment_type = db.Column(db.String(20), nullable=False)
     total = db.Column(db.Float, nullable=False)
+    discount_amount = db.Column(db.Float, default=0)
+    offer_title = db.Column(db.String(200))
     status = db.Column(db.String(20), default='Pending')
     order_type = db.Column(db.String(20))
     customer_suggestion = db.Column(db.Text)
@@ -126,3 +128,35 @@ class Order(db.Model):
     def set_items(self, items_list):
         self.items = json.dumps(items_list)
         self.items_summary = ', '.join([f"{item['name']} x{item['qty']}" for item in items_list])
+
+class Offer(db.Model):
+    __tablename__ = 'offers'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    vendor_id = db.Column(db.Integer, db.ForeignKey('vendor.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    discount_type = db.Column(db.String(20), nullable=False)  # 'percentage' or 'flat'
+    discount_value = db.Column(db.Float, nullable=False)
+    min_order = db.Column(db.Float, default=0)
+    valid_from = db.Column(db.Date, nullable=False)
+    valid_to = db.Column(db.Date, nullable=False)
+    active = db.Column(db.Boolean, default=True)
+    image = db.Column(db.Text)  # Base64 image
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    vendor = db.relationship('Vendor', backref=db.backref('offers', lazy=True))
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'description': self.description,
+            'discount_type': self.discount_type,
+            'discount_value': self.discount_value,
+            'min_order': self.min_order,
+            'valid_from': self.valid_from.isoformat(),
+            'valid_to': self.valid_to.isoformat(),
+            'active': self.active,
+            'image': self.image
+        }

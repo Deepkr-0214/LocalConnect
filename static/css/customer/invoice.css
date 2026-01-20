@@ -7,7 +7,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #cca9d0 0%, #fafafa 100%);
     min-height: 100vh;
     padding: 20px;
     color: #2c3e50;
@@ -232,6 +232,26 @@ body {
     color: #7f8c8d;
     display: block;
     margin-top: 3px;
+}
+
+.discount-row {
+    background: #e8f5e8;
+    font-weight: 600;
+}
+
+.discount-amount {
+    color: #27ae60;
+    font-weight: 700;
+}
+
+.delivery-row {
+    background: #e3f2fd;
+    font-weight: 600;
+}
+
+.delivery-amount {
+    color: #2196f3;
+    font-weight: 700;
 }
 
 /* Total Section */

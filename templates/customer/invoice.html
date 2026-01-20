@@ -113,6 +113,22 @@
                         <td>₹{{ "%.2f"|format(item.price * item.qty) }}</td>
                     </tr>
                     {% endfor %}
+                    {% if order.discount_amount and order.discount_amount > 0 %}
+                    <tr class="discount-row">
+                        <td colspan="3">
+                            <span class="discount-label">Discount Applied ({{ order.offer_title or 'Special Offer' }})</span>
+                        </td>
+                        <td class="discount-amount">-₹{{ "%.2f"|format(order.discount_amount) }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if order.delivery_type == 'delivery' %}
+                    <tr class="delivery-row">
+                        <td colspan="3">
+                            <span class="delivery-label">Home Delivery Charge</span>
+                        </td>
+                        <td class="delivery-amount">₹30.00</td>
+                    </tr>
+                    {% endif %}
                 </tbody>
             </table>
         </div>

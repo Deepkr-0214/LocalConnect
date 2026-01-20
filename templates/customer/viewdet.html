@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="/static/css/customer/viewdet.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/discount_box.css') }}">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
@@ -80,7 +81,7 @@
                         <span class="highlight-badge verified-badge" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 8px 16px; border-radius: 25px; font-size: 0.85rem; font-weight: 700; box-shadow: 0 4px 15px rgba(67,233,123,0.3); display: flex; align-items: center; gap: 6px; transition: all 0.3s ease;">💯 Verified</span>
                     </div>
                     <div class="badge-row">
-                        <span class="rating-box pulse-animation"><i class="fa-solid fa-star"></i> <span id="vendor-rating">4.5</span></span>
+                        <span class="rating-box pulse-animation"><i class="fa-solid fa-star"></i> <span id="vendor-rating">Loading...</span></span>
                         <span class="distance"><i class="fa-solid fa-location-dot"></i> <span id="vendor-distance">Calculating...</span></span>
                         <span class="type-badge">{{ vendor.business_category }}</span>
                     </div>
@@ -245,7 +246,7 @@
             <section id="reviews-section" class="tab-content">
                 <div class="reviews-container">
                     <div class="review-header">
-                        <div class="big-rating" id="reviews-avg-rating">4.5</div>
+                        <div class="big-rating" id="reviews-avg-rating">Loading...</div>
                         <div class="stat-text">Based on <span id="reviews-total-count">0</span> verified reviews</div>
                     </div>
                     <div id="reviews-list">
@@ -298,8 +299,14 @@
         </div>
     </div>
 
+    <!-- Include Discount Box -->
+    {% include 'components/discount_box.html' %}
+
+    <script src="/static/js/discount_box.js"></script>
     <script src="/static/js/customer/base.js"></script>
     <script>
+        // Set vendor ID for discount box
+        window.currentVendorId = {{ vendor_id }};
         // Global functions for profile dropdown
         function viewProfile() {
             window.location.href = '/customer/profile';
@@ -716,19 +723,43 @@
         
         function proceedWithDeliveryType(type, subtotal) {
             const deliveryFee = type === 'delivery' ? 30 : 0;
-            const total = subtotal + deliveryFee;
+            
+            // Calculate discount if applicable
+            let discount = 0;
+            let appliedOffer = null;
+            
+            if (vendorOffers && vendorOffers.length > 0) {
+                for (let offer of vendorOffers) {
+                    if (subtotal >= offer.min_order) {
+                        const offerDiscount = offer.discount_type === 'percentage' 
+                            ? (subtotal * offer.discount_value / 100)
+                            : offer.discount_value;
+                        if (offerDiscount > discount) {
+                            discount = offerDiscount;
+                            appliedOffer = offer;
+                        }
+                    }
+                }
+            }
+            
+            const discountedSubtotal = subtotal - discount;
+            const total = discountedSubtotal + deliveryFee;
             
             // Check if total is above 200 for cash payment restriction
             const cashRestricted = total > 200;
             const cashMessage = cashRestricted ? 
                 '<div style="background:#fff3cd;border:1px solid #ffeaa7;color:#856404;padding:12px;border-radius:8px;margin:15px 0;font-size:14px;"><i class="fa-solid fa-info-circle"></i> <strong>Note:</strong> Orders above ₹200 require online payment only. Cash payment is available for orders ₹200 and below.</div>' : '';
             
+            const discountHtml = discount > 0 ? 
+                `<div class="summary-row discount-row" style="color:#27ae60;"><span>Discount (${appliedOffer.title}):</span><span>-₹${discount.toFixed(0)}</span></div>` : '';
+            
             document.getElementById('cart-items-list').innerHTML = `
                 <div class="order-step"><h3>Payment Method</h3>
                     <div class="order-summary">
                         <div class="summary-row"><span>Subtotal:</span><span>₹${subtotal}</span></div>
+                        ${discountHtml}
                         <div class="summary-row"><span>${type === 'delivery' ? 'Delivery Fee:' : 'Takeaway:'}</span><span>${deliveryFee > 0 ? '₹' + deliveryFee : 'Free'}</span></div>
-                        <div class="summary-row total-row"><span>Total:</span><span>₹${total}</span></div>
+                        <div class="summary-row total-row"><span>Total:</span><span>₹${total.toFixed(0)}</span></div>
                     </div>
                     ${cashMessage}
                     <div style="margin:20px 0;">
@@ -736,11 +767,11 @@
                         <textarea id="customerSuggestion" placeholder="Any special requests or instructions for the vendor..." style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;min-height:80px;resize:vertical;font-family:inherit;"></textarea>
                     </div>
                     <div class="payment-options">
-                        <div class="payment-option" onclick="if(!window.processingPayment) processPayment('online', '${type}', ${total})">
+                        <div class="payment-option" onclick="if(!window.processingPayment) processPayment('online', '${type}', ${total}, ${discount}, '${appliedOffer ? appliedOffer.title : ''}')">
                             <div class="option-icon">💳</div>
                             <div class="option-details"><h4>Online Payment</h4><p>Pay now with card/UPI</p></div>
                         </div>
-                        <div class="payment-option ${cashRestricted ? 'disabled' : ''}" ${cashRestricted ? '' : `onclick="if(!window.processingPayment) processPayment('cash', '${type}', ${total})"`}>
+                        <div class="payment-option ${cashRestricted ? 'disabled' : ''}" ${cashRestricted ? '' : `onclick="if(!window.processingPayment) processPayment('cash', '${type}', ${total}, ${discount}, '${appliedOffer ? appliedOffer.title : ''}')"`}>
                             <div class="option-icon">💵</div>
                             <div class="option-details"><h4>Cash on ${type === 'delivery' ? 'Delivery' : 'Pickup'}</h4><p>${cashRestricted ? 'Not available for orders above ₹200' : 'Pay when you receive'}</p></div>
                         </div>
@@ -749,7 +780,7 @@
             document.getElementById('modal-total').style.display = 'none';
         }
 
-        function processPayment(paymentType, deliveryType, total) {
+        function processPayment(paymentType, deliveryType, total, discount = 0, offerTitle = '') {
             // Prevent multiple clicks
             if (window.processingPayment) return;
             window.processingPayment = true;
@@ -763,6 +794,8 @@
                 deliveryType: deliveryType,
                 paymentType: paymentType,
                 total: total,
+                discount: discount,
+                offerTitle: offerTitle,
                 customerSuggestion: customerSuggestion,
                 locationType: window.selectedLocationType || null
             };
@@ -772,9 +805,18 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(orderData)
             })
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) {
+                    return res.text().then(text => {
+                        console.error('Order creation failed:', res.status, text);
+                        throw new Error(`HTTP ${res.status}: ${text}`);
+                    });
+                }
+                return res.json();
+            })
             .then(data => {
                 window.processingPayment = false;
+                console.log('Order creation response:', data);
                 if (data.success) {
                     const orderId = data.order_id;
                     if (paymentType === 'cash') {
@@ -851,12 +893,14 @@
                         });
                     }
                 } else {
+                    console.error('Order creation failed:', data);
                     alert('Error creating order: ' + (data.error || 'Unknown error'));
                 }
             })
             .catch(error => {
                 window.processingPayment = false;
-                alert('Failed to create order. Please try again.');
+                console.error('Order creation error:', error);
+                alert('Failed to create order: ' + error.message);
             });
         }
 
@@ -880,15 +924,21 @@
             fetch(`/api/vendor/${vendorId}/reviews`)
                 .then(res => res.json())
                 .then(data => {
-                    document.getElementById('vendor-rating').textContent = data.avg_rating || '4.5';
-                    document.getElementById('review-count').textContent = data.review_count || '0';
-                    document.getElementById('reviews-avg-rating').textContent = data.avg_rating || '4.5';
-                    document.getElementById('reviews-total-count').textContent = data.review_count || '0';
+                    const avgRating = data.avg_rating || 0;
+                    const reviewCount = data.review_count || 0;
+                    
+                    // Format rating with golden star in superscript
+                    const ratingDisplay = avgRating > 0 ? 
+                        `${avgRating}<span style="color:#ffd700;font-size:0.8em;vertical-align:super;">★</span>` : 
+                        'New';
+                    
+                    document.getElementById('vendor-rating').innerHTML = ratingDisplay;
+                    document.getElementById('reviews-avg-rating').innerHTML = avgRating > 0 ? avgRating : 'New';
+                    document.getElementById('reviews-total-count').textContent = reviewCount;
                 })
                 .catch(() => {
-                    document.getElementById('vendor-rating').textContent = '4.5';
-                    document.getElementById('review-count').textContent = '0';
-                    document.getElementById('reviews-avg-rating').textContent = '4.5';
+                    document.getElementById('vendor-rating').innerHTML = 'New';
+                    document.getElementById('reviews-avg-rating').innerHTML = 'New';
                     document.getElementById('reviews-total-count').textContent = '0';
                 });
             

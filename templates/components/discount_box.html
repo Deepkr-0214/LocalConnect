@@ -1,0 +1,43 @@
+<!-- 3D Rotating Discount Cube -->
+<div id="discountBox" class="discount-box" style="display: none;">
+    <div class="discount-cube">
+        <div class="cube-face front">
+            <div class="offer-title" id="discountTitle">20% OFF</div>
+            <div class="offer-desc" id="discountDesc">on orders above ₹199</div>
+        </div>
+        <div class="cube-face back">
+            <div class="offer-title">🎉 OFFER</div>
+            <div class="offer-desc">Click to view</div>
+        </div>
+        <div class="cube-face right">
+            <div class="offer-title">💰 SAVE</div>
+            <div class="offer-desc">More deals</div>
+        </div>
+        <div class="cube-face left">
+            <div class="offer-title">🔥 HOT</div>
+            <div class="offer-desc">Limited time</div>
+        </div>
+        <div class="cube-face top">
+            <div class="offer-title">⭐ BEST</div>
+            <div class="offer-desc">Value deals</div>
+        </div>
+        <div class="cube-face bottom">
+            <div class="offer-title">🚀 FAST</div>
+            <div class="offer-desc">Quick order</div>
+        </div>
+    </div>
+    <button class="close-btn" onclick="closeDiscountBox()">&times;</button>
+</div>
+
+<!-- Offers Modal -->
+<div id="offersModal" class="offers-modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>🎉 Special Offers</h2>
+            <button class="close-modal" onclick="closeOffersModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="offersContainer">
+            <!-- Offers will be loaded here -->
+        </div>
+    </div>
+</div>

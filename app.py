@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, g
-from models.models import db, Customer, Vendor, Order, MenuItem
+from models.models import db, Customer, Vendor, Order, MenuItem, Offer
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import json
 from functools import wraps
 import warnings
@@ -94,6 +94,27 @@ with app.app_context():
         pass  # Silently fail if columns already exist
     
     db.create_all()
+    
+    # Add offer and discount columns migration
+    try:
+        with db.engine.connect() as conn:
+            # Check offers table and add image column
+            result = conn.execute(db.text("PRAGMA table_info('offers')"))
+            offers_columns = [row[1] for row in result.fetchall()]
+            if 'image' not in offers_columns:
+                conn.execute(db.text('ALTER TABLE offers ADD COLUMN image TEXT'))
+            
+            # Add discount columns to order table
+            result = conn.execute(db.text("PRAGMA table_info('order')"))
+            order_columns = [row[1] for row in result.fetchall()]
+            if 'discount_amount' not in order_columns:
+                conn.execute(db.text('ALTER TABLE "order" ADD COLUMN discount_amount FLOAT DEFAULT 0'))
+            if 'offer_title' not in order_columns:
+                conn.execute(db.text('ALTER TABLE "order" ADD COLUMN offer_title VARCHAR(200)'))
+            
+            conn.commit()
+    except Exception as e:
+        pass
     
     # Auto-fix all vendors with missing coordinates (silently in background)
     try:
@@ -492,6 +513,8 @@ def create_order():
             payment_type=data['paymentType'],
             order_type=data['deliveryType'],
             total=data['total'],
+            discount_amount=data.get('discount', 0),
+            offer_title=data.get('offerTitle', ''),
             customer_suggestion=data.get('customerSuggestion', ''),
             status='Pending' if data['paymentType'] != 'online' else 'Payment Pending',
             created_at=datetime.now(IST),
@@ -1574,6 +1597,12 @@ def vendor_settings():
     vendor = Vendor.query.get(vendor_id)
     unread_count = Order.query.filter_by(vendor_id=vendor_id, status='Pending').count()
     
+    # Get vendor offers for the offers section
+    try:
+        offers = Offer.query.filter_by(vendor_id=vendor_id).all()
+    except:
+        offers = []
+    
     if request.method == 'POST':
         # Check if address is being updated
         new_address = request.form.get('address')
@@ -1651,7 +1680,7 @@ def vendor_settings():
             flash('Settings updated successfully!', 'success')
         return redirect(url_for('vendor_settings'))
     
-    return render_template('vendor/settings.html', vendor_profile=vendor, unread_count=unread_count)
+    return render_template('vendor/settings.html', vendor_profile=vendor, unread_count=unread_count, offers=offers)
 
 @app.route('/toggle_shop_status', methods=['POST'])
 @vendor_required
@@ -2236,6 +2265,101 @@ def delete_vendor_account():
         print(f"Error deleting vendor account: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
             
+@app.route('/vendor/offers/list')
+@vendor_required
+def get_vendor_offers_list():
+    try:
+        offers = Offer.query.filter_by(vendor_id=session['user_id']).all()
+        return jsonify([offer.to_dict() for offer in offers])
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/vendor/offers/get/<int:offer_id>')
+@vendor_required
+def get_vendor_offer(offer_id):
+    try:
+        offer = Offer.query.filter_by(id=offer_id, vendor_id=session['user_id']).first()
+        if not offer:
+            return jsonify({'success': False, 'error': 'Offer not found'}), 404
+        return jsonify({'success': True, 'offer': offer.to_dict()})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+# Vendor Offers API Routes
+@app.route('/vendor/offers/add', methods=['POST'])
+@vendor_required
+def add_vendor_offer():
+    try:
+        data = request.json
+        offer = Offer(
+            vendor_id=session['user_id'],
+            title=data['title'],
+            description=data['description'],
+            discount_type=data['discount_type'],
+            discount_value=data['discount_value'],
+            min_order=data.get('min_order', 0),
+            valid_from=datetime.strptime(data['valid_from'], '%Y-%m-%d').date(),
+            valid_to=datetime.strptime(data['valid_to'], '%Y-%m-%d').date(),
+            active=data.get('active', True),
+            image=data.get('image')
+        )
+        db.session.add(offer)
+        db.session.commit()
+        return jsonify({'success': True, 'offer': offer.to_dict()})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/vendor/offers/edit/<int:offer_id>', methods=['POST'])
+@vendor_required
+def edit_vendor_offer(offer_id):
+    try:
+        offer = Offer.query.filter_by(id=offer_id, vendor_id=session['user_id']).first()
+        if not offer:
+            return jsonify({'success': False, 'error': 'Offer not found'}), 404
+        
+        data = request.json
+        offer.title = data.get('title', offer.title)
+        offer.description = data.get('description', offer.description)
+        offer.discount_type = data.get('discount_type', offer.discount_type)
+        offer.discount_value = data.get('discount_value', offer.discount_value)
+        offer.min_order = data.get('min_order', offer.min_order)
+        if data.get('valid_from'):
+            offer.valid_from = datetime.strptime(data['valid_from'], '%Y-%m-%d').date()
+        if data.get('valid_to'):
+            offer.valid_to = datetime.strptime(data['valid_to'], '%Y-%m-%d').date()
+        offer.active = data.get('active', offer.active)
+        if 'image' in data:
+            offer.image = data['image']
+        
+        db.session.commit()
+        return jsonify({'success': True, 'offer': offer.to_dict()})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/vendor/offers/delete/<int:offer_id>', methods=['POST'])
+@vendor_required
+def delete_vendor_offer(offer_id):
+    offer = Offer.query.filter_by(id=offer_id, vendor_id=session['user_id']).first()
+    if not offer:
+        return jsonify({'error': 'Offer not found'}), 404
+    
+    db.session.delete(offer)
+    db.session.commit()
+    return jsonify({'success': True})
+
+@app.route('/vendor/<int:vendor_id>/offers')
+def get_vendor_offers(vendor_id):
+    today = date.today()
+    offers = Offer.query.filter(
+        Offer.vendor_id == vendor_id,
+        Offer.active == True,
+        Offer.valid_from <= today,
+        Offer.valid_to >= today
+    ).all()
+    return jsonify([offer.to_dict() for offer in offers])
+
 if __name__ == '__main__':
     # Suppress Flask development server logging
     import logging
@@ -2244,147 +2368,3 @@ if __name__ == '__main__':
     
     print("\n✅ Server starting at http://127.0.0.1:5000\n")
     app.run(debug=True, host='127.0.0.1', port=5000, use_reloader=True, use_debugger=False)
-@app.route('/api/vendor/notifications')
-@vendor_required
-def get_vendor_notifications():
-    """Get unread notifications for vendor"""
-    vendor_id = session['user_id']
-    notifications = VendorNotification.query.filter_by(
-        vendor_id=vendor_id, 
-        is_read=False
-    ).order_by(VendorNotification.created_at.desc()).limit(10).all()
-    
-    return jsonify({
-        'notifications': [n.to_dict() for n in notifications],
-        'unread_count': len(notifications)
-    })
-
-@app.route('/api/vendor/notifications/<int:notification_id>/read', methods=['POST'])
-@vendor_required
-def mark_notification_read(notification_id):
-    """Mark notification as read"""
-    notification = VendorNotification.query.filter_by(
-        id=notification_id, 
-        vendor_id=session['user_id']
-    ).first()
-    
-    if notification:
-        notification.is_read = True
-        db.session.commit()
-        return jsonify({'success': True})
-    
-    return jsonify({'error': 'Notification not found'}), 404
-
-@app.route('/api/vendor/notifications/mark-all-read', methods=['POST'])
-@vendor_required
-def mark_all_notifications_read():
-    """Mark all notifications as read"""
-    VendorNotification.query.filter_by(
-        vendor_id=session['user_id'], 
-        is_read=False
-    ).update({'is_read': True})
-    db.session.commit()
-    
-    return jsonify({'success': True})
-@app.route('/api/vendor/recent-orders')
-@vendor_required
-def get_recent_orders_notifications():
-    """Get recent orders for notifications"""
-    vendor_id = session['user_id']
-    
-    # Get recent orders (last 24 hours)
-    from datetime import datetime, timedelta
-    yesterday = datetime.now(IST) - timedelta(hours=24)
-    
-    recent_orders = Order.query.filter(
-        Order.vendor_id == vendor_id,
-        Order.created_at >= yesterday
-    ).order_by(Order.created_at.desc()).limit(5).all()
-    
-    # Get pending count
-    pending_count = Order.query.filter_by(vendor_id=vendor_id, status='Pending').count()
-    
-    orders_data = []
-    for order in recent_orders:
-        # Calculate time ago
-        now = datetime.now(IST)
-        diff = now - order.created_at
-        
-        if diff.days > 0:
-            time_ago = f"{diff.days}d ago"
-        elif diff.seconds > 3600:
-            time_ago = f"{diff.seconds // 3600}h ago"
-        elif diff.seconds > 60:
-            time_ago = f"{diff.seconds // 60}m ago"
-        else:
-            time_ago = "Just now"
-        
-        orders_data.append({
-            'id': order.id,
-            'customer_name': order.customer_name,
-            'status': order.status,
-            'total': order.total,
-            'time_ago': time_ago
-        })
-    
-    return jsonify({
-        'orders': orders_data,
-        'pending_count': pending_count
-    })
-
-# Update the recent orders API to include first item name
-@app.route('/api/vendor/recent-orders-updated')
-@vendor_required
-def get_recent_orders_notifications_updated():
-    """Get recent orders for notifications with item names"""
-    vendor_id = session['user_id']
-    
-    # Get recent orders (last 24 hours)
-    from datetime import datetime, timedelta
-    yesterday = datetime.now(IST) - timedelta(hours=24)
-    
-    recent_orders = Order.query.filter(
-        Order.vendor_id == vendor_id,
-        Order.created_at >= yesterday
-    ).order_by(Order.created_at.desc()).limit(5).all()
-    
-    # Get pending count
-    pending_count = Order.query.filter_by(vendor_id=vendor_id, status='Pending').count()
-    
-    orders_data = []
-    for order in recent_orders:
-        # Calculate time ago
-        now = datetime.now(IST)
-        diff = now - order.created_at
-        
-        if diff.days > 0:
-            time_ago = f"{diff.days}d ago"
-        elif diff.seconds > 3600:
-            time_ago = f"{diff.seconds // 3600}h ago"
-        elif diff.seconds > 60:
-            time_ago = f"{diff.seconds // 60}m ago"
-        else:
-            time_ago = "Just now"
-        
-        # Get first item name from order items
-        first_item_name = "Order"
-        try:
-            items = json.loads(order.items) if order.items else []
-            if items and len(items) > 0:
-                first_item_name = items[0].get('name', 'Order')
-        except:
-            first_item_name = "Order"
-        
-        orders_data.append({
-            'id': order.id,
-            'customer_name': order.customer_name,
-            'status': order.status,
-            'total': order.total,
-            'time_ago': time_ago,
-            'first_item_name': first_item_name
-        })
-    
-    return jsonify({
-        'orders': orders_data,
-        'pending_count': pending_count
-    })
