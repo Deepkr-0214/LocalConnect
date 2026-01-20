@@ -112,6 +112,12 @@ with app.app_context():
             if 'offer_title' not in order_columns:
                 conn.execute(db.text('ALTER TABLE "order" ADD COLUMN offer_title VARCHAR(200)'))
             
+            # Add sub_category to vendor table
+            result = conn.execute(db.text("PRAGMA table_info('vendor')"))
+            vendor_columns = [row[1] for row in result.fetchall()]
+            if 'business_sub_category' not in vendor_columns:
+                conn.execute(db.text('ALTER TABLE vendor ADD COLUMN business_sub_category VARCHAR(50)'))
+            
             conn.commit()
     except Exception as e:
         pass
@@ -1515,6 +1521,7 @@ def vendor_signup():
                 phone = f"+91{phone.lstrip('0')}"
 
         new_vendor = Vendor(business_name=business_name, email=email, business_category=business_category,
+                           business_sub_category=request.form.get('business_sub_category'),
                            business_address=business_address, phone=phone)
         new_vendor.set_password(password)
         

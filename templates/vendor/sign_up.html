@@ -43,15 +43,21 @@
                 </div>
 
                 <div class="input-group select-wrapper">
-                    <select id="businessCategory" name="business_category" required>
+                    <select id="businessCategory" name="business_category" required onchange="updateSubCategories()">
                         <option value="">Shop Category</option>
-                        <option value="Street Food">Street Food</option>
-                        <option value="Food Shop">Food Shop</option>
-                        <option value="Restaurant">Restaurant</option>
-                        <option value="Dhaba">Dhaba</option>
-                        <option value="medicine">Medicine</option>
-                        <option value="groceries">Groceries</option>
-                        <option value="other">Other</option>
+                        <option value="Food & Restaurant">Food & Restaurant</option>
+                        <option value="Grocery & Essentials">Grocery & Essentials</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Medical & Health">Medical & Health</option>
+                        <option value="Services">Services</option>
+                        <option value="Fashion & Lifestyle">Fashion & Lifestyle</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="select-arrow"></i>
+                </div>
+
+                <div class="input-group select-wrapper">
+                    <select id="businessSubCategory" name="business_sub_category" required>
+                        <option value="">Select Sub-Category</option>
                     </select>
                     <i data-lucide="chevron-down" class="select-arrow"></i>
                 </div>
@@ -82,6 +88,35 @@
         </div>
     </div>
 
-    <script>lucide.createIcons();</script>
+    <script>
+        lucide.createIcons();
+        
+        const subCategories = {
+            'Food & Restaurant': ['Street Food Carts', 'Food Shops', 'Restaurants & Dhabas'],
+            'Grocery & Essentials': ['Vegetables', 'Dairy & Eggs', 'General Store', 'Fruits'],
+            'Electronics': ['Mobiles', 'Home Appliances', 'Kitchen Appliances'],
+            'Medical & Health': ['Ayurvedic Medicines', 'Chemist & Drug', 'Baby Medicine'],
+            'Services': ['2-Wheeler', '3-Wheeler', '4-Wheeler'],
+            'Fashion & Lifestyle': ['Ladies', 'Gents', 'Boy', 'Girls']
+        };
+        
+        function updateSubCategories() {
+            const categorySelect = document.getElementById('businessCategory');
+            const subCategorySelect = document.getElementById('businessSubCategory');
+            const selectedCategory = categorySelect.value;
+            
+            // Clear existing options
+            subCategorySelect.innerHTML = '<option value="">Select Sub-Category</option>';
+            
+            if (selectedCategory && subCategories[selectedCategory]) {
+                subCategories[selectedCategory].forEach(subCat => {
+                    const option = document.createElement('option');
+                    option.value = subCat;
+                    option.textContent = subCat;
+                    subCategorySelect.appendChild(option);
+                });
+            }
+        }
+    </script>
 </body>
 </html>

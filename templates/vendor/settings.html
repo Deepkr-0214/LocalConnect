@@ -61,13 +61,9 @@
                     <label for="business_category">Shop Category</label>
                     <select id="business_category" name="business_category" required>
                         <option value="">Select Category</option>
-                        <option value="food" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'food' else '' }}>Food & Restaurant</option>
-                        <option value="Restaurant" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Restaurant' else '' }}>Restaurant</option>
-                        <option value="Street Food" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Street Food' else '' }}>Street Food</option>
-                        <option value="Dhaba" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Dhaba' else '' }}>Dhaba</option>
-                        <option value="medicine" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'medicine' else '' }}>Medicine</option>
-                        <option value="groceries" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'groceries' else '' }}>Groceries</option>
-                        <option value="other" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'other' else '' }}>Other</option>
+                        <option value="Street Food Carts" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Street Food Carts' else '' }}>Street Food Carts</option>
+                        <option value="Food Shops" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Food Shops' else '' }}>Food Shops</option>
+                        <option value="Restaurants & Dhabas" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Restaurants & Dhabas' else '' }}>Restaurants & Dhabas</option>
                     </select>
                 </div>
 
