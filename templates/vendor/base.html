@@ -28,7 +28,7 @@
                         <a href="/vendor/delivery-map"><i class="fa-solid fa-map"></i> Delivery Map</a>
                     </li>
                     <li class="{{ 'active' if request.path == '/vendor/menu' }}">
-                        <a href="/vendor/menu"><i class="fa-solid fa-utensils"></i> Menu Management</a>
+                        <a href="/vendor/menu"><i class="fa-solid {{ labels.icon if labels else 'fa-utensils' }}"></i> {{ labels.inventory if labels else 'Menu' }} Management</a>
                     </li>
                     <li class="{{ 'active' if request.path == '/vendor/earnings' }}">
                         <a href="/vendor/earnings"><i class="fa-solid fa-indian-rupee-sign"></i> Earnings</a>

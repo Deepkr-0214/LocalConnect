@@ -1,0 +1,301 @@
+{% extends "vendor/base.html" %}
+
+{% block page_title %}Settings{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/vendor/settings.css') }}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/vendor/settings.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <div class="settings-grid">
+        <!-- Shop Profile Card -->
+        <div class="settings-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fa-solid fa-store"></i>
+                </div>
+                <div class="card-title">
+                    <h3>Shop Profile</h3>
+                    <p>Manage your shop information</p>
+                </div>
+            </div>
+            
+            <div class="shop-profile-section">
+                <div class="shop-image-container" onclick="showShopImageOptions()">
+                    <div class="shop-image" id="shopImage">
+                        {% if vendor_profile and vendor_profile.shop_image %}
+                            {% if vendor_profile.shop_image.startswith('data:image') %}
+                                <img src="{{ vendor_profile.shop_image }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.innerHTML='🏪';">
+                            {% elif vendor_profile.shop_image|length < 5 %}
+                                {{ vendor_profile.shop_image }}
+                            {% else %}
+                                🏪
+                            {% endif %}
+                        {% else %}
+                            🏪
+                        {% endif %}
+                    </div>
+                    <div class="image-overlay">
+                        <i class="fa-solid fa-camera"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <form action="/vendor/settings" method="POST" class="settings-form" onsubmit="return handleFormSubmit(event)">
+                <div class="form-group">
+                    <label for="shop_name">Shop Name</label>
+                    <input type="text" id="shop_name" name="shop_name" value="{{ vendor_profile.business_name if vendor_profile else '' }}" required onchange="updateNavbarName()">
+                </div>
+                
+                <div class="form-group">
+                    <label for="shop_email">Email</label>
+                    <input type="email" id="shop_email" name="email" value="{{ vendor_profile.email if vendor_profile else '' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="business_category">Shop Category</label>
+                    <select id="business_category" name="business_category" required>
+                        <option value="">Select Category</option>
+                        <option value="Street Food Carts" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Street Food Carts' else '' }}>Street Food Carts</option>
+                        <option value="Food Shops" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Food Shops' else '' }}>Food Shops</option>
+                        <option value="Restaurants & Dhabas" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Restaurants & Dhabas' else '' }}>Restaurants & Dhabas</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="address">Shop Address</label>
+                    <textarea id="address" name="address" placeholder="Enter shop address" required>{{ vendor_profile.business_address if vendor_profile else '' }}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="shop_location">Shop Location (GPS)</label>
+                    <input type="text" id="shop_location" name="shop_location" placeholder="Click 'Get Location' to fetch GPS coordinates" readonly 
+                           value="{% if vendor_profile and vendor_profile.latitude and vendor_profile.longitude %}{{ vendor_profile.latitude }}, {{ vendor_profile.longitude }}{% endif %}">
+                    <button type="button" class="btn-secondary" onclick="getVendorCurrentLocation()" style="margin-top: 8px;">
+                        <i class="fa-solid fa-location-crosshairs"></i> Get Current Location
+                    </button>
+                    <small style="color: #6b7280; font-size: 0.85rem; margin-top: 4px; display: block;">This location is used for distance calculation and map display</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Phone</label>
+                    <input type="tel" id="phone" name="phone" value="{{ vendor_profile.phone if vendor_profile else '' }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="about">About</label>
+                    <textarea id="about" name="about" placeholder="Tell customers about your shop" rows="4">{{ vendor_profile.about if vendor_profile and vendor_profile.about else '' }}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category_type">Category Type <span style="color:red;">*</span></label>
+                    <input type="text" id="category_type" name="category_type" placeholder="e.g., Chinese, Italian, Street Food, etc." value="{{ vendor_profile.category_type if vendor_profile and vendor_profile.category_type else '' }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="veg_nonveg">Veg/Non-Veg <span style="color:red;">*</span></label>
+                    <select id="veg_nonveg" name="veg_nonveg" required>
+                        <option value="">Select Type</option>
+                        <option value="Pure Veg" {{ 'selected' if vendor_profile and vendor_profile.veg_nonveg == 'Pure Veg' else '' }}>Pure Veg</option>
+                        <option value="Non Veg" {{ 'selected' if vendor_profile and vendor_profile.veg_nonveg == 'Non Veg' else '' }}>Non Veg</option>
+                        <option value="Both" {{ 'selected' if vendor_profile and vendor_profile.veg_nonveg == 'Both' else '' }}>Both</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Timings <span style="color:red;">*</span></label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+                        <div style="position:relative;display:flex;align-items:center;border:2px solid #e0e0e0;border-radius:10px;overflow:hidden;transition:border-color 0.3s;" onmouseover="this.style.borderColor='#27ae60'" onmouseout="this.style.borderColor='#e0e0e0'">
+                            <span style="padding:0 12px;color:#666;font-size:1.1rem;">🕐</span>
+                            <input type="time" name="opening_time" value="{{ vendor_profile.opening_time.split()[0] if vendor_profile and vendor_profile.opening_time and ' ' in vendor_profile.opening_time else '' }}" required style="flex:1;padding:12px 8px;border:none;outline:none;font-size:1rem;">
+                            <select name="opening_period" required style="border:none;border-left:2px solid #e0e0e0;padding:12px 15px;background:#f8f9fa;outline:none;cursor:pointer;font-weight:600;color:#555;">
+                                <option value="AM" {{ 'selected' if vendor_profile and vendor_profile.opening_time and 'AM' in vendor_profile.opening_time else '' }}>AM</option>
+                                <option value="PM" {{ 'selected' if vendor_profile and vendor_profile.opening_time and 'PM' in vendor_profile.opening_time else '' }}>PM</option>
+                            </select>
+                        </div>
+                        <div style="position:relative;display:flex;align-items:center;border:2px solid #e0e0e0;border-radius:10px;overflow:hidden;transition:border-color 0.3s;" onmouseover="this.style.borderColor='#27ae60'" onmouseout="this.style.borderColor='#e0e0e0'">
+                            <span style="padding:0 12px;color:#666;font-size:1.1rem;">🕐</span>
+                            <input type="time" name="closing_time" value="{{ vendor_profile.closing_time.split()[0] if vendor_profile and vendor_profile.closing_time and ' ' in vendor_profile.closing_time else '' }}" required style="flex:1;padding:12px 8px;border:none;outline:none;font-size:1rem;">
+                            <select name="closing_period" required style="border:none;border-left:2px solid #e0e0e0;padding:12px 15px;background:#f8f9fa;outline:none;cursor:pointer;font-weight:600;color:#555;">
+                                <option value="AM" {{ 'selected' if vendor_profile and vendor_profile.closing_time and 'AM' in vendor_profile.closing_time else '' }}>AM</option>
+                                <option value="PM" {{ 'selected' if vendor_profile and vendor_profile.closing_time and 'PM' in vendor_profile.closing_time else '' }}>PM</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Amenities (Optional)</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" name="indoor_seating" value="1" {{ 'checked' if vendor_profile and vendor_profile.indoor_seating else '' }}>
+                            <span>Indoor Seating</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" name="outdoor_seating" value="1" {{ 'checked' if vendor_profile and vendor_profile.outdoor_seating else '' }}>
+                            <span>Outdoor Seating</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" name="home_delivery" value="1" {{ 'checked' if vendor_profile and vendor_profile.home_delivery else '' }}>
+                            <span>Home Delivery</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" name="takeaway" value="1" {{ 'checked' if vendor_profile and vendor_profile.takeaway else '' }}>
+                            <span>Takeaway</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" name="free_wifi" value="1" {{ 'checked' if vendor_profile and vendor_profile.free_wifi else '' }}>
+                            <span>Free Wi-Fi</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" name="ac" value="1" {{ 'checked' if vendor_profile and vendor_profile.ac else '' }}>
+                            <span>AC</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" name="cooler" value="1" {{ 'checked' if vendor_profile and vendor_profile.cooler else '' }}>
+                            <span>Cooler</span>
+                        </label>
+                    </div>
+                    <div style="margin-top:15px;">
+                        <label style="display:block;margin-bottom:8px;">Parking</label>
+                        <select name="parking" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;">
+                            <option value="">Select Parking Option</option>
+                            <option value="Available" {{ 'selected' if vendor_profile and vendor_profile.parking == 'Available' else '' }}>Parking Available</option>
+                            <option value="Not Available" {{ 'selected' if vendor_profile and vendor_profile.parking == 'Not Available' else '' }}>Parking Not Available</option>
+                        </select>
+                    </div>
+                    <div style="margin-top:15px;">
+                        <label style="display:block;margin-bottom:8px;">Other Amenities</label>
+                        <textarea name="other_amenities" placeholder="Add other amenities (comma separated)" rows="2" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;">{{ vendor_profile.other_amenities if vendor_profile and vendor_profile.other_amenities else '' }}</textarea>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-save"></i> Save Changes
+                    </button>
+                </div>
+                
+                <div class="danger-zone">
+                    <h3>Danger Zone</h3>
+                    <p>Once you delete your account, there is no going back. Please be certain.</p>
+                    <button type="button" class="btn-danger" onclick="deleteVendorAccount()">
+                        <i class="fa-solid fa-trash"></i> Delete Account
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Shop Status Card -->
+        <div class="settings-card">
+            <div class="card-header">
+                <div class="card-icon status-icon">
+                    <i class="fa-solid fa-power-off"></i>
+                </div>
+                <div class="card-title">
+                    <h3>Shop Status</h3>
+                    <p>Control your shop availability</p>
+                </div>
+            </div>
+            
+            <div class="status-control">
+                <div class="status-display">
+                    <div class="status-badge {{ 'open' if vendor_profile and vendor_profile.is_open else 'closed' }}">
+                        <i class="fa-solid fa-{{ 'check-circle' if vendor_profile and vendor_profile.is_open else 'times-circle' }}"></i>
+                        <span>{{ 'Open for Orders' if vendor_profile and vendor_profile.is_open else 'Closed' }}</span>
+                    </div>
+                </div>
+                
+                <div class="toggle-switch">
+                    <input type="checkbox" id="shop_status" {{ 'checked' if vendor_profile and vendor_profile.is_open else '' }} onchange="toggleShopStatus(this)">
+                    <label for="shop_status" class="switch-label">
+                        <span class="switch-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preferences Card -->
+        <div class="settings-card">
+            <div class="card-header">
+                <div class="card-icon preferences-icon">
+                    <i class="fa-solid fa-sliders"></i>
+                </div>
+                <div class="card-title">
+                    <h3>Preferences</h3>
+                    <p>Customize your experience</p>
+                </div>
+            </div>
+            
+            <div class="preferences-list">
+                <div class="preference-item">
+                    <div class="preference-info">
+                        <h4>Email Notifications</h4>
+                        <p>Receive order updates via email</p>
+                    </div>
+                    <div class="preference-toggle">
+                        <input type="checkbox" id="email_notifications" checked>
+                        <label for="email_notifications" class="toggle-label"></label>
+                    </div>
+                </div>
+                
+                <div class="preference-item">
+                    <div class="preference-info">
+                        <h4>Sound Alerts</h4>
+                        <p>Play sound for new orders</p>
+                    </div>
+                    <div class="preference-toggle">
+                        <input type="checkbox" id="sound_alerts" checked>
+                        <label for="sound_alerts" class="toggle-label"></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Offers Section -->
+{% include 'vendor/offers_section.html' %}
+
+<!-- Shop Image Options Modal -->
+<div id="shopImageModal" class="modal image-options-modal">
+    <div class="modal-content image-options-content">
+        <div class="modal-header">
+            <h3>Change Shop Image</h3>
+            <span class="close" onclick="closeShopImageModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="image-options">
+                <button class="image-option" onclick="uploadShopImage()">
+                    <i class="fa-solid fa-upload"></i>
+                    <span>Upload from Device</span>
+                </button>
+                <button class="image-option" onclick="showShopEmojiPicker()">
+                    <i class="fa-solid fa-smile"></i>
+                    <span>Choose Avatar/Emoji</span>
+                </button>
+            </div>
+            
+            <div class="emoji-picker" id="shopEmojiPicker" style="display: none;">
+                <div class="emoji-grid">
+                    <span class="emoji-option" onclick="selectShopEmoji('🏪')">🏪</span>
+                    <span class="emoji-option" onclick="selectShopEmoji('🍕')">🍕</span>
+                    <span class="emoji-option" onclick="selectShopEmoji('🍔')">🍔</span>
+                    <span class="emoji-option" onclick="selectShopEmoji('🍜')">🍜</span>
+                    <span class="emoji-option" onclick="selectShopEmoji('🥘')">🥘</span>
+                    <span class="emoji-option" onclick="selectShopEmoji('🍛')">🍛</span>
+                    <span class="emoji-option" onclick="selectShopEmoji('🥗')">🥗</span>
+                    <span class="emoji-option" onclick="selectShopEmoji('☕')">☕</span>
+                </div>
+            </div>
+            
+            <input type="file" id="shopImageUpload" accept="image/*" style="display: none;" onchange="previewShopImage(this)">
+        </div>
+    </div>
+</div>
+{% endblock %}

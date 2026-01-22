@@ -12,8 +12,11 @@ class FoodRestaurantPage {
     loadVendors() {
         const categoryMap = {
             'Street Food': 'street',
+            'Street Food Carts': 'street',
             'Food Shop': 'shop',
+            'Food Shops': 'shop',
             'Restaurant': 'restaurant',
+            'Restaurants & Dhabas': 'restaurant',
             'Dhaba': 'restaurant'
         };
 
@@ -21,7 +24,7 @@ class FoodRestaurantPage {
         const vendors = vendorsFromServer.map(v => ({
             id: v.id,
             name: v.name,
-            category: categoryMap[v.category] || 'shop',
+            category: categoryMap[v.subcategory] || 'shop',
             rating: v.rating || 0,
             reviews: v.review_count || 0,
             distance: 'Getting location...',
@@ -185,6 +188,13 @@ class FoodRestaurantPage {
             imageHtml = `<div style="font-size:80px;display:flex;align-items:center;justify-content:center;height:100%;">🏪</div>`;
         }
 
+        let matchingDishesHtml = '';
+        if (vendor.matching_dishes && vendor.matching_dishes.length > 0) {
+            const dishList = vendor.matching_dishes.slice(0, 3).join(', ');
+            const moreText = vendor.matching_dishes.length > 3 ? ` +${vendor.matching_dishes.length - 3} more` : '';
+            matchingDishesHtml = `<div class="matching-dishes"><i class="fas fa-utensils"></i> ${dishList}${moreText}</div>`;
+        }
+
         card.innerHTML = `
             <div class="vendor-image">
                 ${imageHtml}
@@ -195,6 +205,7 @@ class FoodRestaurantPage {
             <div class="vendor-info">
                 <h3>${vendor.name}</h3>
                 <p class="cuisine">${vendor.cuisine}</p>
+                ${matchingDishesHtml}
                 <div class="vendor-meta">
                     <div class="rating">
                         <i class="fas fa-star"></i>
@@ -256,15 +267,71 @@ class FoodRestaurantPage {
 
     setupSearch() {
         const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                const term = e.target.value.toLowerCase();
-                this.filteredVendors = this.vendors.filter(vendor =>
-                    vendor.name.toLowerCase().includes(term) ||
-                    vendor.cuisine.toLowerCase().includes(term)
-                );
+        if (!searchInput) return;
+
+        let debounceTimer;
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.trim().toLowerCase();
+
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                this.performSearch(term);
+            }, 300);
+        });
+    }
+
+    async performSearch(searchTerm) {
+        if (!searchTerm) {
+            this.filteredVendors = [...this.vendors];
+            this.renderVendors();
+            return;
+        }
+
+        // 1. Local search first (instant)
+        const localMatches = this.vendors.filter(vendor =>
+            vendor.name.toLowerCase().includes(searchTerm) ||
+            vendor.cuisine.toLowerCase().includes(searchTerm)
+        );
+
+        // Update UI immediately with local matches if any
+        if (localMatches.length > 0) {
+            this.filteredVendors = localMatches;
+            this.renderVendors();
+        }
+
+        // 2. API search for menu items & category matches
+        try {
+            const response = await fetch(`/api/search/vendors?q=${encodeURIComponent(searchTerm)}`);
+            if (response.ok) {
+                const apiResults = await response.json();
+
+                // Mappings for food category
+                const categoryMap = {
+                    'Street Food': 'street',
+                    'Food Shop': 'shop',
+                    'Restaurant': 'restaurant',
+                    'Dhaba': 'restaurant'
+                };
+
+                // Merge and preserve distance data
+                const foodCats = ['Food & Restaurant', 'Street Food', 'Food Shop', 'Restaurant', 'Dhaba', 'Street Food Carts', 'Food Shops', 'Restaurants & Dhabas'];
+                const mergedResults = apiResults
+                    .filter(v => foodCats.includes(v.category))
+                    .map(apiVendor => {
+                        const localVendor = this.vendors.find(v => v.id === apiVendor.id);
+                        return {
+                            ...apiVendor,
+                            category: categoryMap[apiVendor.subcategory] || 'shop',
+                            distance: localVendor ? localVendor.distance : 'N/A'
+                        };
+                    });
+
+                this.filteredVendors = mergedResults;
                 this.renderVendors();
-            });
+            }
+        } catch (error) {
+            console.error('Search API failed:', error);
+            // Fallback to local search which is already rendered
         }
     }
 

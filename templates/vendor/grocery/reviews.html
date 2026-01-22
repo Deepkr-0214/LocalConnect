@@ -1,0 +1,733 @@
+{% extends "vendor/base.html" %}
+
+{% block page_title %}Reviews Management{% endblock %}
+
+{% block extra_css %}
+<style>
+.reviews-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 14px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-indicator.open .status-dot {
+    background: #27ae60;
+}
+
+.status-indicator.open {
+    color: #27ae60;
+}
+
+.status-indicator.closed .status-dot {
+    background: #e74c3c;
+}
+
+.status-indicator.closed {
+    color: #e74c3c;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.notification-bell {
+    font-size: 20px;
+    color: #7f8c8d;
+    cursor: pointer;
+}
+
+.vendor-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.summary-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border-top: 4px solid #27ae60;
+    text-align: center;
+}
+
+.card-icon {
+    width: 50px;
+    height: 50px;
+    background: #27ae60;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    color: white;
+    font-size: 20px;
+}
+
+.card-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.card-label {
+    font-size: 14px;
+    color: #7f8c8d;
+    margin-bottom: 10px;
+}
+
+.card-subtext {
+    font-size: 12px;
+    color: #95a5a6;
+}
+
+.stars-display {
+    color: #f1c40f;
+    font-size: 16px;
+}
+
+.filter-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.filter-tab {
+    padding: 10px 20px;
+    border-radius: 25px;
+    border: 2px solid #ecf0f1;
+    background: white;
+    color: #7f8c8d;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.filter-tab.active {
+    background: #27ae60;
+    color: white;
+    border-color: #27ae60;
+}
+
+.reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.review-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border: 1px solid #ecf0f1;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.customer-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.customer-avatar {
+    width: 45px;
+    height: 45px;
+    background: #3498db;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+}
+
+.customer-details h4 {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+    color: #2c3e50;
+}
+
+.review-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: #7f8c8d;
+}
+
+.verified-badge {
+    background: #27ae60;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+}
+
+.review-rating {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stars {
+    color: #f1c40f;
+    font-size: 16px;
+}
+
+.review-content {
+    margin: 15px 0;
+    color: #2c3e50;
+    line-height: 1.6;
+}
+
+.review-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 15px;
+}
+
+.respond-btn {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.response-panel {
+    margin-top: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #ecf0f1;
+}
+
+.response-textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    resize: vertical;
+    font-family: inherit;
+    margin-bottom: 15px;
+}
+
+.quick-responses {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.quick-chip {
+    background: #ecf0f1;
+    color: #2c3e50;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    cursor: pointer;
+    border: none;
+}
+
+.quick-chip:hover {
+    background: #27ae60;
+    color: white;
+}
+
+.response-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.cancel-btn {
+    background: #95a5a6;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.send-btn {
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.shop-response {
+    margin-top: 15px;
+    padding: 15px;
+    background: #e3f2fd;
+    border-radius: 8px;
+    border-left: 4px solid #2196f3;
+}
+
+.response-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.response-title {
+    font-weight: 600;
+    color: #1976d2;
+    font-size: 14px;
+}
+
+.response-date {
+    font-size: 12px;
+    color: #7f8c8d;
+}
+
+.response-text {
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.response-actions-posted {
+    display: flex;
+    gap: 10px;
+}
+
+.edit-response-btn, .helpful-btn {
+    background: none;
+    border: 1px solid #2196f3;
+    color: #2196f3;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    border: 2px dashed #ecf0f1;
+    border-radius: 12px;
+    color: #7f8c8d;
+}
+
+.empty-state i {
+    font-size: 48px;
+    color: #bdc3c7;
+    margin-bottom: 15px;
+}
+
+.hidden {
+    display: none;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reviews-container">
+    <div class="summary-cards">
+        <div class="summary-card">
+            <div class="card-icon">
+                <i class="fa-solid fa-star"></i>
+            </div>
+            <div class="card-value" id="avg-rating">{{ avg_rating }}</div>
+            <div class="card-label">Average Rating</div>
+            <div class="stars-display">
+                {% for i in range(5) %}
+                    <i class="fa-solid fa-star" style="color: {{ '#f1c40f' if i < avg_rating|int else '#ecf0f1' }}"></i>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="summary-card">
+            <div class="card-icon">
+                <i class="fa-solid fa-comments"></i>
+            </div>
+            <div class="card-value" id="total-reviews">{{ total_count }}</div>
+            <div class="card-label">Total Reviews</div>
+            <div class="card-subtext">{{ recent_count }} this month</div>
+        </div>
+        
+        <div class="summary-card">
+            <div class="card-icon">
+                <i class="fa-solid fa-reply"></i>
+            </div>
+            <div class="card-value" id="response-rate">{{ response_rate }}%</div>
+            <div class="card-label">Response Rate</div>
+            <div class="card-subtext">{{ responded_count }}/{{ total_count }} responded</div>
+        </div>
+    </div>
+    
+    <div class="filter-tabs">
+        <div class="filter-tab active" data-filter="all">All Reviews</div>
+        <div class="filter-tab" data-filter="5">5 Stars</div>
+        <div class="filter-tab" data-filter="4">4 Stars</div>
+        <div class="filter-tab" data-filter="3">3 Stars</div>
+        <div class="filter-tab" data-filter="2">2 Stars</div>
+        <div class="filter-tab" data-filter="1">1 Star</div>
+        <div class="filter-tab" data-filter="pending">Pending Response</div>
+        <div class="filter-tab" data-filter="responded">Responded</div>
+    </div>
+    
+    <div class="reviews-list" id="reviews-list">
+        {% for review in reviews %}
+        <div class="review-card" data-rating="{{ review.review_rating }}" data-responded="{{ 'true' if review.vendor_response else 'false' }}" data-order-id="{{ review.id }}">
+            <div class="review-header">
+                <div class="customer-info">
+                    <div class="customer-avatar">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="customer-details">
+                        <h4>{{ review.customer_name }}</h4>
+                        <div class="review-meta">
+                            <span>{{ review.created_at.strftime('%d %b %Y, %I:%M %p') }}</span>
+                            <span class="verified-badge">Verified Customer</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="review-rating">
+                    <div class="stars">
+                        {% for i in range(5) %}
+                            <i class="fa-solid fa-star" style="color: {{ '#f1c40f' if i < review.review_rating|int else '#ecf0f1' }}"></i>
+                        {% endfor %}
+                    </div>
+                    <span>{{ review.review_rating }}/5</span>
+                </div>
+            </div>
+            
+            <div class="review-content">
+                <p>{{ review.review_comment }}</p>
+            </div>
+            
+            {% if review.vendor_response %}
+            <div class="shop-response">
+                <div class="response-header">
+                    <div class="response-title">Shop Response</div>
+                    <div class="response-date">{{ review.vendor_response_date.strftime('%d %b %Y') if review.vendor_response_date else 'Recently' }}</div>
+                </div>
+                <div class="response-text">{{ review.vendor_response }}</div>
+                <div class="response-actions-posted">
+                    <button class="edit-response-btn" onclick="editResponse(this)">Edit Response</button>
+                    <button class="helpful-btn" onclick="markHelpful({{ review.id }}, this)"><i class="fa-solid fa-heart" style="color: {{ '#e74c3c' if review.response_helpful and review.response_helpful > 0 else '#bdc3c7' }}"></i> {{ review.response_helpful or 0 }}</button>
+                </div>
+            </div>
+            {% else %}
+            <div class="review-actions">
+                <button class="respond-btn" onclick="showResponsePanel(this)">Respond</button>
+            </div>
+            
+            <div class="response-panel hidden">
+                <textarea class="response-textarea" placeholder="Type your response here..."></textarea>
+                <div class="quick-responses">
+                    <button class="quick-chip" onclick="addQuickResponse(this, 'Thank you for your feedback!')">Thank You</button>
+                    <button class="quick-chip" onclick="addQuickResponse(this, 'We will work on improving this.')">We'll Improve</button>
+                    <button class="quick-chip" onclick="addQuickResponse(this, 'We apologize for any inconvenience.')">Apologize</button>
+                </div>
+                <div class="response-actions">
+                    <button class="cancel-btn" onclick="hideResponsePanel(this)">Cancel</button>
+                    <button class="send-btn" onclick="sendResponse(this)">Send Response</button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fa-solid fa-star"></i>
+            <h3>No Reviews Yet</h3>
+            <p>Customer reviews will appear here once they start rating your service.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+// Filter functionality
+document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        
+        const filter = this.dataset.filter;
+        const reviewCards = document.querySelectorAll('.review-card');
+        
+        reviewCards.forEach(card => {
+            const rating = card.dataset.rating;
+            const responded = card.dataset.responded === 'true';
+            
+            let show = false;
+            
+            if (filter === 'all') {
+                show = true;
+            } else if (filter === 'pending') {
+                show = !responded;
+            } else if (filter === 'responded') {
+                show = responded;
+            } else {
+                show = rating === filter;
+            }
+            
+            card.style.display = show ? 'block' : 'none';
+        });
+    });
+});
+
+// Response panel functions
+function showResponsePanel(btn) {
+    const card = btn.closest('.review-card');
+    const panel = card.querySelector('.response-panel');
+    panel.classList.remove('hidden');
+    btn.style.display = 'none';
+}
+
+function hideResponsePanel(btn) {
+    const card = btn.closest('.review-card');
+    const panel = card.querySelector('.response-panel');
+    const respondBtn = card.querySelector('.respond-btn');
+    panel.classList.add('hidden');
+    respondBtn.style.display = 'inline-block';
+    panel.querySelector('.response-textarea').value = '';
+}
+
+function addQuickResponse(btn, text) {
+    const panel = btn.closest('.response-panel');
+    const textarea = panel.querySelector('.response-textarea');
+    textarea.value = text;
+}
+
+function sendResponse(btn) {
+    const card = btn.closest('.review-card');
+    const panel = card.querySelector('.response-panel');
+    const textarea = panel.querySelector('.response-textarea');
+    const responseText = textarea.value.trim();
+    const orderId = card.dataset.orderId;
+    
+    if (!responseText) {
+        alert('Please enter a response');
+        return;
+    }
+    
+    // Save to database
+    fetch(`/api/orders/${orderId}/vendor-response`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({response: responseText})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            // Create shop response element
+            const shopResponse = document.createElement('div');
+            shopResponse.className = 'shop-response';
+            shopResponse.innerHTML = `
+                <div class="response-header">
+                    <div class="response-title">Shop Response</div>
+                    <div class="response-date">${new Date().toLocaleDateString()}</div>
+                </div>
+                <div class="response-text">${responseText}</div>
+                <div class="response-actions-posted">
+                    <button class="edit-response-btn" onclick="editResponse(this)">Edit Response</button>
+                    <button class="helpful-btn" onclick="markHelpful(${orderId}, this)"><i class="fa-solid fa-heart" style="color: #bdc3c7"></i> 0</button>
+                </div>
+            `;
+            
+            // Replace response panel with shop response
+            panel.parentNode.replaceChild(shopResponse, panel);
+            
+            // Update card data
+            card.dataset.responded = 'true';
+            
+            // Hide respond button
+            const respondBtn = card.querySelector('.respond-btn');
+            if (respondBtn) respondBtn.style.display = 'none';
+        }
+    });
+}
+
+function markHelpful(orderId, btn) {
+    fetch(`/api/orders/${orderId}/helpful`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const heart = btn.querySelector('i');
+            heart.style.color = '#e74c3c';
+            btn.innerHTML = `<i class="fa-solid fa-heart" style="color: #e74c3c"></i> Thank you`;
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+        }
+    });
+}
+
+function editResponse(btn) {
+    const shopResponse = btn.closest('.shop-response');
+    const card = shopResponse.closest('.review-card');
+    const responseText = shopResponse.querySelector('.response-text').textContent;
+    const orderId = card.dataset.orderId;
+    
+    // Create edit panel
+    const panel = document.createElement('div');
+    panel.className = 'response-panel';
+    panel.innerHTML = `
+        <textarea class="response-textarea" placeholder="Type your response here...">${responseText}</textarea>
+        <div class="quick-responses">
+            <button class="quick-chip" onclick="addQuickResponse(this, 'Thank you for your feedback!')">Thank You</button>
+            <button class="quick-chip" onclick="addQuickResponse(this, 'We will work on improving this.')">We'll Improve</button>
+            <button class="quick-chip" onclick="addQuickResponse(this, 'We apologize for any inconvenience.')">Apologize</button>
+        </div>
+        <div class="response-actions">
+            <button class="cancel-btn" onclick="cancelEdit(this)">Cancel</button>
+            <button class="send-btn" onclick="updateResponse(this)">Update Response</button>
+        </div>
+    `;
+    
+    // Replace shop response with edit panel
+    shopResponse.parentNode.replaceChild(panel, shopResponse);
+}
+
+function updateResponse(btn) {
+    const card = btn.closest('.review-card');
+    const panel = card.querySelector('.response-panel');
+    const textarea = panel.querySelector('.response-textarea');
+    const responseText = textarea.value.trim();
+    const orderId = card.dataset.orderId;
+    
+    if (!responseText) {
+        alert('Please enter a response');
+        return;
+    }
+    
+    // Update in database
+    fetch(`/api/orders/${orderId}/vendor-response`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({response: responseText})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            // Create updated shop response
+            const shopResponse = document.createElement('div');
+            shopResponse.className = 'shop-response';
+            shopResponse.innerHTML = `
+                <div class="response-header">
+                    <div class="response-title">Shop Response</div>
+                    <div class="response-date">${new Date().toLocaleDateString()}</div>
+                </div>
+                <div class="response-text">${responseText}</div>
+                <div class="response-actions-posted">
+                    <button class="edit-response-btn" onclick="editResponse(this)">Edit Response</button>
+                    <button class="helpful-btn" onclick="markHelpful(${orderId}, this)"><i class="fa-solid fa-heart" style="color: #bdc3c7"></i> 0</button>
+                </div>
+            `;
+            
+            panel.parentNode.replaceChild(shopResponse, panel);
+        }
+    });
+}
+
+function editResponse(btn) {
+    const shopResponse = btn.closest('.shop-response');
+    const card = shopResponse.closest('.review-card');
+    const responseText = shopResponse.querySelector('.response-text').textContent;
+    
+    // Create new response panel
+    const panel = document.createElement('div');
+    panel.className = 'response-panel';
+    panel.innerHTML = `
+        <textarea class="response-textarea" placeholder="Type your response here...">${responseText}</textarea>
+        <div class="quick-responses">
+            <button class="quick-chip" onclick="addQuickResponse(this, 'Thank you for your feedback!')">Thank You</button>
+            <button class="quick-chip" onclick="addQuickResponse(this, 'We will work on improving this.')">We'll Improve</button>
+            <button class="quick-chip" onclick="addQuickResponse(this, 'We apologize for any inconvenience.')">Apologize</button>
+        </div>
+        <div class="response-actions">
+            <button class="cancel-btn" onclick="cancelEdit(this)">Cancel</button>
+            <button class="send-btn" onclick="updateResponse(this)">Update Response</button>
+        </div>
+    `;
+    
+    // Replace shop response with edit panel
+    shopResponse.parentNode.replaceChild(panel, shopResponse);
+}
+
+function cancelEdit(btn) {
+    const panel = btn.closest('.response-panel');
+    const card = panel.closest('.review-card');
+    
+    // Restore original shop response (simplified)
+    const shopResponse = document.createElement('div');
+    shopResponse.className = 'shop-response';
+    shopResponse.innerHTML = `
+        <div class="response-header">
+            <div class="response-title">Shop Response</div>
+            <div class="response-date">${new Date().toLocaleDateString()}</div>
+        </div>
+        <div class="response-text">Previous response</div>
+        <div class="response-actions-posted">
+            <button class="edit-response-btn" onclick="editResponse(this)">Edit Response</button>
+            <button class="helpful-btn">Mark as Helpful</button>
+        </div>
+    `;
+    
+    panel.parentNode.replaceChild(shopResponse, panel);
+}
+
+function updateResponse(btn) {
+    sendResponse(btn); // Reuse the same logic
+}
+</script>
+{% endblock %}

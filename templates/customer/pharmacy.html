@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocalConnect - Pharmacy</title>
+    <link rel="stylesheet" href="/static/css/customer/base.css">
+    <link rel="stylesheet" href="/static/css/customer/pharmacy.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+
+<body>
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="logo" onclick="window.location.href='/customer/dashboard'">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <span>LocalConnect</span>
+            </div>
+            <div class="search-wrapper" id="searchWrapper">
+                <input type="text" id="searchInput" placeholder="Search for medicines, pharmacy...">
+                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </div>
+            <div class="user-profile">
+                <span class="welcome-text">Welcome, {{ user_name or 'Guest' }}</span>
+                <div class="avatar" id="profileIcon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="dropdown-item" onclick="viewProfile()"><i class="fa-solid fa-user"></i><span>View
+                            Profile</span></div>
+                    <div class="dropdown-item" onclick="changePassword()"><i class="fa-solid fa-key"></i><span>Change
+                            Password</span></div>
+                    <div class="dropdown-item" onclick="myOrders()"><i class="fa-solid fa-shopping-bag"></i><span>My
+                            Orders</span></div>
+                    <div class="dropdown-item" onclick="logout()"><i
+                            class="fa-solid fa-sign-out-alt"></i><span>Logout</span></div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <nav class="filter-nav">
+        <div class="filter-scroll-container">
+            <button class="filter-btn active" data-target="all">All</button>
+            <button class="filter-btn" data-target="ayurvedic"><i class="fa fa-leaf"></i> Ayurvedic Medicine</button>
+            <button class="filter-btn" data-target="chemist"><i class="fa fa-pills"></i> Chemist & Drug
+                Medicine</button>
+            <button class="filter-btn" data-target="baby"><i class="fa fa-baby"></i> Baby Medicine</button>
+        </div>
+    </nav>
+    <nav class="breadcrumb">
+        <h2>Pharmacy</h2>
+    </nav>
+    <main class="container" id="mainContainer">
+        <section class="column" data-category="ayurvedic">
+            <h2 class="column-title" style="color:#16a085"><i class="fa fa-leaf"></i> Ayurvedic Medicine</h2>
+            <div id="ayurvedic-list" class="card-list"></div>
+        </section>
+        <section class="column" data-category="chemist">
+            <h2 class="column-title" style="color:#16a085"><i class="fa fa-pills"></i> Chemist & Drug Medicine</h2>
+            <div id="chemist-list" class="card-list"></div>
+        </section>
+        <section class="column" data-category="baby">
+            <h2 class="column-title" style="color:#16a085"><i class="fa fa-baby"></i> Baby Medicine</h2>
+            <div id="baby-list" class="card-list"></div>
+        </section>
+    </main>
+    <div class="chat-button" id="chatBtn">
+        <div class="chat-pulse"></div>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+            <path
+                d="M12 2a10 10 0 0 0-10 10c0 2.5.9 4.8 2.4 6.6l-.4 3.4 3.4-.4c1.8 1.5 4.1 2.4 6.6 2.4a10 10 0 0 0 10-10A10 10 0 0 0 12 2zm-3 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm6 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z">
+            </path>
+        </svg>
+    </div>
+    <script src="/static/js/customer/base.js"></script>
+    <script type="application/json" id="vendors-data">{{ vendors| tojson | safe }}</script>
+    <script type="application/json" id="customer-lat">{{ customer_lat| tojson | safe }}</script>
+    <script type="application/json" id="customer-lon">{{ customer_lon| tojson | safe }}</script>
+    <script>
+        function viewProfile() { window.location.href = '/customer/profile'; }
+        function myOrders() { window.location.href = '/customer/orders'; }
+        function changePassword() { window.location.href = '/customer/change-password'; }
+        function logout() { if (typeof (Storage) !== "undefined") { localStorage.clear(); sessionStorage.clear(); } window.location.href = '/logout'; }
+        const vendorsFromServer = JSON.parse(document.getElementById('vendors-data').textContent);
+        const customerStoredLat = JSON.parse(document.getElementById('customer-lat').textContent);
+        const customerStoredLon = JSON.parse(document.getElementById('customer-lon').textContent);
+    </script>
+    <script src="/static/js/customer/pharmacy.js"></script>
+</body>
+
+</html>

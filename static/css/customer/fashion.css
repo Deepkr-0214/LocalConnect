@@ -1,0 +1,249 @@
+/* Fashion Page Specific Styles */
+.breadcrumb {
+    text-align: center;
+    padding: 25px 0 10px;
+}
+
+.breadcrumb h2 {
+    color: #e91e63;
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.filter-nav {
+    background: white;
+    padding: 10px 0;
+    position: sticky;
+    top: 64px;
+    z-index: 999;
+    border-bottom: 1px solid #eee;
+}
+
+.filter-scroll-container {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    padding: 0 15px;
+}
+
+.filter-btn {
+    padding: 8px 20px;
+    border-radius: 50px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.filter-btn.active {
+    background: #e91e63;
+    color: white;
+    border-color: #e91e63;
+}
+
+.filter-btn:hover {
+    background: #e91e63;
+    color: white;
+    border-color: #e91e63;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 25px;
+    padding: 20px 5% 80px;
+}
+
+.container.single-category {
+    grid-template-columns: 1fr;
+}
+
+.container.single-category .card-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.column {
+    display: block;
+}
+
+.column.hidden {
+    display: none;
+}
+
+.column-title {
+    margin-bottom: 20px;
+    font-size: 1.4rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vendor-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+    margin-bottom: 25px;
+}
+
+.vendor-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    border-color: #e91e63;
+}
+
+.vendor-image {
+    position: relative;
+    height: 180px;
+    overflow: hidden;
+}
+
+.vendor-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.vendor-card:hover .vendor-image img {
+    transform: scale(1.05);
+}
+
+.status-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.open {
+    background: #d1f2eb;
+    color: #0d7a5f;
+}
+
+.status-badge.closed {
+    background: #fadbd8;
+    color: #a93226;
+}
+
+.vendor-info {
+    padding: 16px;
+}
+
+.vendor-info h3 {
+    margin: 0 0 8px 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.cuisine {
+    color: var(--text-gray);
+    font-size: 0.9rem;
+    margin: 0 0 12px 0;
+}
+
+.vendor-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.85rem;
+}
+
+.rating i {
+    color: #f1c40f;
+}
+
+.reviews {
+    color: var(--text-gray);
+    font-size: 0.8rem;
+}
+
+.distance {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-gray);
+    font-size: 0.85rem;
+}
+
+.distance i {
+    color: #e91e63;
+}
+
+.vendor-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.price-range {
+    color: #e91e63;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.delivery-time {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-gray);
+    font-size: 0.85rem;
+}
+
+.delivery-time i {
+    color: #e91e63;
+}
+
+@media (max-width: 992px) {
+    .container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .container.single-category .card-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+
+    .container,
+    .container.single-category .card-list {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-scroll-container {
+        justify-content: flex-start;
+        overflow-x: auto;
+    }
+
+    .vendor-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}

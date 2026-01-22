@@ -59,11 +59,24 @@
 
                 <div class="form-group">
                     <label for="business_category">Shop Category</label>
-                    <select id="business_category" name="business_category" required>
+                    <select id="business_category" name="business_category" required onchange="updateSubCategories()">
                         <option value="">Select Category</option>
-                        <option value="Street Food Carts" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Street Food Carts' else '' }}>Street Food Carts</option>
-                        <option value="Food Shops" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Food Shops' else '' }}>Food Shops</option>
-                        <option value="Restaurants & Dhabas" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Restaurants & Dhabas' else '' }}>Restaurants & Dhabas</option>
+                        <option value="Food & Restaurant" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Food & Restaurant' else '' }}>Food & Restaurant</option>
+                        <option value="Garage" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Garage' else '' }}>Garage Services</option>
+                        <option value="Electronics" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Electronics' else '' }}>Electronics</option>
+                        <option value="Fashion" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Fashion' else '' }}>Fashion</option>
+                        <option value="Grocery" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Grocery' else '' }}>Grocery</option>
+                        <option value="Pharmacy" {{ 'selected' if vendor_profile and vendor_profile.business_category == 'Pharmacy' else '' }}>Pharmacy</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="business_sub_category">Sub-Category</label>
+                    <select id="business_sub_category" name="business_sub_category" required>
+                        <option value="">Select Sub-Category</option>
+                        {% if vendor_profile and vendor_profile.business_sub_category %}
+                            <option value="{{ vendor_profile.business_sub_category }}" selected>{{ vendor_profile.business_sub_category }}</option>
+                        {% endif %}
                     </select>
                 </div>
 

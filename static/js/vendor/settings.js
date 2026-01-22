@@ -7,16 +7,16 @@ function updateHeaderProfileName() {
         const shopName = shopNameInput.value.trim();
         const headerProfileName = document.querySelector('.profile-name');
         const dropdownProfileName = document.querySelector('.profile-details .profile-name');
-        
+
         if (shopName && headerProfileName) {
             const displayName = shopName.length > 15 ? shopName.substring(0, 15) + '...' : shopName;
             headerProfileName.textContent = displayName;
         }
-        
+
         if (shopName && dropdownProfileName) {
             dropdownProfileName.textContent = shopName;
         }
-        
+
         // Save to localStorage
         localStorage.setItem('shopName', shopName);
     }
@@ -28,11 +28,11 @@ function updateHeaderProfileEmail() {
     if (shopEmailInput) {
         const shopEmail = shopEmailInput.value.trim();
         const dropdownProfileEmail = document.querySelector('.profile-details .profile-email');
-        
+
         if (shopEmail && dropdownProfileEmail) {
             dropdownProfileEmail.textContent = shopEmail;
         }
-        
+
         // Save to localStorage
         localStorage.setItem('shopEmail', shopEmail);
     }
@@ -67,12 +67,12 @@ function loadGlobalShopName() {
     if (savedShopName) {
         const headerProfileName = document.querySelector('.profile-name');
         const dropdownProfileName = document.querySelector('.profile-details .profile-name');
-        
+
         if (headerProfileName) {
             const displayName = savedShopName.length > 15 ? savedShopName.substring(0, 15) + '...' : savedShopName;
             headerProfileName.textContent = displayName;
         }
-        
+
         if (dropdownProfileName) {
             dropdownProfileName.textContent = savedShopName;
         }
@@ -112,68 +112,68 @@ function toggleShopStatus(checkbox) {
     const statusBadge = document.querySelector('.status-badge');
     const statusIndicator = document.querySelector('.status-indicator');
     const headerToggle = document.getElementById('header_shop_status');
-    
+
     // Update status badge in settings
     if (statusBadge) {
         statusBadge.className = `status-badge ${isOpen ? 'open' : 'closed'}`;
         statusBadge.innerHTML = `<i class="fa-solid fa-${isOpen ? 'check-circle' : 'times-circle'}"></i><span>${isOpen ? 'Open for Orders' : 'Closed'}</span>`;
     }
-    
+
     // Update header status indicator
     if (statusIndicator) {
         statusIndicator.className = `status-indicator ${isOpen ? 'open' : 'closed'}`;
         const statusText = statusIndicator.querySelector('.status-text');
         if (statusText) statusText.textContent = isOpen ? 'Open' : 'Closed';
     }
-    
+
     // Sync header toggle
     if (headerToggle) headerToggle.checked = isOpen;
-    
+
     // Send to server
     fetch('/toggle_shop_status', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({is_open: isOpen})
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_open: isOpen })
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            showToast(isOpen ? 'Shop is now Open' : 'Shop is now Closed');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        checkbox.checked = !isOpen;
-    });
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(isOpen ? 'Shop is now Open' : 'Shop is now Closed');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            checkbox.checked = !isOpen;
+        });
 }
 
 function previewShopImage(input) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
             const base64Image = e.target.result;
             const shopImage = document.getElementById('shopImage');
             const imgTag = `<img src="${base64Image}" alt="Shop Image" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
             shopImage.innerHTML = imgTag;
             shopImage.classList.remove('emoji');
-            
+
             // Send to server
             fetch('/vendor/update_shop_image', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({shop_image: base64Image})
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ shop_image: base64Image })
             })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    // Update navbar images
-                    const headerImg = document.getElementById('headerShopImage');
-                    const dropdownImg = document.getElementById('dropdownShopImage');
-                    if (headerImg) headerImg.innerHTML = imgTag;
-                    if (dropdownImg) dropdownImg.innerHTML = imgTag;
-                }
-            });
-            
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update navbar images
+                        const headerImg = document.getElementById('headerShopImage');
+                        const dropdownImg = document.getElementById('dropdownShopImage');
+                        if (headerImg) headerImg.innerHTML = imgTag;
+                        if (dropdownImg) dropdownImg.innerHTML = imgTag;
+                    }
+                });
+
             closeShopImageModal();
             showToast('Shop image updated successfully!');
         };
@@ -185,24 +185,24 @@ function selectShopEmoji(emoji) {
     const shopImage = document.getElementById('shopImage');
     shopImage.innerHTML = emoji;
     shopImage.classList.add('emoji');
-    
+
     // Send to server
     fetch('/vendor/update_shop_image', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({shop_image: emoji})
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shop_image: emoji })
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            // Update all navbar images
-            const headerImg = document.getElementById('headerShopImage');
-            const dropdownImg = document.getElementById('dropdownShopImage');
-            if (headerImg) headerImg.innerHTML = emoji;
-            if (dropdownImg) dropdownImg.innerHTML = emoji;
-        }
-    });
-    
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Update all navbar images
+                const headerImg = document.getElementById('headerShopImage');
+                const dropdownImg = document.getElementById('dropdownShopImage');
+                if (headerImg) headerImg.innerHTML = emoji;
+                if (dropdownImg) dropdownImg.innerHTML = emoji;
+            }
+        });
+
     closeShopImageModal();
     showToast('Shop avatar updated successfully!');
 }
@@ -212,7 +212,7 @@ function updateNavbarName() {
     if (shopName) {
         const headerName = document.querySelector('.profile-pill .profile-name');
         const dropdownName = document.querySelector('.profile-details .profile-name');
-        
+
         if (headerName) {
             headerName.textContent = shopName.length > 15 ? shopName.substring(0, 15) + '...' : shopName;
         }
@@ -226,7 +226,7 @@ function handleFormSubmit(event) {
     event.preventDefault();
     const form = event.target;
     const formData = new FormData(form);
-    
+
     // Parse shop location coordinates if provided
     const shopLocation = document.getElementById('shop_location').value;
     if (shopLocation && shopLocation.includes(',')) {
@@ -236,27 +236,27 @@ function handleFormSubmit(event) {
             formData.append('longitude', lng);
         }
     }
-    
+
     fetch(form.action, {
         method: 'POST',
         body: formData
     })
-    .then(res => {
-        if (res.ok) {
-            showToast('Settings updated successfully!');
-            updateNavbarName();
-        }
-        return res;
-    })
-    .then(res => res.text())
-    .then(() => {
-        // Keep user on page
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('Failed to update settings');
-    });
-    
+        .then(res => {
+            if (res.ok) {
+                showToast('Settings updated successfully!');
+                updateNavbarName();
+            }
+            return res;
+        })
+        .then(res => res.text())
+        .then(() => {
+            // Keep user on page
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Failed to update settings');
+        });
+
     return false;
 }
 
@@ -264,7 +264,7 @@ function handleFormSubmit(event) {
 function loadShopImage() {
     const savedImage = localStorage.getItem('shopImage');
     const imageType = localStorage.getItem('shopImageType');
-    
+
     if (savedImage && imageType) {
         const shopImage = document.getElementById('shopImage');
         if (imageType === 'emoji') {
@@ -277,8 +277,39 @@ function loadShopImage() {
     }
 }
 
+const subCategories = {
+    'Food & Restaurant': ['Street Food', 'Food Shop', 'Restaurant', 'Dhaba'],
+    'Garage': ['2-Wheeler', '3-Wheeler', '4-Wheeler'],
+    'Electronics': ['Mobiles', 'Home Appliances', 'Kitchen Appliances'],
+    'Fashion': ['Ladies', 'Gents', 'Boy', 'Girl'],
+    'Grocery': ['Vegetables', 'Dairy & Eggs', 'General Store', 'Fruits'],
+    'Pharmacy': ['Ayurvedic Medicine', 'Chemist & Drug Medicine', 'Baby Medicine']
+};
+
+function updateSubCategories() {
+    const categorySelect = document.getElementById('business_category');
+    const subCategorySelect = document.getElementById('business_sub_category');
+    const selectedCategory = categorySelect.value;
+    const currentSub = "{{ vendor_profile.business_sub_category if vendor_profile else '' }}";
+
+    // Clear existing options
+    subCategorySelect.innerHTML = '<option value="">Select Sub-Category</option>';
+
+    if (selectedCategory && subCategories[selectedCategory]) {
+        subCategories[selectedCategory].forEach(subCat => {
+            const option = document.createElement('option');
+            option.value = subCat;
+            option.textContent = subCat;
+            if (subCat === currentSub) {
+                option.selected = true;
+            }
+            subCategorySelect.appendChild(option);
+        });
+    }
+}
+
 // Close modal when clicking outside
-window.onclick = function(event) {
+window.onclick = function (event) {
     const modal = document.getElementById('shopImageModal');
     if (event.target === modal) {
         closeShopImageModal();
@@ -288,13 +319,16 @@ window.onclick = function(event) {
 document.addEventListener('DOMContentLoaded', () => {
     // Load saved shop image only
     loadShopImage();
-    
+
+    // Initialize subcategories
+    updateSubCategories();
+
     // Show success message if form was submitted
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('success') === 'true') {
         showSuccessMessage();
     }
-    
+
     // Initialize preference toggles
     initializePreferences();
 });
@@ -303,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function showSuccessMessage() {
     const message = document.getElementById('successMessage');
     message.style.display = 'flex';
-    
+
     setTimeout(() => {
         message.style.animation = 'slideOut 0.3s ease forwards';
         setTimeout(() => {
@@ -320,7 +354,7 @@ function initializePreferences() {
         email_notifications: localStorage.getItem('email_notifications') !== 'false',
         sound_alerts: localStorage.getItem('sound_alerts') !== 'false'
     };
-    
+
     // Set checkbox states
     Object.keys(preferences).forEach(key => {
         const checkbox = document.getElementById(key);
@@ -340,7 +374,7 @@ function showPreferenceUpdate(preference, enabled) {
         email_notifications: enabled ? 'Email notifications enabled' : 'Email notifications disabled',
         sound_alerts: enabled ? 'Sound alerts enabled' : 'Sound alerts disabled'
     };
-    
+
     showToast(messages[preference]);
 }
 
@@ -352,7 +386,7 @@ function showToast(message) {
         <i class="fa-solid fa-check-circle"></i>
         <span>${message}</span>
     `;
-    
+
     // Add toast styles
     Object.assign(toast.style, {
         position: 'fixed',
@@ -371,14 +405,14 @@ function showToast(message) {
         transform: 'translateY(100px)',
         transition: 'transform 0.3s ease'
     });
-    
+
     document.body.appendChild(toast);
-    
+
     // Animate in
     setTimeout(() => {
         toast.style.transform = 'translateY(0)';
     }, 100);
-    
+
     // Remove after 3 seconds
     setTimeout(() => {
         toast.style.transform = 'translateY(100px)';
@@ -423,38 +457,38 @@ function deleteVendorAccount() {
     if (!confirm('Are you sure you want to permanently delete your vendor account? This action cannot be undone!')) {
         return;
     }
-    
+
     if (!confirm('This will delete all your menu items, orders history, and business data. Type "DELETE" to confirm:')) {
         return;
     }
-    
+
     const userInput = prompt('Type "DELETE" to confirm account deletion:');
     if (userInput !== 'DELETE') {
         alert('Confirmation failed. Account deletion cancelled.');
         return;
     }
-    
+
     fetch('/vendor/delete-account', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         }
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Vendor account deleted successfully. You will be redirected to the home page.');
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.href = data.redirect;
-        } else {
-            alert('Error deleting account: ' + (data.error || 'Unknown error'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Network error. Please try again.');
-    });
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Vendor account deleted successfully. You will be redirected to the home page.');
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.href = data.redirect;
+            } else {
+                alert('Error deleting account: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Network error. Please try again.');
+        });
 }
 
 // Get vendor current location
@@ -464,20 +498,20 @@ function getVendorCurrentLocation() {
         alert('Location field not found');
         return;
     }
-    
+
     if (!navigator.geolocation) {
         alert('Geolocation is not supported by your browser.');
         return;
     }
-    
+
     locationField.value = 'Getting location...';
     showToast('Getting your current location...');
-    
+
     navigator.geolocation.getCurrentPosition(
         (position) => {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
-            
+
             locationField.value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
             showToast('Location coordinates updated successfully!');
         },
@@ -487,7 +521,7 @@ function getVendorCurrentLocation() {
             if (error.code === 1) errorMessage = 'Location permission denied';
             else if (error.code === 2) errorMessage = 'Location unavailable';
             else if (error.code === 3) errorMessage = 'Location request timeout';
-            
+
             alert(errorMessage);
             showToast(errorMessage);
         },

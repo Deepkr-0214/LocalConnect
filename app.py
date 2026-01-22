@@ -13,6 +13,7 @@ import pytz
 import logging
 from utils.twilio_notifications import TwilioNotifications
 from utils.enhanced_notifications import EnhancedNotifications
+from utils.category_labels import get_category_labels
 from geocoding_enhanced import GeocodeServiceEnhanced
 from vendor_location_autofix import auto_fix_on_startup
 
@@ -263,7 +264,9 @@ def food_restaurants():
     customer_lat = customer.latitude if customer and hasattr(customer, 'latitude') else None
     customer_lon = customer.longitude if customer and hasattr(customer, 'longitude') else None
     
-    vendors = Vendor.query.all()
+    # Filter vendors by Food & Restaurant related categories
+    food_categories = ['Food & Restaurant', 'Street Food', 'Food Shop', 'Restaurant', 'Dhaba', 'Street Food Carts', 'Food Shops', 'Restaurants & Dhabas']
+    vendors = Vendor.query.filter(Vendor.business_category.in_(food_categories)).all()
     vendors_data = []
     
     for v in vendors:
@@ -293,6 +296,7 @@ def food_restaurants():
             'id': v.id,
             'name': v.business_name,
             'category': v.business_category,
+            'subcategory': v.business_sub_category if v.business_sub_category else v.business_category,
             'is_open': v.is_open if hasattr(v, 'is_open') else True,
             'shop_image': v.shop_image if hasattr(v, 'shop_image') else '🏪',
             'address': v.business_address,
@@ -306,6 +310,297 @@ def food_restaurants():
         })
     
     return render_template('customer/food&rest.html', 
+                         user_name=session.get('user_name'), 
+                         user_id=user_id, 
+                         vendors=vendors_data,
+                         customer_lat=customer_lat,
+                         customer_lon=customer_lon)
+
+@app.route('/customer/garage')
+@customer_required
+def garage():
+    from sqlalchemy import func
+    user_id = session.get('user_id')
+    
+    customer = Customer.query.get(user_id)
+    customer_lat = customer.latitude if customer and hasattr(customer, 'latitude') else None
+    customer_lon = customer.longitude if customer and hasattr(customer, 'longitude') else None
+    
+    # Filter vendors by Garage category
+    vendors = Vendor.query.filter_by(business_category='Garage').all()
+    vendors_data = []
+    
+    for v in vendors:
+        price_query = db.session.query(
+            func.min(MenuItem.price).label('min_price'),
+            func.max(MenuItem.price).label('max_price')
+        ).filter_by(vendor_id=v.id).first()
+        
+        min_price = int(price_query.min_price) if price_query.min_price else 250
+        max_price = int(price_query.max_price) if price_query.max_price else 500
+        
+        rating_data = db.session.query(
+            func.avg(Order.review_rating).label('avg_rating'),
+            func.count(Order.review_rating).label('review_count')
+        ).filter(
+            Order.vendor_id==v.id, 
+            Order.review_rating!=None,
+            Order.status=='Completed'
+        ).first()
+        
+        avg_rating = round(rating_data.avg_rating, 1) if rating_data.avg_rating else 0
+        review_count = rating_data.review_count if rating_data.review_count else 0
+        
+        vendors_data.append({
+            'id': v.id,
+            'name': v.business_name,
+            'category': v.business_category,
+            'subcategory': v.business_sub_category if hasattr(v, 'business_sub_category') else '2-Wheeler',
+            'is_open': v.is_open if hasattr(v, 'is_open') else True,
+            'shop_image': v.shop_image if hasattr(v, 'shop_image') else '🔧',
+            'address': v.business_address,
+            'phone': v.phone,
+            'min_price': min_price,
+            'max_price': max_price,
+            'latitude': v.latitude if hasattr(v, 'latitude') else None,
+            'longitude': v.longitude if hasattr(v, 'longitude') else None,
+            'rating': avg_rating,
+            'review_count': review_count
+        })
+    
+    return render_template('customer/garage.html', 
+                         user_name=session.get('user_name'), 
+                         user_id=user_id, 
+                         vendors=vendors_data,
+                         customer_lat=customer_lat,
+                         customer_lon=customer_lon)
+
+@app.route('/customer/electronics')
+@customer_required
+def electronics():
+    from sqlalchemy import func
+    user_id = session.get('user_id')
+    
+    customer = Customer.query.get(user_id)
+    customer_lat = customer.latitude if customer and hasattr(customer, 'latitude') else None
+    customer_lon = customer.longitude if customer and hasattr(customer, 'longitude') else None
+    
+    vendors = Vendor.query.filter_by(business_category='Electronics').all()
+    vendors_data = []
+    
+    for v in vendors:
+        price_query = db.session.query(
+            func.min(MenuItem.price).label('min_price'),
+            func.max(MenuItem.price).label('max_price')
+        ).filter_by(vendor_id=v.id).first()
+        
+        min_price = int(price_query.min_price) if price_query.min_price else 10000
+        max_price = int(price_query.max_price) if price_query.max_price else 50000
+        
+        rating_data = db.session.query(
+            func.avg(Order.review_rating).label('avg_rating'),
+            func.count(Order.review_rating).label('review_count')
+        ).filter(
+            Order.vendor_id==v.id, 
+            Order.review_rating!=None,
+            Order.status=='Completed'
+        ).first()
+        
+        avg_rating = round(rating_data.avg_rating, 1) if rating_data.avg_rating else 0
+        review_count = rating_data.review_count if rating_data.review_count else 0
+        
+        vendors_data.append({
+            'id': v.id,
+            'name': v.business_name,
+            'category': v.business_category,
+            'subcategory': v.business_sub_category if hasattr(v, 'business_sub_category') else 'Mobiles',
+            'is_open': v.is_open if hasattr(v, 'is_open') else True,
+            'shop_image': v.shop_image if hasattr(v, 'shop_image') else '📱',
+            'address': v.business_address,
+            'phone': v.phone,
+            'min_price': min_price,
+            'max_price': max_price,
+            'latitude': v.latitude if hasattr(v, 'latitude') else None,
+            'longitude': v.longitude if hasattr(v, 'longitude') else None,
+            'rating': avg_rating,
+            'review_count': review_count
+        })
+    
+    return render_template('customer/electronics.html', 
+                         user_name=session.get('user_name'), 
+                         user_id=user_id, 
+                         vendors=vendors_data,
+                         customer_lat=customer_lat,
+                         customer_lon=customer_lon)
+
+@app.route('/customer/fashion')
+@customer_required
+def fashion():
+    from sqlalchemy import func
+    user_id = session.get('user_id')
+    
+    customer = Customer.query.get(user_id)
+    customer_lat = customer.latitude if customer and hasattr(customer, 'latitude') else None
+    customer_lon = customer.longitude if customer and hasattr(customer, 'longitude') else None
+    
+    vendors = Vendor.query.filter_by(business_category='Fashion').all()
+    vendors_data = []
+    
+    for v in vendors:
+        price_query = db.session.query(
+            func.min(MenuItem.price).label('min_price'),
+            func.max(MenuItem.price).label('max_price')
+        ).filter_by(vendor_id=v.id).first()
+        
+        min_price = int(price_query.min_price) if price_query.min_price else 500
+        max_price = int(price_query.max_price) if price_query.max_price else 1500
+        
+        rating_data = db.session.query(
+            func.avg(Order.review_rating).label('avg_rating'),
+            func.count(Order.review_rating).label('review_count')
+        ).filter(
+            Order.vendor_id==v.id, 
+            Order.review_rating!=None,
+            Order.status=='Completed'
+        ).first()
+        
+        avg_rating = round(rating_data.avg_rating, 1) if rating_data.avg_rating else 0
+        review_count = rating_data.review_count if rating_data.review_count else 0
+        
+        vendors_data.append({
+            'id': v.id,
+            'name': v.business_name,
+            'category': v.business_category,
+            'subcategory': v.business_sub_category if hasattr(v, 'business_sub_category') else 'Ladies',
+            'is_open': v.is_open if hasattr(v, 'is_open') else True,
+            'shop_image': v.shop_image if hasattr(v, 'shop_image') else '👗',
+            'address': v.business_address,
+            'phone': v.phone,
+            'min_price': min_price,
+            'max_price': max_price,
+            'latitude': v.latitude if hasattr(v, 'latitude') else None,
+            'longitude': v.longitude if hasattr(v, 'longitude') else None,
+            'rating': avg_rating,
+            'review_count': review_count
+        })
+    
+    return render_template('customer/fashion.html', 
+                         user_name=session.get('user_name'), 
+                         user_id=user_id, 
+                         vendors=vendors_data,
+                         customer_lat=customer_lat,
+                         customer_lon=customer_lon)
+
+@app.route('/customer/grocery')
+@customer_required
+def grocery():
+    from sqlalchemy import func
+    user_id = session.get('user_id')
+    
+    customer = Customer.query.get(user_id)
+    customer_lat = customer.latitude if customer and hasattr(customer, 'latitude') else None
+    customer_lon = customer.longitude if customer and hasattr(customer, 'longitude') else None
+    
+    vendors = Vendor.query.filter_by(business_category='Grocery').all()
+    vendors_data = []
+    
+    for v in vendors:
+        price_query = db.session.query(
+            func.min(MenuItem.price).label('min_price'),
+            func.max(MenuItem.price).label('max_price')
+        ).filter_by(vendor_id=v.id).first()
+        
+        min_price = int(price_query.min_price) if price_query.min_price else 80
+        max_price = int(price_query.max_price) if price_query.max_price else 100
+        
+        rating_data = db.session.query(
+            func.avg(Order.review_rating).label('avg_rating'),
+            func.count(Order.review_rating).label('review_count')
+        ).filter(
+            Order.vendor_id==v.id, 
+            Order.review_rating!=None,
+            Order.status=='Completed'
+        ).first()
+        
+        avg_rating = round(rating_data.avg_rating, 1) if rating_data.avg_rating else 0
+        review_count = rating_data.review_count if rating_data.review_count else 0
+        
+        vendors_data.append({
+            'id': v.id,
+            'name': v.business_name,
+            'category': v.business_category,
+            'subcategory': v.business_sub_category if hasattr(v, 'business_sub_category') else 'Vegetables',
+            'is_open': v.is_open if hasattr(v, 'is_open') else True,
+            'shop_image': v.shop_image if hasattr(v, 'shop_image') else '🛒',
+            'address': v.business_address,
+            'phone': v.phone,
+            'min_price': min_price,
+            'max_price': max_price,
+            'latitude': v.latitude if hasattr(v, 'latitude') else None,
+            'longitude': v.longitude if hasattr(v, 'longitude') else None,
+            'rating': avg_rating,
+            'review_count': review_count
+        })
+    
+    return render_template('customer/grocery.html', 
+                         user_name=session.get('user_name'), 
+                         user_id=user_id, 
+                         vendors=vendors_data,
+                         customer_lat=customer_lat,
+                         customer_lon=customer_lon)
+
+@app.route('/customer/pharmacy')
+@customer_required
+def pharmacy():
+    from sqlalchemy import func
+    user_id = session.get('user_id')
+    
+    customer = Customer.query.get(user_id)
+    customer_lat = customer.latitude if customer and hasattr(customer, 'latitude') else None
+    customer_lon = customer.longitude if customer and hasattr(customer, 'longitude') else None
+    
+    vendors = Vendor.query.filter_by(business_category='Pharmacy').all()
+    vendors_data = []
+    
+    for v in vendors:
+        price_query = db.session.query(
+            func.min(MenuItem.price).label('min_price'),
+            func.max(MenuItem.price).label('max_price')
+        ).filter_by(vendor_id=v.id).first()
+        
+        min_price = int(price_query.min_price) if price_query.min_price else 80
+        max_price = int(price_query.max_price) if price_query.max_price else 120
+        
+        rating_data = db.session.query(
+            func.avg(Order.review_rating).label('avg_rating'),
+            func.count(Order.review_rating).label('review_count')
+        ).filter(
+            Order.vendor_id==v.id, 
+            Order.review_rating!=None,
+            Order.status=='Completed'
+        ).first()
+        
+        avg_rating = round(rating_data.avg_rating, 1) if rating_data.avg_rating else 0
+        review_count = rating_data.review_count if rating_data.review_count else 0
+        
+        vendors_data.append({
+            'id': v.id,
+            'name': v.business_name,
+            'category': v.business_category,
+            'subcategory': v.business_sub_category if hasattr(v, 'business_sub_category') else 'Ayurvedic Medicine',
+            'is_open': v.is_open if hasattr(v, 'is_open') else True,
+            'shop_image': v.shop_image if hasattr(v, 'shop_image') else '💊',
+            'address': v.business_address,
+            'phone': v.phone,
+            'min_price': min_price,
+            'max_price': max_price,
+            'latitude': v.latitude if hasattr(v, 'latitude') else None,
+            'longitude': v.longitude if hasattr(v, 'longitude') else None,
+            'rating': avg_rating,
+            'review_count': review_count
+        })
+    
+    return render_template('customer/pharmacy.html', 
                          user_name=session.get('user_name'), 
                          user_id=user_id, 
                          vendors=vendors_data,
@@ -372,6 +667,79 @@ def get_vendor_menu(vendor_id):
         'is_available': item.is_available,
         'image_file': item.image_file
     } for item in items])
+
+@app.route('/api/search/vendors', methods=['GET'])
+def search_vendors():
+    from sqlalchemy import or_, func
+    search_term = request.args.get('q', '').strip().lower()
+    
+    if not search_term:
+        return jsonify([])
+
+    # A. Search vendors by name and category
+    vendor_matches = Vendor.query.filter(
+        or_(
+            func.lower(Vendor.business_name).contains(search_term),
+            func.lower(Vendor.business_category).contains(search_term)
+        )
+    ).all()
+    
+    # B. Search vendors by dish names in their menu
+    dish_matches = db.session.query(Vendor).join(MenuItem).filter(
+        func.lower(MenuItem.name).contains(search_term)
+    ).distinct().all()
+    
+    # Combine results (unique vendors)
+    all_matched_vendors = list(set(vendor_matches + dish_matches))
+    
+    vendors_data = []
+    for v in all_matched_vendors:
+        # Get matching dishes for THIS search term
+        matching_dishes = MenuItem.query.filter(
+            MenuItem.vendor_id == v.id,
+            func.lower(MenuItem.name).contains(search_term)
+        ).all()
+        
+        # Get rating stats
+        rating_data = db.session.query(
+            func.avg(Order.review_rating).label('avg_rating'),
+            func.count(Order.review_rating).label('review_count')
+        ).filter(
+            Order.vendor_id == v.id,
+            Order.review_rating != None,
+            Order.status == 'Completed'
+        ).first()
+
+        avg_rating = round(rating_data.avg_rating, 1) if rating_data.avg_rating else 0
+        review_count = rating_data.review_count if rating_data.review_count else 0
+
+        # Get price range
+        price_query = db.session.query(
+            func.min(MenuItem.price).label('min_price'),
+            func.max(MenuItem.price).label('max_price')
+        ).filter_by(vendor_id=v.id).first()
+        
+        min_price = int(price_query.min_price) if price_query.min_price else 100
+        max_price = int(price_query.max_price) if price_query.max_price else 300
+
+        vendors_data.append({
+            'id': v.id,
+            'name': v.business_name,
+            'category': v.business_category,
+            'subcategory': v.business_sub_category if v.business_sub_category else v.business_category,
+            'cuisine': v.business_sub_category if v.business_sub_category else v.business_category,
+            'rating': avg_rating,
+            'reviews': review_count,
+            'image': v.shop_image,
+            'isOpen': v.is_open,
+            'latitude': v.latitude,
+            'longitude': v.longitude,
+            'priceRange': f"₹{min_price}-{max_price}",
+            'deliveryTime': '15-25 min',
+            'matching_dishes': [dish.name for dish in matching_dishes]
+        })
+    
+    return jsonify(vendors_data)
 
 @app.route('/api/vendor/<int:vendor_id>/all-reviews')
 def get_vendor_all_reviews(vendor_id):
@@ -1090,6 +1458,10 @@ def vendor_dashboard():
     vendor_id = session['user_id']
     vendor = Vendor.query.get(vendor_id)
     
+    # Get vendor category information
+    category = vendor.business_category if vendor else 'Food & Restaurant'
+    subcategory = vendor.business_sub_category if vendor else None
+    
     # Recent orders (all statuses for display)
     orders = Order.query.filter_by(vendor_id=vendor_id).order_by(Order.created_at.desc()).limit(5).all()
     unread_count = Order.query.filter_by(vendor_id=vendor_id, status='Pending').count()
@@ -1108,6 +1480,7 @@ def vendor_dashboard():
     
     # Debug logging
     print(f"DEBUG Dashboard - Vendor ID: {vendor_id}")
+    print(f"DEBUG Dashboard - Category: {category}, Subcategory: {subcategory}")
     print(f"DEBUG Dashboard - Today's Earnings: {todays_earnings}")
     
     # Verify with manual calculation
@@ -1130,6 +1503,9 @@ def vendor_dashboard():
     
     menu_items = MenuItem.query.filter_by(vendor_id=vendor_id).limit(5).all()
     
+    # Get category-specific labels
+    labels = get_category_labels(category)
+    
     # Add no-cache headers
     response = app.make_response(render_template('vendor/vendor_dashboard.html', 
                                                orders=orders, 
@@ -1139,7 +1515,10 @@ def vendor_dashboard():
                                                todays_earnings=todays_earnings, 
                                                pending_orders=pending_orders,
                                                avg_rating=avg_rating, 
-                                               menu_items=menu_items))
+                                               menu_items=menu_items,
+                                               category=category,
+                                               subcategory=subcategory,
+                                               labels=labels))
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
@@ -1151,7 +1530,12 @@ def vendor_delivery_map():
     """Display delivery map for vendor"""
     vendor_id = session['user_id']
     vendor = Vendor.query.get(vendor_id)
-    return render_template('vendor/delivery_map.html', vendor_profile=vendor)
+    
+    # Get category-specific labels
+    category = vendor.business_category if vendor else 'Food & Restaurant'
+    labels = get_category_labels(category)
+    
+    return render_template('vendor/delivery_map.html', vendor_profile=vendor, labels=labels, category=category)
 
 @app.route('/vendor/orders')
 @vendor_required
@@ -1160,7 +1544,12 @@ def vendor_orders():
     vendor = Vendor.query.get(vendor_id)
     orders = Order.query.filter_by(vendor_id=vendor_id).order_by(Order.created_at.desc()).all()
     unread_count = Order.query.filter_by(vendor_id=vendor_id, status='Pending').count()
-    return render_template('vendor/orders.html', orders=orders, vendor_profile=vendor, unread_count=unread_count)
+    
+    # Get category-specific labels
+    category = vendor.business_category if vendor else 'Food & Restaurant'
+    labels = get_category_labels(category)
+    
+    return render_template('vendor/orders.html', orders=orders, vendor_profile=vendor, unread_count=unread_count, labels=labels, category=category)
 
 @app.route('/vendor/orders/<int:order_id>/status', methods=['POST'])
 @vendor_required
@@ -1233,7 +1622,12 @@ def vendor_menu():
     vendor = Vendor.query.get(vendor_id)
     menu_items = MenuItem.query.filter_by(vendor_id=vendor_id).all()
     unread_count = Order.query.filter_by(vendor_id=vendor_id, status='Pending').count()
-    return render_template('vendor/menu.html', menu_items=menu_items, items=menu_items, vendor_profile=vendor, unread_count=unread_count)
+    
+    # Get category-specific labels
+    category = vendor.business_category if vendor else 'Food & Restaurant'
+    labels = get_category_labels(category)
+    
+    return render_template('vendor/menu.html', menu_items=menu_items, items=menu_items, vendor_profile=vendor, unread_count=unread_count, labels=labels, category=category)
 
 @app.route('/vendor/menu/add', methods=['POST'])
 @vendor_required
@@ -1418,6 +1812,10 @@ def vendor_earnings():
     # Recent orders (show all recent orders for reference, but earnings only from completed)
     earnings_history = Order.query.filter_by(vendor_id=vendor_id).order_by(Order.created_at.desc()).limit(10).all()
     
+    # Get category-specific labels
+    category = vendor.business_category if vendor else 'Food & Restaurant'
+    labels = get_category_labels(category)
+    
     # Add no-cache headers
     response = app.make_response(render_template('vendor/earnings.html',
                                                total_earnings=total_earnings,
@@ -1436,7 +1834,9 @@ def vendor_earnings():
                                                chart_values=chart_values,
                                                earnings_history=earnings_history,
                                                vendor_profile=vendor,
-                                               unread_count=unread_count))
+                                               unread_count=unread_count,
+                                               labels=labels,
+                                               category=category))
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
@@ -1481,6 +1881,10 @@ def vendor_reviews():
     responded_count = len([r for r in reviews if r.vendor_response])
     response_rate = round((responded_count / total_count * 100) if total_count > 0 else 0)
     
+    # Get category-specific labels
+    category = vendor.business_category if vendor else 'Food & Restaurant'
+    labels = get_category_labels(category)
+    
     return render_template('vendor/reviews.html',
                          reviews=reviews,
                          avg_rating=avg_rating,
@@ -1489,7 +1893,9 @@ def vendor_reviews():
                          response_rate=response_rate,
                          responded_count=responded_count,
                          vendor_profile=vendor,
-                         unread_count=unread_count)
+                         unread_count=unread_count,
+                         labels=labels,
+                         category=category)
 
 @app.route('/vendor/signup', methods=['GET', 'POST'])
 def vendor_signup():
@@ -1522,6 +1928,7 @@ def vendor_signup():
 
         new_vendor = Vendor(business_name=business_name, email=email, business_category=business_category,
                            business_sub_category=request.form.get('business_sub_category'),
+                           category_type=request.form.get('business_sub_category'),
                            business_address=business_address, phone=phone)
         new_vendor.set_password(password)
         
@@ -1595,7 +2002,12 @@ def vendor_change_password():
     
     vendor = Vendor.query.get(session['user_id'])
     unread_count = Order.query.filter_by(vendor_id=session['user_id'], status='Pending').count()
-    return render_template('vendor/change_password.html', vendor_profile=vendor, unread_count=unread_count)
+    
+    # Get category-specific labels
+    category = vendor.business_category if vendor else 'Food & Restaurant'
+    labels = get_category_labels(category)
+    
+    return render_template('vendor/change_password.html', vendor_profile=vendor, unread_count=unread_count, labels=labels, category=category)
 
 @app.route('/vendor/settings', methods=['GET', 'POST'])
 @vendor_required
@@ -1618,6 +2030,7 @@ def vendor_settings():
         vendor.business_name = request.form.get('shop_name', vendor.business_name)
         vendor.email = request.form.get('email', vendor.email)
         vendor.business_category = request.form.get('business_category', vendor.business_category)
+        vendor.business_sub_category = request.form.get('business_sub_category', vendor.business_sub_category)
         vendor.phone = request.form.get('phone', vendor.phone)
         vendor.business_address = request.form.get('address', vendor.business_address)
         vendor.about = request.form.get('about', vendor.about)
@@ -1687,7 +2100,11 @@ def vendor_settings():
             flash('Settings updated successfully!', 'success')
         return redirect(url_for('vendor_settings'))
     
-    return render_template('vendor/settings.html', vendor_profile=vendor, unread_count=unread_count, offers=offers)
+    # Get category-specific labels
+    category = vendor.business_category if vendor else 'Food & Restaurant'
+    labels = get_category_labels(category)
+    
+    return render_template('vendor/settings.html', vendor_profile=vendor, unread_count=unread_count, offers=offers, labels=labels, category=category)
 
 @app.route('/toggle_shop_status', methods=['POST'])
 @vendor_required

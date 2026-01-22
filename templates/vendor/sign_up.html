@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="/static/css/vendor/vendor_sign_up.css">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
+
 <body>
 
     <div class="bg-grid"></div>
@@ -24,13 +26,14 @@
             </div>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ 'success' if category == 'success' else 'error' }}" style="padding:10px;margin:10px 0;border-radius:8px;background:{{ '#d4edda' if category == 'success' else '#f8d7da' }};color:{{ '#155724' if category == 'success' else '#721c24' }};">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'error' }}"
+                style="padding:10px;margin:10px 0;border-radius:8px;background:{{ '#d4edda' if category == 'success' else '#f8d7da' }};color:{{ '#155724' if category == 'success' else '#721c24' }};">
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
             {% endwith %}
 
             <form class="signup-form" method="POST" action="/vendor/signup" id="signupForm">
@@ -46,11 +49,11 @@
                     <select id="businessCategory" name="business_category" required onchange="updateSubCategories()">
                         <option value="">Shop Category</option>
                         <option value="Food & Restaurant">Food & Restaurant</option>
-                        <option value="Grocery & Essentials">Grocery & Essentials</option>
+                        <option value="Garage">Garage Services</option>
                         <option value="Electronics">Electronics</option>
-                        <option value="Medical & Health">Medical & Health</option>
-                        <option value="Services">Services</option>
-                        <option value="Fashion & Lifestyle">Fashion & Lifestyle</option>
+                        <option value="Fashion">Fashion</option>
+                        <option value="Grocery">Grocery</option>
+                        <option value="Pharmacy">Pharmacy</option>
                     </select>
                     <i data-lucide="chevron-down" class="select-arrow"></i>
                 </div>
@@ -90,24 +93,24 @@
 
     <script>
         lucide.createIcons();
-        
+
         const subCategories = {
-            'Food & Restaurant': ['Street Food Carts', 'Food Shops', 'Restaurants & Dhabas'],
-            'Grocery & Essentials': ['Vegetables', 'Dairy & Eggs', 'General Store', 'Fruits'],
+            'Food & Restaurant': ['Street Food', 'Food Shop', 'Restaurant', 'Dhaba'],
+            'Garage': ['2-Wheeler', '3-Wheeler', '4-Wheeler'],
             'Electronics': ['Mobiles', 'Home Appliances', 'Kitchen Appliances'],
-            'Medical & Health': ['Ayurvedic Medicines', 'Chemist & Drug', 'Baby Medicine'],
-            'Services': ['2-Wheeler', '3-Wheeler', '4-Wheeler'],
-            'Fashion & Lifestyle': ['Ladies', 'Gents', 'Boy', 'Girls']
+            'Fashion': ['Ladies', 'Gents', 'Boy', 'Girl'],
+            'Grocery': ['Vegetables', 'Dairy & Eggs', 'General Store', 'Fruits'],
+            'Pharmacy': ['Ayurvedic Medicine', 'Chemist & Drug Medicine', 'Baby Medicine']
         };
-        
+
         function updateSubCategories() {
             const categorySelect = document.getElementById('businessCategory');
             const subCategorySelect = document.getElementById('businessSubCategory');
             const selectedCategory = categorySelect.value;
-            
+
             // Clear existing options
             subCategorySelect.innerHTML = '<option value="">Select Sub-Category</option>';
-            
+
             if (selectedCategory && subCategories[selectedCategory]) {
                 subCategories[selectedCategory].forEach(subCat => {
                     const option = document.createElement('option');
@@ -119,4 +122,5 @@
         }
     </script>
 </body>
+
 </html>

@@ -1,0 +1,271 @@
+<!-- Vendor Offers Management Section -->
+<div class="offers-section" style="margin-top: 30px;">
+    <h3 style="color: #2c3e50; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+        <i class="fa-solid fa-tags" style="color: #e74c3c;"></i>
+        Manage Offers
+    </h3>
+    
+    <div class="offers-container">
+        <button class="add-offer-btn" onclick="openOfferModal()" style="background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; margin-bottom: 20px;">
+            <i class="fa-solid fa-plus"></i> Add New Offer
+        </button>
+        
+        <div id="offersList" class="offers-list">
+            <!-- Offers will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Offer Modal -->
+<div id="offerModal" class="offer-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="offer-modal-content" style="background: white; border-radius: 15px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+        <div class="offer-modal-header" style="padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+            <h3 id="offerModalTitle">Add New Offer</h3>
+            <button onclick="closeOfferModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+        
+        <form id="offerForm" style="padding: 20px;">
+            <input type="hidden" id="offerId" value="">
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Offer Title:</label>
+                <input type="text" id="offerTitle" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Description:</label>
+                <textarea id="offerDescription" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; min-height: 80px;"></textarea>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Discount Type:</label>
+                    <select id="discountType" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <option value="percentage">Percentage (%)</option>
+                        <option value="flat">Flat Amount (₹)</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Discount Value:</label>
+                    <input type="number" id="discountValue" required min="1" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Minimum Order Amount (₹):</label>
+                <input type="number" id="minOrder" value="0" min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Valid From:</label>
+                    <input type="date" id="validFrom" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Valid To:</label>
+                    <input type="date" id="validTo" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Offer Image (Optional):</label>
+                <input type="file" id="offerImage" accept="image/*" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                <div id="imagePreview" style="margin-top: 10px; display: none;">
+                    <img id="previewImg" style="max-width: 100px; max-height: 100px; border-radius: 5px;">
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" onclick="closeOfferModal()" style="background: #95a5a6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Cancel</button>
+                <button type="submit" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Save Offer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let editingOfferId = null;
+
+// Load existing offers
+function loadOffers() {
+    fetch('/vendor/offers/list')
+        .then(response => response.json())
+        .then(offers => {
+            const offersList = document.getElementById('offersList');
+            if (offers.length === 0) {
+                offersList.innerHTML = '<p style="color: #7f8c8d; text-align: center; padding: 20px;">No offers created yet. Click "Add New Offer" to get started!</p>';
+            } else {
+                offersList.innerHTML = offers.map(offer => `
+                    <div class="offer-item" style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <div class="offer-info">
+                            <h4 style="margin: 0 0 5px 0; color: #2c3e50;">${offer.title}</h4>
+                            <p style="margin: 0 0 5px 0; color: #7f8c8d; font-size: 14px;">${offer.description}</p>
+                            <div style="font-size: 12px; color: #6c757d;">
+                                <span><strong>Discount:</strong> ${offer.discount_type === 'percentage' ? offer.discount_value + '%' : '₹' + offer.discount_value} OFF</span> | 
+                                <span><strong>Min Order:</strong> ₹${offer.min_order}</span> | 
+                                <span><strong>Valid:</strong> ${new Date(offer.valid_from).toLocaleDateString()} - ${new Date(offer.valid_to).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                        <div class="offer-actions" style="display: flex; gap: 10px;">
+                            <button onclick="editOffer(${offer.id})" style="background: #3498db; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer;">
+                                <i class="fa-solid fa-edit"></i>
+                            </button>
+                            <button onclick="deleteOffer(${offer.id})" style="background: #e74c3c; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer;">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading offers:', error);
+            document.getElementById('offersList').innerHTML = '<p style="color: #e74c3c; text-align: center; padding: 20px;">Error loading offers. Please refresh the page.</p>';
+        });
+}
+
+// Edit offer
+function editOffer(offerId) {
+    // Find the offer data and populate the form
+    fetch(`/vendor/offers/get/${offerId}`)
+        .then(response => response.json())
+        .then(offer => {
+            if (offer.success) {
+                const data = offer.offer;
+                document.getElementById('offerId').value = data.id;
+                document.getElementById('offerTitle').value = data.title;
+                document.getElementById('offerDescription').value = data.description;
+                document.getElementById('discountType').value = data.discount_type;
+                document.getElementById('discountValue').value = data.discount_value;
+                document.getElementById('minOrder').value = data.min_order;
+                document.getElementById('validFrom').value = data.valid_from;
+                document.getElementById('validTo').value = data.valid_to;
+                
+                if (data.image) {
+                    document.getElementById('previewImg').src = data.image;
+                    document.getElementById('imagePreview').style.display = 'block';
+                }
+                
+                openOfferModal(offerId);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading offer:', error);
+            alert('Error loading offer data');
+        });
+}
+
+// Open offer modal
+function openOfferModal(offerId = null) {
+    editingOfferId = offerId;
+    const modal = document.getElementById('offerModal');
+    const title = document.getElementById('offerModalTitle');
+    
+    if (offerId) {
+        title.textContent = 'Edit Offer';
+        // Load offer data for editing
+        // This will be implemented in the main settings page
+    } else {
+        title.textContent = 'Add New Offer';
+        document.getElementById('offerForm').reset();
+        document.getElementById('imagePreview').style.display = 'none';
+    }
+    
+    modal.style.display = 'flex';
+}
+
+// Close offer modal
+function closeOfferModal() {
+    document.getElementById('offerModal').style.display = 'none';
+    editingOfferId = null;
+}
+
+// Handle image preview
+document.getElementById('offerImage').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('previewImg').src = e.target.result;
+            document.getElementById('imagePreview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Handle form submission
+document.getElementById('offerForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        title: document.getElementById('offerTitle').value,
+        description: document.getElementById('offerDescription').value,
+        discount_type: document.getElementById('discountType').value,
+        discount_value: parseFloat(document.getElementById('discountValue').value),
+        min_order: parseFloat(document.getElementById('minOrder').value),
+        valid_from: document.getElementById('validFrom').value,
+        valid_to: document.getElementById('validTo').value,
+        active: true
+    };
+    
+    // Handle image
+    const imageFile = document.getElementById('offerImage').files[0];
+    if (imageFile) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            formData.image = e.target.result;
+            submitOffer(formData);
+        };
+        reader.readAsDataURL(imageFile);
+    } else {
+        submitOffer(formData);
+    }
+});
+
+// Submit offer
+function submitOffer(formData) {
+    const url = editingOfferId ? `/vendor/offers/edit/${editingOfferId}` : '/vendor/offers/add';
+    
+    fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeOfferModal();
+            loadOffers();
+            alert(editingOfferId ? 'Offer updated successfully!' : 'Offer added successfully!');
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        alert('Error saving offer: ' + error.message);
+    });
+}
+
+// Delete offer
+function deleteOffer(offerId) {
+    if (confirm('Are you sure you want to delete this offer?')) {
+        fetch(`/vendor/offers/delete/${offerId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadOffers();
+                alert('Offer deleted successfully!');
+            } else {
+                alert('Error deleting offer');
+            }
+        });
+    }
+}
+
+// Load offers when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadOffers();
+});
+</script>

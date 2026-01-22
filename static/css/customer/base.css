@@ -1008,3 +1008,20 @@ body {
         align-items: flex-start;
     }
 }
+/* Matching Dishes Styling */
+.matching-dishes {
+    color: #666;
+    font-size: 13px;
+    margin: 5px 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #f8f9fa;
+    padding: 4px 10px;
+    border-radius: 8px;
+    width: fit-content;
+}
+
+.matching-dishes i {
+    color: #27ae60;
+}
