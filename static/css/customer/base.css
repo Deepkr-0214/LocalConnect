@@ -32,7 +32,8 @@ body {
 /* Common Navbar Styles */
 .navbar {
     background: white;
-    height: 64px;
+    height: auto;
+    min-height: 64px;
     display: flex;
     align-items: center;
     padding: 0 5%;
@@ -41,6 +42,7 @@ body {
     top: 0;
     z-index: 1000;
     border-bottom: 1px solid #eee;
+    flex-wrap: wrap;
 }
 
 .nav-container {
@@ -51,6 +53,7 @@ body {
     justify-content: space-between;
     align-items: center;
     gap: 15px;
+    flex-wrap: wrap;
 }
 
 .logo {
@@ -61,6 +64,8 @@ body {
     font-weight: 600;
     font-size: 1.1rem;
     cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .search-wrapper {
@@ -69,6 +74,7 @@ body {
     flex: 1;
     max-width: 450px;
     transition: all 0.3s ease;
+    min-width: 150px;
 }
 
 .search-wrapper.collapsed {
@@ -111,6 +117,8 @@ body {
     align-items: center;
     gap: 12px;
     position: relative;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .welcome-text {
@@ -151,6 +159,7 @@ body {
     transform: translateY(-10px);
     transition: all 0.3s ease;
     z-index: 1000;
+    max-width: 95vw;
 }
 
 .profile-dropdown.active {
@@ -219,6 +228,16 @@ body {
 .chat-button:hover,
 .chat-bot:hover {
     transform: scale(1.1) rotate(5deg);
+}
+
+@media (max-width: 480px) {
+    .chat-button,
+    .chat-bot {
+        bottom: 20px;
+        right: 20px;
+        width: 56px;
+        height: 56px;
+    }
 }
 
 .chat-pulse {
@@ -292,10 +311,151 @@ body {
     }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+    .navbar {
+        padding: 0 3%;
+        height: auto;
+        min-height: 60px;
+    }
+
+    .nav-container {
+        gap: 12px;
+        justify-content: flex-start;
+    }
+
+    .logo {
+        min-width: fit-content;
+        font-size: 1rem;
+    }
+
+    .logo svg {
+        width: 20px;
+        height: 20px;
+    }
+
     .search-wrapper {
-        width: 150px;
-        max-width: 130px;
+        width: 200px;
+        max-width: 200px;
+        order: 3;
+        flex-basis: 100%;
+        margin-top: 8px;
+    }
+
+    .search-wrapper input {
+        padding: 8px 35px 8px 15px;
+        font-size: 0.75rem;
+    }
+
+    .user-profile {
+        gap: 8px;
+        min-width: fit-content;
+    }
+
+    .welcome-text {
+        display: none;
+    }
+
+    .avatar {
+        width: 36px;
+        height: 36px;
+    }
+}
+
+@media (max-width: 600px) {
+    .navbar {
+        padding: 0 3%;
+        height: auto;
+        min-height: 56px;
+    }
+
+    .nav-container {
+        gap: 8px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .logo {
+        width: 100%;
+        min-width: fit-content;
+        font-size: 0.95rem;
+        order: 1;
+    }
+
+    .logo svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .logo span {
+        font-size: 0.9rem;
+    }
+
+    .search-wrapper {
+        width: 100%;
+        max-width: 100%;
+        order: 2;
+        flex-basis: 100%;
+        margin: 8px 0 0 0;
+    }
+
+    .search-wrapper.collapsed {
+        width: 40px;
+        max-width: 40px;
+    }
+
+    .search-wrapper input {
+        padding: 9px 35px 9px 15px;
+        font-size: 0.75rem;
+        width: 100%;
+    }
+
+    .search-icon {
+        right: 12px;
+    }
+
+    .user-profile {
+        width: 100%;
+        gap: 10px;
+        justify-content: space-between;
+        align-items: center;
+        order: 3;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #f0f0f0;
+    }
+
+    .welcome-text {
+        display: none;
+    }
+
+    .avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar {
+        padding: 0 2%;
+        height: auto;
+        min-height: 52px;
+    }
+
+    .nav-container {
+        gap: 6px;
+    }
+
+    .logo {
+        font-size: 0.85rem;
+    }
+
+    .logo span {
+        font-size: 0.8rem;
+    }
+
+    .search-wrapper {
+        margin: 6px 0 0 0;
     }
 
     .search-wrapper input {
@@ -303,12 +463,31 @@ body {
         font-size: 0.7rem;
     }
 
-    .nav-container {
-        padding: 0 10px;
+    .user-profile {
+        margin-top: 6px;
+        padding-top: 6px;
+        gap: 8px;
     }
 
-    .logo span {
+    .avatar {
+        width: 34px;
+        height: 34px;
         font-size: 0.8rem;
+    }
+
+    .profile-dropdown {
+        right: -10px;
+        min-width: 160px;
+    }
+
+    .dropdown-item {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+    }
+
+    .dropdown-item i {
+        width: 14px;
+        font-size: 12px;
     }
 }
 
