@@ -2853,10 +2853,12 @@ def chat():
     return chat_logic()
 
 if __name__ == '__main__':
-    # Suppress Flask development server logging
+    # Local development only - NOT USED by Gunicorn on Railway/Render
+    # Gunicorn imports this module and extracts 'app' directly without executing this block
     import logging
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
     
-    print("\n✅ Server starting at http://127.0.0.1:5000\n")
-    app.run(debug=True, host='127.0.0.1', port=5000, use_reloader=True, use_debugger=False)
+    port = int(os.getenv('PORT', 5000))
+    print(f"\n✅ Local development server starting at http://0.0.0.0:{port}\n")
+    app.run(debug=True, host='0.0.0.0', port=port, use_reloader=True, use_debugger=False)
