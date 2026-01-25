@@ -12,6 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     {% block extra_head %}{% endblock %}
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 
 <body>
@@ -68,16 +69,224 @@
 
     {% block content %}{% endblock %}
 
-    <div class="chat-button" id="chatBtn">
-        <div class="chat-pulse"></div>
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
-            <path
-                d="M12 2a10 10 0 0 0-10 10c0 2.5.9 4.8 2.4 6.6l-.4 3.4 3.4-.4c1.8 1.5 4.1 2.4 6.6 2.4a10 10 0 0 0 10-10A10 10 0 0 0 12 2zm-3 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm6 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z">
-            </path>
-        </svg>
+    <div class="chat-button" id="chatBtn"
+        style="position:fixed;bottom:25px;right:25px;width:65px;height:65px;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);border-radius:50%;cursor:pointer;box-shadow:0 8px 25px rgba(102,126,234,0.4);z-index:1000;display:flex;align-items:center;justify-content:center;transition:all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);border:3px solid rgba(255,255,255,0.2);"
+        onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 12px 35px rgba(102,126,234,0.6)'"
+        onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 8px 25px rgba(102,126,234,0.4)'">
+        <div class="chat-pulse"
+            style="position:absolute;width:100%;height:100%;border-radius:50%;background:rgba(255,255,255,0.3);animation:pulse 2s infinite;">
+        </div>
+        <div style="position:relative;z-index:2;text-align:center;color:white;">
+            <i class="fas fa-headset" style="font-size:1.5rem;margin-bottom:2px;display:block;"></i>
+            <span style="font-size:0.7rem;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,0.2);">Help</span>
+        </div>
     </div>
 
-    <script src="/static/js/customer/base.js"></script>
+    <script src="/static/js/customer/base.js?v=14"></script>
+    <div class="chat-window" id="chatWindow">
+        <div class="chat-header">
+            <div class="chat-title">
+                <i class="fas fa-robot"></i>
+                <span>LocalConnect Assistant</span>
+            </div>
+            <button class="chat-close" id="chatCloseBtn">&times;</button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="chat-placeholder" id="chatPlaceholder">
+                <i class="fas fa-comment-dots" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                Type "Hi" to start the chatbot...
+            </div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Type a message...">
+            <button id="chatSendBtn">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
+
+        // Configure tawk.to with interactive buttons
+        Tawk_API.onLoad = function () {
+            // Set up quick replies for order flow
+            Tawk_API.setAttributes({
+                name: '{{ session.user_name or "Guest" }}',
+                email: '{{ session.user_email or "" }}'
+            });
+            // Hide custom chat button now that Tawk is ready
+            var custBtn = document.getElementById('chatBtn');
+            if (custBtn) custBtn.style.display = 'none';
+
+            // Show explicit back button
+            var backBtn = document.getElementById('backToBotBtn');
+            if (backBtn) backBtn.style.display = 'flex';
+        };
+
+        Tawk_API.onMinimize = function () {
+            // Restore local chat button when Tawk is minimized/closed
+            var custBtn = document.getElementById('chatBtn');
+            if (custBtn) custBtn.style.display = 'flex';
+
+            // Hide explicit back button
+            var backBtn = document.getElementById('backToBotBtn');
+            if (backBtn) backBtn.style.display = 'none';
+
+            // Fully hide the Tawk Bubble as requested
+            try {
+                Tawk_API.hideWidget();
+            } catch (e) { }
+        };
+
+        Tawk_API.onChatMessageVisitor = function (message) {
+            const msg = message.message.toLowerCase();
+
+            if (msg.includes('order') || msg.includes('buy')) {
+                setTimeout(() => {
+                    // Send message with quick reply buttons
+                    Tawk_API.addEvent('You selected Honest Omlet.\nHow would you like to receive your order?', {
+                        quickReplies: [
+                            {
+                                text: '🛵 Delivery',
+                                payload: 'delivery_selected'
+                            },
+                            {
+                                text: '🥡 Takeaway',
+                                payload: 'takeaway_selected'
+                            }
+                        ]
+                    });
+                }, 1000);
+            }
+
+            if (msg.includes('delivery') || msg === 'delivery_selected') {
+                setTimeout(() => {
+                    Tawk_API.addEvent('Great! Delivery selected (₹30 charge)\n\nChoose delivery location:', {
+                        quickReplies: [
+                            {
+                                text: '🏠 Home Location',
+                                payload: 'home_location'
+                            },
+                            {
+                                text: '📍 Current Location',
+                                payload: 'current_location'
+                            }
+                        ]
+                    });
+                }, 1000);
+            }
+
+            if (msg.includes('takeaway') || msg === 'takeaway_selected') {
+                setTimeout(() => {
+                    Tawk_API.addEvent('Perfect! Takeaway selected (Free)\n\nPayment Method:', {
+                        quickReplies: [
+                            {
+                                text: '💳 Online Payment',
+                                payload: 'online_payment'
+                            },
+                            {
+                                text: '💵 Cash on Pickup',
+                                payload: 'cash_pickup'
+                            }
+                        ]
+                    });
+                }, 1000);
+            }
+        };
+
+        function startTawkSupport() {
+            // If Tawk is already loaded, just maximize it
+            if (window.Tawk_API && window.Tawk_API.maximize) {
+                try { window.Tawk_API.showWidget(); } catch (e) { }
+                window.Tawk_API.maximize();
+                var backBtn = document.getElementById('backToBotBtn');
+                if (backBtn) backBtn.style.display = 'flex';
+                var custBtn = document.getElementById('chatBtn');
+                if (custBtn) custBtn.style.display = 'none';
+                return;
+            }
+
+            // If script is already inserted but not ready, maybe wait (or do nothing and let it load)
+            // Check if script tag exists
+            var existingScript = document.querySelector('script[src*="embed.tawk.to"]');
+            if (existingScript) {
+                // It's there but maybe not ready? Wait a bit more
+                setTimeout(() => {
+                    if (window.Tawk_API && window.Tawk_API.maximize) {
+                        try { window.Tawk_API.showWidget(); } catch (e) { }
+                        window.Tawk_API.maximize();
+                        var backBtn = document.getElementById('backToBotBtn');
+                        if (backBtn) backBtn.style.display = 'flex';
+                        var custBtn = document.getElementById('chatBtn');
+                        if (custBtn) custBtn.style.display = 'none';
+                    }
+                }, 1000);
+                return;
+            }
+
+            var s1 = document.createElement("script"), s0 = document.getElementsByTagName("script")[0];
+            s1.async = true;
+            s1.src = 'https://embed.tawk.to/6970564aa3974e19801a37aa/1jffd25nb';
+            s1.charset = 'UTF-8';
+            s1.setAttribute('crossorigin', '*');
+
+            s1.onload = function () {
+                setTimeout(() => {
+                    // Try to Maximize
+                    if (window.Tawk_API && window.Tawk_API.maximize) {
+                        try {
+                            window.Tawk_API.showWidget();
+                            window.Tawk_API.maximize();
+                        } catch (e) { console.log('Tawk maximize failed', e); }
+                    }
+                }, 500);
+            };
+
+            s0.parentNode.insertBefore(s1, s0);
+        }
+
+        function restoreLocalBot() {
+            if (window.Tawk_API) {
+                try {
+                    window.Tawk_API.hideWidget();
+                } catch (e) {
+                    window.Tawk_API.minimize();
+                }
+            }
+            var custBtn = document.getElementById('chatBtn');
+            if (custBtn) custBtn.style.display = 'flex';
+
+            // Hide the explicit back button
+            var backBtn = document.getElementById('backToBotBtn');
+            if (backBtn) backBtn.style.display = 'none';
+
+            // Trigger Rating Flow automatically
+            if (window.localConnect && typeof window.localConnect.sendSilentMessage === 'function') {
+                // Open the chat window automatically
+                if (typeof window.localConnect.toggleChat === 'function') {
+                    // Ensure it is open (if closed)
+                    var chatWindow = document.getElementById('chatWindow');
+                    if (chatWindow && chatWindow.style.display !== 'flex') {
+                        window.localConnect.toggleChat();
+                    }
+                }
+
+                // Small delay to ensure UI transition feels natural
+                setTimeout(() => {
+                    window.localConnect.sendSilentMessage('CMD_AGENT_CHAT_ENDED');
+                }, 500);
+            }
+        }
+    </script>
+
+    <!-- Explicit Back Button for Tawk -->
+    <div id="backToBotBtn" onclick="restoreLocalBot()" style="display:none; position:fixed; bottom:100px; right:25px; z-index:100000; 
+                background:white; color:#333; padding:8px 15px; border-radius:30px; 
+                box-shadow:0 4px 15px rgba(0,0,0,0.2); font-weight:600; font-size:13px; 
+                cursor:pointer; border:1px solid #ddd; align-items:center; gap:5px;">
+        <i class="fas fa-arrow-left"></i> Back to Bot
+    </div>
     <script>
         // Automatic Location Update (Background)
         function autoUpdateLocation() {

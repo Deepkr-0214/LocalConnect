@@ -96,20 +96,20 @@
             </div>
         </section>
 
-        <div class="tab-container">
-            <div class="tabs-nav-inline">
-                <div class="tab active" data-target="menu-section">Menu</div>
-                <div class="tab" data-target="about-section">About</div>
-                <div class="tab" data-target="reviews-section">Reviews</div>
-            </div>
-            <section id="menu-section" class="tab-content active">
-                <div class="menu-section-inner" style="padding:30px 5% 120px;background:#f5f7f8;">
-                    <div id="menu-grid" class="menu-grid"
-                        style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:25px;">
-                        <!-- Menu items will be loaded dynamically -->
-                    </div>
+            <div class="tab-container">
+                <div class="tabs-nav-inline">
+                    <div class="tab active" data-target="menu-section">{% if vendor.business_category == 'Garage' %}Services{% else %}Menu{% endif %}</div>
+                    <div class="tab" data-target="about-section">About</div>
+                    <div class="tab" data-target="reviews-section">Reviews</div>
                 </div>
-            </section>
+                <section id="menu-section" class="tab-content active">
+                    <div class="menu-section-inner" style="padding:30px 5% 120px;background:#f5f7f8;">
+                        <div id="menu-grid" class="menu-grid"
+                            style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:25px;">
+                            <!-- Menu items/services will be loaded dynamically -->
+                        </div>
+                    </div>
+                </section>
 
             <section id="about-section" class="tab-content">
                 <div class="about-container">
@@ -562,6 +562,7 @@
 
         function renderMenuCards() {
             const isOpen = {{ 'true' if vendor.is_open else 'false' }};
+            const isGarage = '{{ vendor.business_category }}' === 'Garage';
             const menuGrid = document.getElementById('menu-grid');
             menuGrid.innerHTML = menuItems.map(item => {
                 const imageUrl = item.image_file && item.image_file !== 'default.jpg'
@@ -577,6 +578,8 @@
                         '<span style="font-weight:700;color:#e74c3c;font-size:14px;">Shop Closed</span>' :
                         !item.available ?
                         '<span style="font-weight:700;color:#e74c3c;font-size:14px;">Not Available</span>' :
+                        isGarage ?
+                            `<span style="font-weight:700;color:#27ae60;font-size:18px;">₹${item.price}</span><button class="btn-add" onclick="bookService(${item.id})" style="background:#27ae60;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">Book</button>` :
                         item.qty > 0 ?
                             `<span style="font-weight:700;color:#27ae60;font-size:18px;">₹${item.price}</span><div style="display:flex;align-items:center;background:#27ae60;color:white;border-radius:8px;padding:4px 8px;gap:10px;"><button onclick="updateQty(${item.id}, -1)" style="background:none;border:none;color:white;cursor:pointer;font-size:16px;">-</button><span style="font-weight:700;">${item.qty}</span><button onclick="updateQty(${item.id}, 1)" style="background:none;border:none;color:white;cursor:pointer;font-size:16px;">+</button></div>` :
                             `<span style="font-weight:700;color:#27ae60;font-size:18px;">₹${item.price}</span><button class="btn-add" onclick="addToCart(${item.id})" style="background:#27ae60;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">Add</button>`
@@ -600,6 +603,10 @@
             item.qty++;
             updateCart();
             renderMenuCards();
+        }
+
+        function bookService(itemId) {
+            addToCart(itemId);
         }
 
         function updateQty(itemId, change) {
@@ -667,7 +674,13 @@
             const cartItems = menuItems.filter(i => i.qty > 0);
             if (cartItems.length === 0) { alert('Your cart is empty!'); return; }
             const total = cartItems.reduce((s, i) => s + (i.qty * i.price), 0);
-            showDeliverySelection(total);
+            
+            const isGarage = '{{ vendor.business_category }}' === 'Garage';
+            if (isGarage) {
+                showLocationChoice(total);
+            } else {
+                showDeliverySelection(total);
+            }
         }
 
         function showDeliverySelection(total) {
@@ -718,11 +731,18 @@
         function selectLocation(locationType, subtotal) {
             // Store selected location type for order processing
             window.selectedLocationType = locationType;
-            proceedWithDeliveryType('delivery', subtotal);
+            const isGarage = '{{ vendor.business_category }}' === 'Garage';
+            if (isGarage) {
+                proceedWithDeliveryType('delivery', subtotal);
+            } else {
+                proceedWithDeliveryType('delivery', subtotal);
+            }
         }
         
         function proceedWithDeliveryType(type, subtotal) {
-            const deliveryFee = type === 'delivery' ? 30 : 0;
+            const isGarage = '{{ vendor.business_category }}' === 'Garage';
+            const deliveryType = isGarage ? 'delivery' : type;
+            const deliveryFee = deliveryType === 'delivery' ? 30 : 0;
             
             // Calculate discount if applicable
             let discount = 0;
@@ -753,12 +773,14 @@
             const discountHtml = discount > 0 ? 
                 `<div class="summary-row discount-row" style="color:#27ae60;"><span>Discount (${appliedOffer.title}):</span><span>-₹${discount.toFixed(0)}</span></div>` : '';
             
+            const serviceLabel = isGarage ? 'Service Fee:' : (deliveryType === 'delivery' ? 'Delivery Fee:' : 'Takeaway:');
+            
             document.getElementById('cart-items-list').innerHTML = `
                 <div class="order-step"><h3>Payment Method</h3>
                     <div class="order-summary">
                         <div class="summary-row"><span>Subtotal:</span><span>₹${subtotal}</span></div>
                         ${discountHtml}
-                        <div class="summary-row"><span>${type === 'delivery' ? 'Delivery Fee:' : 'Takeaway:'}</span><span>${deliveryFee > 0 ? '₹' + deliveryFee : 'Free'}</span></div>
+                        <div class="summary-row"><span>${serviceLabel}</span><span>${deliveryFee > 0 ? '₹' + deliveryFee : 'Free'}</span></div>
                         <div class="summary-row total-row"><span>Total:</span><span>₹${total.toFixed(0)}</span></div>
                     </div>
                     ${cashMessage}
@@ -767,13 +789,13 @@
                         <textarea id="customerSuggestion" placeholder="Any special requests or instructions for the vendor..." style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;min-height:80px;resize:vertical;font-family:inherit;"></textarea>
                     </div>
                     <div class="payment-options">
-                        <div class="payment-option" onclick="if(!window.processingPayment) processPayment('online', '${type}', ${total}, ${discount}, '${appliedOffer ? appliedOffer.title : ''}')">
+                        <div class="payment-option" onclick="if(!window.processingPayment) processPayment('online', '${deliveryType}', ${total}, ${discount}, '${appliedOffer ? appliedOffer.title : ''}')">
                             <div class="option-icon">💳</div>
                             <div class="option-details"><h4>Online Payment</h4><p>Pay now with card/UPI</p></div>
                         </div>
-                        <div class="payment-option ${cashRestricted ? 'disabled' : ''}" ${cashRestricted ? '' : `onclick="if(!window.processingPayment) processPayment('cash', '${type}', ${total}, ${discount}, '${appliedOffer ? appliedOffer.title : ''}')"`}>
+                        <div class="payment-option ${cashRestricted ? 'disabled' : ''}" ${cashRestricted ? '' : `onclick="if(!window.processingPayment) processPayment('cash', '${deliveryType}', ${total}, ${discount}, '${appliedOffer ? appliedOffer.title : ''}')"`}>
                             <div class="option-icon">💵</div>
-                            <div class="option-details"><h4>Cash on ${type === 'delivery' ? 'Delivery' : 'Pickup'}</h4><p>${cashRestricted ? 'Not available for orders above ₹200' : 'Pay when you receive'}</p></div>
+                            <div class="option-details"><h4>Cash on ${isGarage ? 'Service' : (deliveryType === 'delivery' ? 'Delivery' : 'Pickup')}</h4><p>${cashRestricted ? 'Not available for orders above ₹200' : 'Pay when you receive'}</p></div>
                         </div>
                     </div>
                 </div>`;
@@ -909,9 +931,11 @@
             updateCart();
             renderMenuCards();
             closeCart();
-            const paymentMethod = paymentType === 'online' ? 'Online Payment' : `Cash on ${deliveryType === 'delivery' ? 'Delivery' : 'Pickup'}`;
-            const timeEstimate = deliveryType === 'delivery' ? '25-30 minutes' : '15-20 minutes';
-            alert(`🎉 Order placed successfully!\n\nDelivery: ${deliveryType === 'delivery' ? 'Home Delivery' : 'Takeaway'}\nPayment: ${paymentMethod}\nTotal: ₹${total}\n\nYour order will be ready in ${timeEstimate}.\nThank you for choosing ${vendorName}!`);
+            const isGarage = '{{ vendor.business_category }}' === 'Garage';
+            const paymentMethod = paymentType === 'online' ? 'Online Payment' : `Cash on ${isGarage ? 'Service' : (deliveryType === 'delivery' ? 'Delivery' : 'Pickup')}`;
+            const timeEstimate = isGarage ? '30-45 minutes' : (deliveryType === 'delivery' ? '25-30 minutes' : '15-20 minutes');
+            const serviceType = isGarage ? 'Service Booking' : (deliveryType === 'delivery' ? 'Home Delivery' : 'Takeaway');
+            alert(`🎉 ${isGarage ? 'Service booked' : 'Order placed'} successfully!\n\nService: ${serviceType}\nPayment: ${paymentMethod}\nTotal: ₹${total}\n\nYour ${isGarage ? 'service will be completed' : 'order will be ready'} in ${timeEstimate}.\nThank you for choosing ${vendorName}!`);
         }
 
         document.addEventListener('click', (e) => {

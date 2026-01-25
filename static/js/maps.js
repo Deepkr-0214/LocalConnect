@@ -1,11 +1,4 @@
-/* -----------------------------------------------------------
-   LocalConnect - maps.js
-   Responsibilities:
-   1. Detect user location
-   2. Return distance + travel time for each vendor (Distance Matrix)
-   3. Show vendor markers on map (when backend asks)
-   4. Draw fastest route (Directions API) when user clicks Get Directions
------------------------------------------------------------ */
+
 
 let map;
 let userLocation = null;
@@ -13,9 +6,6 @@ let vendorMarkers = [];
 let directionsService;
 let directionsRenderer;
 
-/* ---------------------------------------------
-   Initialize Map
---------------------------------------------- */
 function initMap() {
     const defaultCenter = { lat: 22.30, lng: 73.19 };
 

@@ -15,13 +15,34 @@ class LocalConnectBase {
         this.logo = document.querySelector('.logo');
         this.profileIcon = document.getElementById('profileIcon');
         this.profileDropdown = document.getElementById('profileDropdown');
+
+        // Chat Elements
+        this.chatWindow = document.getElementById('chatWindow');
+        this.chatCloseBtn = document.getElementById('chatCloseBtn');
+        this.chatSendBtn = document.getElementById('chatSendBtn');
+        this.chatInput = document.getElementById('chatInput');
+        this.chatMessages = document.getElementById('chatMessages');
     }
 
     // Setup common event listeners
     setupEventListeners() {
-        // Chat button functionality
+        // Chat functionality
         if (this.chatBtn) {
-            this.chatBtn.addEventListener('click', this.showChatAlert);
+            this.chatBtn.addEventListener('click', () => this.toggleChat());
+        }
+
+        if (this.chatCloseBtn) {
+            this.chatCloseBtn.addEventListener('click', () => this.toggleChat());
+        }
+
+        if (this.chatSendBtn) {
+            this.chatSendBtn.addEventListener('click', () => this.sendMessage());
+        }
+
+        if (this.chatInput) {
+            this.chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') this.sendMessage();
+            });
         }
 
         // Logo click navigation
@@ -38,9 +59,141 @@ class LocalConnectBase {
         this.setupSearchToggle();
     }
 
-    // Common chat alert functionality
-    showChatAlert() {
-        alert("Chat loading... One of our LocalConnect assistants will be with you shortly!");
+    // Toggle Chat Window
+    toggleChat() {
+        if (this.chatWindow) {
+            this.chatWindow.classList.toggle('active');
+            if (this.chatWindow.classList.contains('active')) {
+                if (this.chatInput) this.chatInput.focus();
+                // Placeholder is visible by default via CSS/HTML
+            }
+        } else {
+            alert("Chat feature is initializing...");
+        }
+    }
+
+    // Send Message
+    async sendMessage() {
+        const message = this.chatInput.value.trim();
+        if (!message) return;
+
+        // Display User Message
+        this.displayMessage('user', message);
+        this.chatInput.value = '';
+
+        // Show typing indicator (optional, or just wait)
+
+        try {
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: message })
+            });
+
+            const data = await response.json();
+
+            // Display Bot Response
+            // Display Bot Response
+            if (data.reply) {
+                this.displayMessage('bot', data.reply, data.buttons);
+            }
+
+            // Handle Payment Requirement from Chatbot
+            if (data.payment_required && data.order_id) {
+                this.initiateRazorpayPayment(data.order_id);
+            }
+
+            // Check for Agent Handoff
+            if (data.handoff) {
+                setTimeout(() => {
+                    // Close custom chat
+                    this.toggleChat();
+
+                    // Hide LocalConnect Button (Clean Swap) - DISABLED to prevent vanishing
+                    // if (this.chatBtn) this.chatBtn.style.display = 'none';
+
+                    // Start Dynamic Load of Tawk
+                    if (typeof startTawkSupport === 'function') {
+                        startTawkSupport();
+                    } else {
+                        // Fallback if function missing
+                        if (window.Tawk_API) {
+                            window.Tawk_API.maximize();
+                        } else {
+                            alert("⚠️ Support system updating. Please reload.");
+                            if (this.restoreChatAfterHandoff) this.restoreChatAfterHandoff();
+                        }
+                    }
+                }, 1500); // Small delay to let user read the message
+            }
+
+            if (data.error) {
+                this.displayMessage('bot', 'Sorry, something went wrong: ' + data.error);
+            }
+
+        } catch (error) {
+            console.error('Chat Error:', error);
+            this.displayMessage('bot', 'Sorry, I am having trouble connecting right now. Please try again.');
+        }
+    }
+
+    // Send Silent Message (System Commands)
+    async sendSilentMessage(message) {
+        try {
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message })
+            });
+            const data = await response.json();
+
+            // Display Bot Response only (User msg is hidden)
+            if (data.reply) {
+                this.displayMessage('bot', data.reply, data.buttons);
+            }
+        } catch (error) {
+            console.error('Silent Chat Error:', error);
+        }
+    }
+
+    // Display Message
+    displayMessage(sender, text, buttons = null) {
+        if (!this.chatMessages) return;
+
+        // Hide placeholder if present
+        const placeholder = document.getElementById('chatPlaceholder');
+        if (placeholder) {
+            placeholder.style.display = 'none';
+        }
+
+        const msgDiv = document.createElement('div');
+        msgDiv.classList.add('message');
+        msgDiv.classList.add(sender === 'user' ? 'user-message' : 'bot-message');
+        msgDiv.innerHTML = text; // Allow HTML for bolding/lists
+
+        this.chatMessages.appendChild(msgDiv);
+
+        // Render Buttons if available
+        if (sender === 'bot' && buttons && buttons.length > 0) {
+            const btnContainer = document.createElement('div');
+            btnContainer.classList.add('chat-options');
+
+            buttons.forEach(btn => {
+                const button = document.createElement('button');
+                button.classList.add('chat-option-btn');
+                button.innerText = btn.text;
+                button.onclick = () => {
+                    this.chatInput.value = btn.value;
+                    this.sendMessage();
+                };
+                btnContainer.appendChild(button);
+            });
+            this.chatMessages.appendChild(btnContainer);
+        }
+
+        this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
     }
 
     // Generate star rating HTML
@@ -166,35 +319,114 @@ class LocalConnectBase {
             });
         }
     }
+    // Initiate Razorpay Payment from Chatbot
+    async initiateRazorpayPayment(orderId) {
+        try {
+            // Get Razorpay Options
+            const response = await fetch('/api/payment/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order_id: orderId })
+            });
+
+            const paymentData = await response.json();
+            if (paymentData.error) {
+                this.displayMessage('bot', '❌ Error initiating payment: ' + paymentData.error);
+                return;
+            }
+
+            // Define options
+            const options = {
+                "key": paymentData.razorpay_key_id,
+                "amount": paymentData.amount,
+                "currency": "INR",
+                "name": "LocalConnect",
+                "description": "Chat Order Payment",
+                "order_id": paymentData.razorpay_order_id,
+                "handler": async (response) => {
+                    // Verify payment
+                    try {
+                        const verifyRes = await fetch('/api/payment/verify', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                order_id: orderId,
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature
+                            })
+                        });
+                        const verifyData = await verifyRes.json();
+
+                        if (verifyData.success) {
+                            this.displayMessage('bot', '✅ Payment Successful! Your order has been placed.');
+                        } else {
+                            this.displayMessage('bot', '❌ Payment Verification Failed: ' + (verifyData.error || 'Unknown error'));
+                        }
+                    } catch (e) {
+                        this.displayMessage('bot', '❌ Error verifying payment: ' + e.message);
+                    }
+                },
+                "prefill": {
+                    "name": paymentData.customer_name,
+                    "email": paymentData.customer_email,
+                    "contact": paymentData.customer_phone
+                },
+                "theme": { "color": "#27ae60" },
+                "modal": {
+                    "ondismiss": () => {
+                        this.displayMessage('bot', 'ℹ️ Payment cancelled. You can retry from My Orders.');
+                    }
+                }
+            };
+
+            const rzp = new Razorpay(options);
+            rzp.open();
+
+        } catch (error) {
+            console.error("Payment Error:", error);
+            this.displayMessage('bot', '❌ Failed to start payment process.');
+        }
+    }
+
+    // Restore chat after handoff
+    restoreChatAfterHandoff() {
+        if (this.chatWindow) {
+            // Force open
+            this.chatWindow.classList.add('active');
+            if (this.chatInput) this.chatInput.focus();
+
+            // Add Thank You Message
+            this.displayMessage('bot', 'Thank you for using Local Connect Chatbot! 👋<br>How else can I help you today?');
+
+            // Ensure button is visible (redundancy)
+            if (this.chatBtn) this.chatBtn.style.display = 'flex';
+        }
+    }
 }
 
 // Initialize base functionality when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new LocalConnectBase();
+    window.localConnect = new LocalConnectBase();
 });
-// Global profile functions
+
+// Global functions (Legacy support & access)
 function viewProfile() {
     window.location.href = '/customer/profile';
 }
-
 function changePassword() {
     window.location.href = '/customer/change-password';
 }
-
 function editProfile() {
     alert('✏️ Edit Profile\n\nProfile editing feature will be available soon!\nYou will be able to update your personal information, preferences, and settings.');
 }
-
 function myOrders() {
     window.location.href = '/customer/orders';
 }
 function logout() {
-    // Clear any local storage or session storage
     if (typeof (Storage) !== "undefined") {
         localStorage.clear();
         sessionStorage.clear();
     }
-
-    // Redirect to logout endpoint
     window.location.href = '/logout';
 }
