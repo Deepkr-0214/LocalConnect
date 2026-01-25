@@ -19,6 +19,78 @@
             --bg-light: #f8f9fa;
         }
 
+        @media (max-width: 768px) {
+            .page-hero {
+                padding: 100px 20px 60px !important;
+            }
+
+            .page-hero h1 {
+                font-size: 2.2rem !important;
+            }
+
+            .container {
+                padding: 0 20px !important;
+            }
+
+            .mission-section {
+                padding: 60px 0 !important;
+            }
+
+            .mission-content {
+                grid-template-columns: 1fr !important;
+                gap: 40px !important;
+            }
+
+            .mission-stats {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+
+            .grid-features {
+                grid-template-columns: 1fr !important;
+            }
+
+            .recognition-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            section[style*="grid-template-columns: 1fr 1.2fr"] {
+                grid-template-columns: 1fr !important;
+                gap: 40px !important;
+            }
+
+            section[style*="grid-template-columns: 1.2fr 1fr"] {
+                grid-template-columns: 1fr !important;
+                gap: 40px !important;
+            }
+
+            .vendor-hero-content {
+                grid-template-columns: 1fr !important;
+            }
+
+            h2[style*="font-size: 3.5rem"] {
+                font-size: 2.2rem !important;
+            }
+
+            h2[style*="font-size: 2.5rem"] {
+                font-size: 1.8rem !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-hero h1 {
+                font-size: 1.8rem !important;
+            }
+
+            .mission-stats {
+                grid-template-columns: 1fr !important;
+            }
+
+            .hero-badge {
+                font-size: 0.8rem !important;
+                padding: 6px 12px !important;
+            }
+        }
+
         body {
             font-family: 'Outfit', sans-serif;
             background-color: #fcfcfc;
@@ -269,15 +341,15 @@
             .hero-title {
                 font-size: 3rem;
             }
-            
+
             .hero-desc {
                 font-size: 1.1rem;
             }
-            
+
             .mission-content h2 {
                 font-size: 2rem;
             }
-            
+
             .stat-row {
                 gap: 30px;
             }
@@ -288,12 +360,12 @@
             .page-hero {
                 padding: 140px 0 60px;
             }
-            
+
             .hero-title {
                 font-size: 2.5rem;
                 letter-spacing: -0.5px;
             }
-            
+
             .hero-desc {
                 font-size: 1rem;
                 padding: 0 20px;
@@ -303,20 +375,20 @@
                 grid-template-columns: 1fr;
                 gap: 30px;
             }
-            
+
             .mission-content h2 {
                 font-size: 1.8rem;
             }
-            
+
             .mission-content p {
                 font-size: 1rem;
             }
-            
+
             .stat-row {
                 flex-wrap: wrap;
                 gap: 20px;
             }
-            
+
             .stat-item {
                 flex: 1;
                 min-width: 120px;
@@ -326,7 +398,7 @@
                 grid-template-columns: 1fr;
                 gap: 20px;
             }
-            
+
             .value-card {
                 padding: 30px 20px;
             }
@@ -353,180 +425,180 @@
             .timeline-content {
                 width: 100%;
             }
-            
+
             .glass-card {
                 padding: 30px 20px;
             }
-            
+
             /* Navigation adjustments */
             .nav-links {
                 display: none;
             }
-            
+
             .hamburger {
                 display: flex;
             }
         }
-        
+
         /* Mobile Portrait (320px - 480px) */
         @media (max-width: 480px) {
             .page-hero {
                 padding: 120px 0 50px;
             }
-            
+
             .hero-badge {
                 font-size: 0.8rem;
                 padding: 6px 12px;
             }
-            
+
             .hero-title {
                 font-size: 2rem;
                 line-height: 1.2;
                 margin-bottom: 16px;
             }
-            
+
             .hero-desc {
                 font-size: 0.95rem;
                 padding: 0 10px;
             }
-            
+
             .glass-card {
                 padding: 24px 16px;
                 border-radius: 16px;
             }
-            
+
             .mission-content h2 {
                 font-size: 1.5rem;
                 margin-bottom: 16px;
             }
-            
+
             .mission-content p {
                 font-size: 0.95rem;
                 margin-bottom: 20px;
             }
-            
+
             .stat-row {
                 gap: 16px;
             }
-            
+
             .stat-item h3 {
                 font-size: 2rem;
             }
-            
+
             .stat-item p {
                 font-size: 0.8rem;
             }
-            
+
             .values-section h2,
             .container h2 {
                 font-size: 1.8rem !important;
             }
-            
+
             .value-card {
                 padding: 24px 16px;
             }
-            
+
             .value-icon {
                 width: 60px;
                 height: 60px;
                 font-size: 1.3rem;
             }
-            
+
             .value-card h3 {
                 font-size: 1.3rem;
             }
-            
+
             .value-card p {
                 font-size: 0.9rem;
             }
-            
+
             .timeline-item {
                 margin-left: 50px;
                 margin-bottom: 40px;
             }
-            
+
             .timeline-content {
                 padding: 20px;
             }
-            
+
             .timeline-title {
                 font-size: 1.1rem;
             }
-            
+
             /* What We Provide section */
             div[style*="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))"] {
                 grid-template-columns: 1fr !important;
             }
-            
+
             /* Recognition section */
             div[style*="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))"] {
                 gap: 20px !important;
             }
         }
-        
+
         /* Small Mobile (320px - 375px) */
         @media (max-width: 375px) {
             .page-hero {
                 padding: 100px 0 40px;
             }
-            
+
             .hero-title {
                 font-size: 1.75rem;
             }
-            
+
             .hero-desc {
                 font-size: 0.9rem;
             }
-            
+
             .glass-card {
                 padding: 20px 12px;
             }
-            
+
             .mission-content h2 {
                 font-size: 1.3rem;
             }
-            
+
             .mission-content p {
                 font-size: 0.9rem;
             }
-            
+
             .stat-row {
                 flex-direction: column;
                 gap: 12px;
             }
-            
+
             .stat-item {
                 width: 100%;
                 text-align: center;
             }
-            
+
             .stat-item h3 {
                 font-size: 1.8rem;
             }
-            
+
             .values-section h2,
             .container h2 {
                 font-size: 1.5rem !important;
             }
-            
+
             .value-card h3 {
                 font-size: 1.2rem;
             }
-            
+
             .value-icon {
                 width: 50px;
                 height: 50px;
                 font-size: 1.1rem;
             }
-            
+
             .timeline-item {
                 margin-left: 40px;
             }
-            
+
             .timeline-line {
                 left: 20px;
             }
-            
+
             .timeline-dot {
                 left: 20px;
                 width: 16px;

@@ -44,7 +44,7 @@
 
 .category-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
     border-color: var(--primary-green);
 }
 
@@ -90,7 +90,7 @@
     right: 0;
     background: white;
     border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     min-width: 180px;
     opacity: 0;
     visibility: hidden;
@@ -148,25 +148,25 @@
     .dashboard-content {
         padding: 20px 15px;
     }
-    
+
     .welcome-section h1 {
         font-size: 2rem;
     }
-    
+
     .categories-grid {
         grid-template-columns: 1fr;
         gap: 20px;
     }
-    
+
     .category-card {
         padding: 25px 20px;
     }
-    
+
     .category-icon {
         width: 60px;
         height: 60px;
     }
-    
+
     .category-icon i {
         font-size: 24px;
     }
@@ -176,15 +176,15 @@
     .welcome-section h1 {
         font-size: 1.8rem;
     }
-    
+
     .welcome-section p {
         font-size: 1rem;
     }
-    
+
     .category-card h3 {
         font-size: 1.2rem;
     }
-    
+
     .category-card p {
         font-size: 0.9rem;
     }
@@ -199,7 +199,7 @@
     height: 500px;
     background: white;
     border-radius: 16px;
-    box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
     z-index: 1000;
@@ -210,6 +210,22 @@
     border: 1px solid #eee;
     overflow: hidden;
     font-family: 'Inter', sans-serif;
+}
+
+@media (max-width: 480px) {
+    .chat-window {
+        width: calc(100% - 30px);
+        height: calc(100% - 120px);
+        right: 15px;
+        bottom: 100px;
+    }
+
+    .chat-button {
+        width: 55px !important;
+        height: 55px !important;
+        bottom: 20px !important;
+        right: 15px !important;
+    }
 }
 
 .chat-window.active {
@@ -272,7 +288,7 @@
 
 .bot-message {
     background: white;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     border-bottom-left-radius: 2px;
     align-self: flex-start;
     color: var(--text-dark);

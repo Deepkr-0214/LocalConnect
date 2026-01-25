@@ -28,7 +28,8 @@
                         <a href="/vendor/delivery-map"><i class="fa-solid fa-map"></i> Delivery Map</a>
                     </li>
                     <li class="{{ 'active' if request.path == '/vendor/menu' }}">
-                        <a href="/vendor/menu"><i class="fa-solid {{ labels.icon if labels else 'fa-utensils' }}"></i> {{ labels.inventory if labels else 'Menu' }} Management</a>
+                        <a href="/vendor/menu"><i class="fa-solid {{ labels.icon if labels else 'fa-utensils' }}"></i>
+                            {{ labels.inventory if labels else 'Menu' }} Management</a>
                     </li>
                     <li class="{{ 'active' if request.path == '/vendor/earnings' }}">
                         <a href="/vendor/earnings"><i class="fa-solid fa-indian-rupee-sign"></i> Earnings</a>
@@ -42,6 +43,7 @@
                 </ul>
             </nav>
         </aside>
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
         <main class="main-content">
             <header class="top-header">
@@ -99,76 +101,72 @@
                         <div class="profile-section dropdown">
                             <div class="profile-pill" onclick="toggleDropdown('profile-content')"
                                 aria-label="Profile menu">
-                                <div class="profile-avatar" id="headerShopImage" onclick="event.stopPropagation(); showShopImageModal();" style="cursor: pointer;" title="Click to change profile image">
+                                <div class="profile-avatar" id="headerShopImage"
+                                    onclick="event.stopPropagation(); showShopImageModal();" style="cursor: pointer;"
+                                    title="Click to change profile image">
                                     {% if vendor_profile and vendor_profile.shop_image %}
-                                        {% if vendor_profile.shop_image.startswith('data:image') %}
-                                            <img src="{{ vendor_profile.shop_image }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.innerHTML='🏪';">
-                                        {% elif vendor_profile.shop_image|length < 5 %}
-                                            {{ vendor_profile.shop_image }}
-                                        {% else %}
-                                            🏪
-                                        {% endif %}
-                                    {% else %}
-                                        🏪
-                                    {% endif %}
+                                    {% if vendor_profile.shop_image.startswith('data:image') %}
+                                    <img src="{{ vendor_profile.shop_image }}"
+                                        style="width:100%;height:100%;object-fit:cover;border-radius:50%;"
+                                        onerror="this.innerHTML='🏪';">
+                                    {% elif vendor_profile.shop_image|length < 5 %} {{ vendor_profile.shop_image }} {%
+                                        else %} 🏪 {% endif %} {% else %} 🏪 {% endif %} </div>
+                                        <div class="profile-info">
+                                            <span class="profile-name">
+                                                {% if vendor_profile and vendor_profile.business_name %}
+                                                {{ vendor_profile.business_name[:15] }}{% if
+                                                vendor_profile.business_name|length
+                                                > 15 %}...{% endif %}
+                                                {% else %}
+                                                Localconnect
+                                                {% endif %}
+                                            </span>
+                                            <span class="profile-role">Vendor</span>
+                                        </div>
+                                        <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
                                 </div>
-                                <div class="profile-info">
-                                    <span class="profile-name">
-                                        {% if vendor_profile and vendor_profile.business_name %}
-                                        {{ vendor_profile.business_name[:15] }}{% if vendor_profile.business_name|length
-                                        > 15 %}...{% endif %}
-                                        {% else %}
-                                        Localconnect
-                                        {% endif %}
-                                    </span>
-                                    <span class="profile-role">Vendor</span>
-                                </div>
-                                <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
-                            </div>
-                            <div id="profile-content" class="dropdown-content profile-menu">
-                                <div class="profile-header">
-                                    <div class="profile-avatar large" id="dropdownShopImage" onclick="showShopImageModal()" style="cursor: pointer;" title="Click to change image">
-                                        {% if vendor_profile and vendor_profile.shop_image %}
+                                <div id="profile-content" class="dropdown-content profile-menu">
+                                    <div class="profile-header">
+                                        <div class="profile-avatar large" id="dropdownShopImage"
+                                            onclick="showShopImageModal()" style="cursor: pointer;"
+                                            title="Click to change image">
+                                            {% if vendor_profile and vendor_profile.shop_image %}
                                             {% if vendor_profile.shop_image.startswith('data:image') %}
-                                                <img src="{{ vendor_profile.shop_image }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.innerHTML='🏪';">
-                                            {% elif vendor_profile.shop_image|length < 5 %}
-                                                {{ vendor_profile.shop_image }}
-                                            {% else %}
-                                                🏪
-                                            {% endif %}
-                                        {% else %}
-                                            🏪
-                                        {% endif %}
-                                    </div>
-                                    <div class="profile-details">
-                                        <span class="profile-name">
-                                            {% if vendor_profile and vendor_profile.business_name %}
-                                            {{ vendor_profile.business_name }}
-                                            {% else %}
-                                            Localconnect Shop
-                                            {% endif %}
-                                        </span>
-                                        <span class="profile-email">{{ vendor_profile.email if vendor_profile else
-                                            'vendor@localconnect.com' }}</span>
+                                            <img src="{{ vendor_profile.shop_image }}"
+                                                style="width:100%;height:100%;object-fit:cover;border-radius:50%;"
+                                                onerror="this.innerHTML='🏪';">
+                                            {% elif vendor_profile.shop_image|length < 5 %} {{ vendor_profile.shop_image
+                                                }} {% else %} 🏪 {% endif %} {% else %} 🏪 {% endif %} </div>
+                                                <div class="profile-details">
+                                                    <span class="profile-name">
+                                                        {% if vendor_profile and vendor_profile.business_name %}
+                                                        {{ vendor_profile.business_name }}
+                                                        {% else %}
+                                                        Localconnect Shop
+                                                        {% endif %}
+                                                    </span>
+                                                    <span class="profile-email">{{ vendor_profile.email if
+                                                        vendor_profile else
+                                                        'vendor@localconnect.com' }}</span>
+                                                </div>
+                                        </div>
+                                        <div class="dropdown-divider"></div>
+                                        <a href="/vendor/settings" class="dropdown-item">
+                                            <i class="fa-solid fa-gear"></i>
+                                            <span>Settings</span>
+                                        </a>
+                                        <a href="/vendor/change-password" class="dropdown-item">
+                                            <i class="fa-solid fa-key"></i>
+                                            <span>Change Password</span>
+                                        </a>
+                                        <a href="/logout" class="dropdown-item logout">
+                                            <i class="fa-solid fa-right-from-bracket"></i>
+                                            <span>Logout</span>
+                                        </a>
                                     </div>
                                 </div>
-                                <div class="dropdown-divider"></div>
-                                <a href="/vendor/settings" class="dropdown-item">
-                                    <i class="fa-solid fa-gear"></i>
-                                    <span>Settings</span>
-                                </a>
-                                <a href="/vendor/change-password" class="dropdown-item">
-                                    <i class="fa-solid fa-key"></i>
-                                    <span>Change Password</span>
-                                </a>
-                                <a href="/logout" class="dropdown-item logout">
-                                    <i class="fa-solid fa-right-from-bracket"></i>
-                                    <span>Logout</span>
-                                </a>
                             </div>
                         </div>
-                    </div>
-                </div>
             </header>
 
             <section class="content">
@@ -185,18 +183,18 @@
                     const notificationList = document.getElementById('notificationList');
                     const notificationBadge = document.querySelector('.notification-badge');
                     const notificationCount = document.querySelector('.notification-count');
-                    
+
                     if (data.orders && data.orders.length > 0) {
-                        notificationList.innerHTML = data.orders.map(order => 
+                        notificationList.innerHTML = data.orders.map(order =>
                             '<div class="notif-item">' +
-                                '<i class="fa-solid fa-shopping-cart"></i>' +
-                                '<div class="notif-content">' +
-                                    '<span class="notif-title">' + order.first_item_name + ' order from ' + order.customer_name + '</span>' +
-                                    '<span class="notif-time">' + order.time_ago + '</span>' +
-                                '</div>' +
+                            '<i class="fa-solid fa-shopping-cart"></i>' +
+                            '<div class="notif-content">' +
+                            '<span class="notif-title">' + order.first_item_name + ' order from ' + order.customer_name + '</span>' +
+                            '<span class="notif-time">' + order.time_ago + '</span>' +
+                            '</div>' +
                             '</div>'
                         ).join('');
-                        
+
                         if (notificationBadge) {
                             notificationBadge.textContent = data.pending_count;
                             notificationBadge.style.display = data.pending_count > 0 ? 'block' : 'none';
@@ -205,11 +203,11 @@
                             notificationCount.textContent = data.pending_count;
                         }
                     } else {
-                        notificationList.innerHTML = 
+                        notificationList.innerHTML =
                             '<div class="notif-item" style="text-align: center; color: #666;">' +
-                                '<div class="notif-content">' +
-                                    '<span class="notif-title">No recent orders</span>' +
-                                '</div>' +
+                            '<div class="notif-content">' +
+                            '<span class="notif-title">No recent orders</span>' +
+                            '</div>' +
                             '</div>';
                         if (notificationBadge) notificationBadge.style.display = 'none';
                         if (notificationCount) notificationCount.textContent = '0';
@@ -218,7 +216,7 @@
                 .catch(error => console.error('Error loading notifications:', error));
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             loadNotifications();
         });
         setInterval(loadNotifications, 30000);
@@ -238,7 +236,9 @@
 
         function toggleSidebar() {
             const sidebar = document.querySelector('.sidebar');
-            sidebar.classList.toggle('active');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (sidebar) sidebar.classList.toggle('active');
+            if (overlay) overlay.classList.toggle('active');
         }
 
         function toggleShopStatus(checkbox) {
@@ -268,7 +268,12 @@
                 });
             }
             if (!event.target.closest('.sidebar') && !event.target.closest('.hamburger-menu')) {
-                document.querySelector('.sidebar').classList.remove('active');
+                const sidebar = document.querySelector('.sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                if (sidebar && sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                    if (overlay) overlay.classList.remove('active');
+                }
             }
         });
 
@@ -277,29 +282,29 @@
             modal.id = 'headerShopImageModal';
             modal.className = 'modal';
             modal.style.cssText = 'display:block;position:fixed;z-index:10000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.5);';
-            modal.innerHTML = 
+            modal.innerHTML =
                 '<div style="background:white;margin:10% auto;padding:20px;border-radius:12px;width:90%;max-width:350px;">' +
-                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">' +
-                        '<h3 style="margin:0;">Change Profile Image</h3>' +
-                        '<span onclick="closeHeaderShopImageModal()" style="cursor:pointer;font-size:24px;">&times;</span>' +
-                    '</div>' +
-                    '<div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">' +
-                        '<button onclick="uploadHeaderImage()" style="display:flex;align-items:center;gap:10px;padding:12px;background:#f0f0f0;border:none;border-radius:8px;cursor:pointer;font-size:14px;">' +
-                            '<i class="fa-solid fa-upload"></i> Upload from Device' +
-                        '</button>' +
-                        '<button onclick="showHeaderEmojiPicker()" style="display:flex;align-items:center;gap:10px;padding:12px;background:#f0f0f0;border:none;border-radius:8px;cursor:pointer;font-size:14px;">' +
-                            '<i class="fa-solid fa-smile"></i> Choose Avatar/Emoji' +
-                        '</button>' +
-                    '</div>' +
-                    '<div id="headerEmojiGrid" style="display:none;">' +
-                        '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding-top:12px;border-top:1px solid #e0e0e0;">' +
-                            '<span class="emoji-option" onclick="selectHeaderEmoji(\'🏪\')" style="font-size:2rem;cursor:pointer;text-align:center;padding:10px;border-radius:8px;transition:all 0.3s;">🏪</span>' +
-                            '<span class="emoji-option" onclick="selectHeaderEmoji(\'🍕\')" style="font-size:2rem;cursor:pointer;text-align:center;padding:10px;border-radius:8px;transition:all 0.3s;">🍕</span>' +
-                            '<span class="emoji-option" onclick="selectHeaderEmoji(\'🍔\')" style="font-size:2rem;cursor:pointer;text-align:center;padding:10px;border-radius:8px;transition:all 0.3s;">🍔</span>' +
-                            '<span class="emoji-option" onclick="selectHeaderEmoji(\'🍜\')" style="font-size:2rem;cursor:pointer;text-align:center;padding:10px;border-radius:8px;transition:all 0.3s;">🍜</span>' +
-                        '</div>' +
-                    '</div>' +
-                    '<input type="file" id="headerImageUpload" accept="image/*" style="display:none;" onchange="handleHeaderImageUpload(this)">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">' +
+                '<h3 style="margin:0;">Change Profile Image</h3>' +
+                '<span onclick="closeHeaderShopImageModal()" style="cursor:pointer;font-size:24px;">&times;</span>' +
+                '</div>' +
+                '<div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">' +
+                '<button onclick="uploadHeaderImage()" style="display:flex;align-items:center;gap:10px;padding:12px;background:#f0f0f0;border:none;border-radius:8px;cursor:pointer;font-size:14px;">' +
+                '<i class="fa-solid fa-upload"></i> Upload from Device' +
+                '</button>' +
+                '<button onclick="showHeaderEmojiPicker()" style="display:flex;align-items:center;gap:10px;padding:12px;background:#f0f0f0;border:none;border-radius:8px;cursor:pointer;font-size:14px;">' +
+                '<i class="fa-solid fa-smile"></i> Choose Avatar/Emoji' +
+                '</button>' +
+                '</div>' +
+                '<div id="headerEmojiGrid" style="display:none;">' +
+                '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding-top:12px;border-top:1px solid #e0e0e0;">' +
+                '<span class="emoji-option" onclick="selectHeaderEmoji(\'🏪\')" style="font-size:2rem;cursor:pointer;text-align:center;padding:10px;border-radius:8px;transition:all 0.3s;">🏪</span>' +
+                '<span class="emoji-option" onclick="selectHeaderEmoji(\'🍕\')" style="font-size:2rem;cursor:pointer;text-align:center;padding:10px;border-radius:8px;transition:all 0.3s;">🍕</span>' +
+                '<span class="emoji-option" onclick="selectHeaderEmoji(\'🍔\')" style="font-size:2rem;cursor:pointer;text-align:center;padding:10px;border-radius:8px;transition:all 0.3s;">🍔</span>' +
+                '<span class="emoji-option" onclick="selectHeaderEmoji(\'🍜\')" style="font-size:2rem;cursor:pointer;text-align:center;padding:10px;border-radius:8px;transition:all 0.3s;">🍜</span>' +
+                '</div>' +
+                '</div>' +
+                '<input type="file" id="headerImageUpload" accept="image/*" style="display:none;" onchange="handleHeaderImageUpload(this)">' +
                 '</div>';
             document.body.appendChild(modal);
         }
@@ -322,14 +327,14 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ shop_image: base64Image })
                     })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            const imgTag = '<img src="' + base64Image + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
-                            document.getElementById('headerShopImage').innerHTML = imgTag;
-                            document.getElementById('dropdownShopImage').innerHTML = imgTag;
-                        }
-                    });
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                const imgTag = '<img src="' + base64Image + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+                                document.getElementById('headerShopImage').innerHTML = imgTag;
+                                document.getElementById('dropdownShopImage').innerHTML = imgTag;
+                            }
+                        });
                     closeHeaderShopImageModal();
                 };
                 reader.readAsDataURL(input.files[0]);
@@ -347,13 +352,13 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ shop_image: emoji })
             })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('headerShopImage').innerHTML = emoji;
-                    document.getElementById('dropdownShopImage').innerHTML = emoji;
-                }
-            });
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('headerShopImage').innerHTML = emoji;
+                        document.getElementById('dropdownShopImage').innerHTML = emoji;
+                    }
+                });
             closeHeaderShopImageModal();
         }
     </script>
