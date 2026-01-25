@@ -1,0 +1,42 @@
+--- ALL VENDOR CREDENTIALS ---
+
+Note: Most test accounts use 'test123' or 'password123' as the password.
+
+Category: Food & Restaurant
+--------------------------------------------------
+ID    Business Name                  Email                         
+1     Honest Omlet                   omlet@gmail.com               
+2     Kathi Junction                 deep@gmail.com                
+3     Tasty Bites Restaurant         food@test.com                 
+
+Category: Garage
+--------------------------------------------------
+ID    Business Name                  Email                         
+4     QuickFix Auto Garage           garage@test.com               
+5     City Car Care                  carcare@test.com              
+
+Category: Electronics
+--------------------------------------------------
+ID    Business Name                  Email                         
+6     Mobile World                   electronics@test.com          
+7     Home Appliances Hub            appliances@test.com           
+
+Category: Fashion
+--------------------------------------------------
+ID    Business Name                  Email                         
+8     Fashion Trends                 fashion@test.com              
+9     Gents Fashion Store            gentsfashion@test.com         
+
+Category: Grocery
+--------------------------------------------------
+ID    Business Name                  Email                         
+10    Fresh Vegetables Market        grocery@test.com              
+11    Daily Dairy Products           dairy@test.com                
+14    Biju Bapu                      deep123@gmail.com             
+
+Category: Pharmacy
+--------------------------------------------------
+ID    Business Name                  Email                         
+12    City Pharmacy                  pharmacy@test.com             
+13    Ayurvedic Wellness             ayurvedic@test.com            
+

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="static/css/style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
+
 <body>
     <div class="bg-grid"></div>
     <div class="floating-shapes">
@@ -28,7 +30,7 @@
             <nav class="nav-links">
                 <a href="#" class="active">Home</a>
                 <a href="#features">Features</a>
-                <a href="#about">About</a>
+                <a href="/about">About</a>
                 <a href="/contact">Contact</a>
             </nav>
             <div class="nav-actions">
@@ -44,7 +46,7 @@
             <nav class="mobile-nav-links">
                 <a href="#" class="active">Home</a>
                 <a href="#features">Features</a>
-                <a href="#about">About</a>
+                <a href="/about">About</a>
                 <a href="/contact">Contact</a>
             </nav>
             <div class="mobile-nav-actions">
@@ -55,17 +57,13 @@
 
     <main class="hero-section">
         <div class="container hero-container">
-            <div class="hero-badge">
-                <span>🚀 Connecting Communities Since 2024</span>
-            </div>
-            
             <h1 class="hero-title">
                 Discover & Support<br>
                 <span class="highlight">Local Businesses</span>
             </h1>
 
             <p class="hero-subtitle">
-                Your neighborhood marketplace connecting customers with trusted local vendors. 
+                Your neighborhood marketplace connecting customers with trusted local vendors.
                 Build community, shop local, grow together.
             </p>
 
@@ -153,25 +151,20 @@
         </div>
     </section>
 
-    <div class="chat-button" onclick="alert('Chat feature coming soon!')">
-        <div class="chat-pulse"></div>
-        <i data-lucide="message-circle"></i>
-    </div>
-
     <script>
         lucide.createIcons();
-        
+
         // Mobile menu toggle
         function toggleMobileMenu() {
             const mobileMenu = document.getElementById('mobileMenu');
             const hamburger = document.querySelector('.hamburger');
-            
+
             mobileMenu.classList.toggle('active');
             hamburger.classList.toggle('active');
         }
-        
+
         // Close mobile menu when clicking outside
-        document.addEventListener('click', function(event) {
+        document.addEventListener('click', function (event) {
             const hamburger = document.querySelector('.hamburger');
             const mobileMenu = document.getElementById('mobileMenu');
             if (!hamburger.contains(event.target) && !mobileMenu.contains(event.target)) {
@@ -179,13 +172,13 @@
                 hamburger.classList.remove('active');
             }
         });
-        
+
         // Add scroll animations
         const observerOptions = {
             threshold: 0.1,
             rootMargin: '0px 0px -50px 0px'
         };
-        
+
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -194,7 +187,7 @@
                 }
             });
         }, observerOptions);
-        
+
         document.querySelectorAll('.feature-card, .stat-item').forEach(el => {
             el.style.opacity = '0';
             el.style.transform = 'translateY(30px)';
@@ -203,4 +196,5 @@
         });
     </script>
 </body>
+
 </html>

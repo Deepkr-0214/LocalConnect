@@ -196,6 +196,10 @@ def vendor_required(f):
         return response
     return decorated_function
 
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
 @app.route('/contact')
 def contact():
     return render_template('contact.html')
@@ -601,6 +605,64 @@ def pharmacy():
         })
     
     return render_template('customer/pharmacy.html', 
+                         user_name=session.get('user_name'), 
+                         user_id=user_id, 
+                         vendors=vendors_data,
+                         customer_lat=customer_lat,
+                         customer_lon=customer_lon)
+
+@app.route('/customer/books')
+@customer_required
+def books():
+    from sqlalchemy import func
+    user_id = session.get('user_id')
+    
+    customer = Customer.query.get(user_id)
+    customer_lat = customer.latitude if customer and hasattr(customer, 'latitude') else None
+    customer_lon = customer.longitude if customer and hasattr(customer, 'longitude') else None
+    
+    vendors = Vendor.query.filter_by(business_category='Books').all()
+    vendors_data = []
+    
+    for v in vendors:
+        price_query = db.session.query(
+            func.min(MenuItem.price).label('min_price'),
+            func.max(MenuItem.price).label('max_price')
+        ).filter_by(vendor_id=v.id).first()
+        
+        min_price = int(price_query.min_price) if price_query.min_price else 100
+        max_price = int(price_query.max_price) if price_query.max_price else 500
+        
+        rating_data = db.session.query(
+            func.avg(Order.review_rating).label('avg_rating'),
+            func.count(Order.review_rating).label('review_count')
+        ).filter(
+            Order.vendor_id==v.id, 
+            Order.review_rating!=None,
+            Order.status=='Completed'
+        ).first()
+        
+        avg_rating = round(rating_data.avg_rating, 1) if rating_data.avg_rating else 0
+        review_count = rating_data.review_count if rating_data.review_count else 0
+        
+        vendors_data.append({
+            'id': v.id,
+            'name': v.business_name,
+            'category': v.business_category,
+            'subcategory': v.business_sub_category if hasattr(v, 'business_sub_category') else 'Academic Books',
+            'is_open': v.is_open if hasattr(v, 'is_open') else True,
+            'shop_image': v.shop_image if hasattr(v, 'shop_image') else '📚',
+            'address': v.business_address,
+            'phone': v.phone,
+            'min_price': min_price,
+            'max_price': max_price,
+            'latitude': v.latitude if hasattr(v, 'latitude') else None,
+            'longitude': v.longitude if hasattr(v, 'longitude') else None,
+            'rating': avg_rating,
+            'review_count': review_count
+        })
+    
+    return render_template('customer/books.html', 
                          user_name=session.get('user_name'), 
                          user_id=user_id, 
                          vendors=vendors_data,
@@ -2783,6 +2845,12 @@ def get_vendor_offers(vendor_id):
         Offer.valid_to >= today
     ).all()
     return jsonify([offer.to_dict() for offer in offers])
+
+@app.route('/chat', methods=['POST'])
+@customer_required
+def chat():
+    from utils.chatbot_logic import chat_logic
+    return chat_logic()
 
 if __name__ == '__main__':
     # Suppress Flask development server logging
