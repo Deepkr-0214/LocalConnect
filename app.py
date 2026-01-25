@@ -2853,7 +2853,8 @@ def chat():
     return chat_logic()
 
 if __name__ == '__main__':
-    # Local development only - NOT USED by Gunicorn on Railway
+    # Local development only - NOT USED by Gunicorn on Railway/Render
+    # Gunicorn imports this module and extracts 'app' directly without executing this block
     import logging
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
