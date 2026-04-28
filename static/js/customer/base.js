@@ -283,41 +283,57 @@ class LocalConnectBase {
 
     // Setup profile dropdown
     setupProfileDropdown() {
-        if (this.profileIcon && this.profileDropdown) {
-            this.profileIcon.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.profileDropdown.classList.toggle('active');
-            });
+        if (!this.profileIcon || !this.profileDropdown) return;
 
-            document.addEventListener('click', () => {
-                this.profileDropdown.classList.remove('active');
-            });
-        }
+        // Toggle on click OR touch (mobile support)
+        const toggleDropdown = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.profileDropdown.classList.toggle('active');
+        };
+        this.profileIcon.addEventListener('click',      toggleDropdown);
+        this.profileIcon.addEventListener('touchstart', toggleDropdown, { passive: false });
+
+        // Close when clicking/tapping anywhere outside the user-profile area
+        const closeDropdown = (e) => {
+            const userProfile = this.profileIcon.closest('.user-profile');
+            if (userProfile && userProfile.contains(e.target)) return; // inside → ignore
+            this.profileDropdown.classList.remove('active');
+        };
+        document.addEventListener('click',      closeDropdown);
+        document.addEventListener('touchstart', closeDropdown, { passive: true });
     }
 
     // Setup search toggle
     setupSearchToggle() {
         const searchWrapper = document.getElementById('searchWrapper');
-        const searchIcon = document.querySelector('.search-icon');
-        const searchInput = document.getElementById('searchInput');
+        const searchIcon   = document.querySelector('.search-icon');
+        const searchInput  = document.getElementById('searchInput');
 
-        if (searchWrapper && searchIcon && searchInput) {
+        if (!searchWrapper || !searchIcon || !searchInput) return;
+
+        // Start collapsed
+        searchWrapper.classList.add('collapsed');
+
+        // Toggle on click or touch
+        const toggleSearch = (e) => {
+            e.stopPropagation();
+            searchWrapper.classList.toggle('collapsed');
+            if (!searchWrapper.classList.contains('collapsed')) {
+                searchInput.focus();
+            }
+        };
+        searchIcon.addEventListener('click',      toggleSearch);
+        searchIcon.addEventListener('touchstart', toggleSearch, { passive: false });
+
+        // Collapse when clicking/tapping outside the search wrapper
+        // (but NOT when clicking the profile icon — that has its own handler)
+        const collapseSearch = (e) => {
+            if (searchWrapper.contains(e.target)) return;  // inside search → ignore
             searchWrapper.classList.add('collapsed');
-
-            searchIcon.addEventListener('click', (e) => {
-                e.stopPropagation();
-                searchWrapper.classList.toggle('collapsed');
-                if (!searchWrapper.classList.contains('collapsed')) {
-                    searchInput.focus();
-                }
-            });
-
-            document.addEventListener('click', (e) => {
-                if (!searchWrapper.contains(e.target)) {
-                    searchWrapper.classList.add('collapsed');
-                }
-            });
-        }
+        };
+        document.addEventListener('click',      collapseSearch);
+        document.addEventListener('touchstart', collapseSearch, { passive: true });
     }
     // Initiate Razorpay Payment from Chatbot
     async initiateRazorpayPayment(orderId) {
@@ -408,6 +424,18 @@ class LocalConnectBase {
 // Initialize base functionality when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.localConnect = new LocalConnectBase();
+
+    // Load profile photo into navbar avatar on every page
+    const userId = document.body.dataset.userId;
+    if (userId) {
+        const savedImage = localStorage.getItem(`user_${userId}_profileImage`);
+        const avatar = document.getElementById('profileIcon');
+        if (savedImage && avatar) {
+            // Replace the SVG icon with the user's photo
+            avatar.innerHTML = `<img src="${savedImage}" alt="Profile"
+                style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">`;
+        }
+    }
 });
 
 // Global functions (Legacy support & access)

@@ -233,7 +233,7 @@
     </style>
 </head>
 
-<body>
+<body data-user-id="{{ user_id }}">
     <header class="navbar">
         <div class="nav-container">
             <div class="logo" onclick="window.location.href='/customer/dashboard'">
@@ -589,23 +589,33 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Save image to localStorage if provided
-                        if (capturedImageData) {
-                            localStorage.setItem(profileImageKey, capturedImageData);
+                        // Determine final image data
+                        let finalImageData = capturedImageData || null;
+
+                        const saveImageAndUpdate = (imgData) => {
+                            if (imgData) {
+                                localStorage.setItem(profileImageKey, imgData);
+                                // Update navbar avatar instantly
+                                const navAvatar = document.getElementById('profileIcon');
+                                if (navAvatar) {
+                                    navAvatar.innerHTML = `<img src="${imgData}" alt="Profile"
+                                        style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">`;
+                                }
+                            }
+                            if (address) localStorage.setItem(userAddressKey, address);
+                            alert('Profile updated successfully!');
+                            location.reload();
+                        };
+
+                        if (finalImageData) {
+                            saveImageAndUpdate(finalImageData);
                         } else if (imageFile) {
                             const reader = new FileReader();
-                            reader.onload = function (e) {
-                                localStorage.setItem(profileImageKey, e.target.result);
-                            };
+                            reader.onload = (e) => saveImageAndUpdate(e.target.result);
                             reader.readAsDataURL(imageFile);
+                        } else {
+                            saveImageAndUpdate(null);
                         }
-
-                        if (address) {
-                            localStorage.setItem(userAddressKey, address);
-                        }
-
-                        alert('Profile updated successfully!');
-                        location.reload();
                     } else {
                         alert('Error updating profile: ' + (data.error || 'Unknown error'));
                     }

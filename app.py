@@ -701,6 +701,49 @@ def customer_profile():
     customer = Customer.query.get(user_id)
     return render_template('customer/profile.html', user_name=session.get('user_name'), customer=customer, user_id=user_id)
 
+@app.route('/api/customer/profile', methods=['POST'])
+@customer_required
+def update_customer_profile():
+    user_id = session.get('user_id')
+    customer = Customer.query.get(user_id)
+    if not customer:
+        return jsonify({'success': False, 'error': 'Customer not found'}), 404
+
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+        # Update only fields that are provided
+        if 'full_name' in data and data['full_name']:
+            customer.full_name = data['full_name'].strip()
+            session['user_name'] = customer.full_name  # keep session in sync
+        if 'email' in data and data['email']:
+            # Check if email is already taken by another customer
+            existing = Customer.query.filter(Customer.email == data['email'], Customer.id != user_id).first()
+            if existing:
+                return jsonify({'success': False, 'error': 'Email already in use by another account'}), 400
+            customer.email = data['email'].strip()
+            session['user_email'] = customer.email
+        if 'phone' in data and data['phone']:
+            customer.phone = data['phone'].strip()
+        if 'address' in data:
+            customer.address = data['address'].strip()
+        if 'city' in data:
+            customer.city = data['city'].strip()
+        if 'state' in data:
+            customer.state = data['state'].strip()
+        if 'pincode' in data:
+            customer.pincode = data['pincode'].strip()
+
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Profile updated successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+
 @app.route('/customer/vendor/<int:vendor_id>')
 @customer_required
 def vendor_details(vendor_id):
@@ -1245,12 +1288,6 @@ def update_current_location():
         db.session.commit()
         return jsonify({'success': True})
     return jsonify({'error': 'Customer not found'}), 404
-
-@app.route('/api/customer/profile', methods=['POST'])
-@customer_required
-def update_customer_profile():
-    """Alternative endpoint for customer profile updates"""
-    return update_profile()
 
 # Utility function to convert amount to words
 def amount_to_words(amount):
@@ -2860,5 +2897,5 @@ if __name__ == '__main__':
     log.setLevel(logging.ERROR)
     
     port = int(os.getenv('PORT', 5000))
-    print(f"\n✅ Local development server starting at http://0.0.0.0:{port}\n")
+    print(f"\n[OK] Local development server starting at http://localhost:{port}\n")
     app.run(debug=True, host='0.0.0.0', port=port, use_reloader=True, use_debugger=False)
