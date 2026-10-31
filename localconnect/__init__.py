@@ -1,0 +1,1 @@
+# LocalConnect Django Project

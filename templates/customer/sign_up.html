@@ -24,6 +24,7 @@
             </div>
 
             <form class="signup-form" method="POST" action="/customer/signup">
+                {{ csrf_input }}
                 <div class="input-group">
                     <input type="text" name="full_name" placeholder="Full Name" required>
                 </div>

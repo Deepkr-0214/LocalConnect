@@ -11,8 +11,9 @@ echo 📦 Installing Python dependencies...
 python -m pip install -r requirements.txt
 
 echo.
-echo 🗄️ Checking database...
+echo 🗄️ Checking database and migrations...
 if not exist "instance" mkdir instance
+python manage.py migrate
 
 echo.
 echo ✅ Setup complete! 
@@ -21,7 +22,7 @@ echo 🚀 You can now run the application with:
 echo    start_server.bat
 echo.
 echo    OR manually with:
-echo    python app.py
+echo    python manage.py runserver 0.0.0.0:8000
 echo.
 
 pause

@@ -37,6 +37,7 @@
             {% endwith %}
 
             <form class="signup-form" method="POST" action="/vendor/signup" id="signupForm">
+                {{ csrf_input }}
                 <div class="input-group">
                     <input type="text" name="business_name" placeholder="Shop Name" required>
                 </div>

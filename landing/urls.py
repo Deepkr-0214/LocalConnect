@@ -1,0 +1,30 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.home, name='home'),
+    path('about', views.about),
+    path('about/', views.about, name='about'),
+    path('contact', views.contact),
+    path('contact/', views.contact, name='contact'),
+    path('signin', views.sign_in),
+    path('signin/', views.sign_in, name='sign_in'),
+    path('logout', views.logout_view),
+    path('logout/', views.logout_view, name='logout'),
+    path('signup/success', views.signup_success),
+    path('signup/success/', views.signup_success, name='signup_success'),
+    path('forgot-password', views.forgot_password),
+    path('forgot-password/', views.forgot_password, name='forgot_password'),
+    path('reset-password/<str:token>', views.reset_password),
+    path('reset-password/<str:token>/', views.reset_password, name='reset_password'),
+    path('admin/delete-vendors', views.admin_delete_vendors_page),
+    path('admin/delete-vendors/', views.admin_delete_vendors_page, name='admin_delete_vendors'),
+    path('admin/delete-all-vendors', views.admin_delete_all_vendors),
+    path('admin/delete-all-vendors/', views.admin_delete_all_vendors, name='admin_delete_all_vendors'),
+    path('api/twilio/webhook', views.twilio_webhook),
+    path('api/twilio/webhook/', views.twilio_webhook, name='twilio_webhook'),
+    path('api/twilio/test-notification', views.test_twilio_notification),
+    path('api/twilio/test-notification/', views.test_twilio_notification, name='test_twilio_notification'),
+    path('api/customer/test-notification', views.test_customer_notification),
+    path('api/customer/test-notification/', views.test_customer_notification, name='test_customer_notification'),
+]

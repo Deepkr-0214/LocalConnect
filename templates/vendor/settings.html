@@ -47,6 +47,7 @@
             </div>
             
             <form action="/vendor/settings" method="POST" class="settings-form" onsubmit="return handleFormSubmit(event)">
+                {{ csrf_input }}
                 <div class="form-group">
                     <label for="shop_name">Shop Name</label>
                     <input type="text" id="shop_name" name="shop_name" value="{{ vendor_profile.business_name if vendor_profile else '' }}" required onchange="updateNavbarName()">
